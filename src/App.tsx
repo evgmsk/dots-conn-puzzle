@@ -1,24 +1,24 @@
-import React from 'react';
-import logo from './logo.svg';
+import { useState } from 'react';
+
+import { PuzzleWrapper } from './puzzle-components/puzzle-resolver';
+import {PuzzleCreator} from './puzzle-components/puzzle-creator';
+import { PuzzleMode } from './constant/interfaces';
+import { ModeSwitcher } from './puzzle-components/menu/mode-switsher';
 import './App.css';
 
+
 function App() {
+  const [puzzleMode, setPuzzleMode] = useState('create_custom' as PuzzleMode)
+  const selectMode = (mode: PuzzleMode) => {
+    setPuzzleMode(mode)
+  }
+  
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.tsx</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <ModeSwitcher mode={puzzleMode} handlers={{selectMode}} />
+      {puzzleMode === 'create_custom' 
+        ? <PuzzleCreator /> 
+        : <PuzzleWrapper />} 
     </div>
   );
 }

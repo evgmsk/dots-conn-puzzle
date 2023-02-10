@@ -1,0 +1,36 @@
+@import '../../assets/scss/constant.scss';
+
+.colors-wrapper {
+    display: flex;
+}
+
+.btn_color {
+    width: 2rem;
+    height: 2rem;
+    margin: .2rem;
+    border-radius: 50%;
+    border-color: transparent;
+    position: relative;
+    @each $color in $colors {
+        &.btn-#{$color} {
+            background-color: #{$color};
+            @if $color == yellow {
+                background-color: darken($color, 5);
+            }
+            &.selected::after {
+                content: '';
+                width: 1rem;
+                height: 1rem;
+                border-radius: 50%;
+                background-color: lighten($color, 25);
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                transform: translate(-50%, -50%);
+            }
+        }
+        
+        
+    }
+    
+}
