@@ -25,9 +25,8 @@ export interface ISwitcherProps {
 
 export interface IPointSectorProps {
     dir: LineDirections,
-    line: boolean,
+    line: string,
     turn: LineDirections | null,
-    color: string,
     fill: string
 }
 
@@ -58,22 +57,33 @@ export enum LineDirections {
 
 export interface IStartPoint {
     key: string,
-    coordinates: number[],
-    color: string,
+    coordinates?: number[],
+    color?: string,
+    connections: IPointConnections
+}
+
+export interface ITakenPointProps {
+    utmost: boolean,
     connections: IPointConnections
 }
 
 export interface ITakenPoints {
-    [key: string]: IPointConnections
+    [key: string]: ITakenPointProps
 }
 
+export interface IStartPoints {
+    [color: string]: IStartPoint[]
+}
+
+
 export interface IUtmostPoints {
-    [key: string]: UtmostPointsValue
+    [color: string]: UtmostPointsValue
 }
 
 export interface UtmostPointsValue {
-    points: IPoint
-    intervals: {x: number[], y: number[]}
+    points?: IPoint
+    key: string
+    intervals?: {x: number[], y: number[]}
     difficulty?: number
     resolved?: boolean
 }

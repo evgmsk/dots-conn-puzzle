@@ -23,71 +23,9 @@
         .puzzle-cell {
             border: 1px solid darkgray;
             position: relative;
-            // &.color-red {
-            //     background-color: red;
-            // }
-            @each $color in $colors {
-                &.color-#{$color} {
-                    display: flex;
-                    justify-content: center;
-                    align-items: center;
-                    .puzzle-point {
-                        &_left, &_right {
-                            height: 70%;
-                            width: 35%;
-                            border: 1px grey solid
-                        }
-                        &_left {
-                            border-top-left-radius: 100% 50%;
-                            border-bottom-left-radius: 100% 50%;
-                            border-top-right-radius: 0;
-                            border-bottom-right-radius: 0;
-                        }
-                        &_right {
-                            border-top-right-radius: 100% 50%;
-                            border-bottom-right-radius: 100% 50%;
-                            border-top-left-radius: 0;
-                            border-bottom-left-radius: 0;
-                        }
-                    }
-                    &.utmost {
-                        &_left, &_right {
-                            background-color: $color;
-                            border: 1px grey solid
-                        }
-                    }
-                    
-                    
-                    // &::after {
-                    //     content: '';
-                    //     position: absolute;
-                    //     width: 70%;
-                    //     height: 70%;
-                    //     border-radius: 100%;
-                    //     // background-image: linear-gradient(90deg, transparent 50%, green 50%), linear-gradient(0deg, red 50%, transparent 50%);
-                    //     top: 50%;
-                    //     left: 50%;
-                    //     transform: translate(-50%, -50%);
-                    //     background-color: $color;
-                    //     z-index: 3;
-                    // }
-                    // &::before {
-                    //     content: '';
-                    //     position: absolute;
-                    //     width: 70%;
-                    //     height: 70%;
-                    //     border-radius: 100%;
-                    //     // background-image: linear-gradient(90deg, red 0 50%, $color 50% 100%);
-                    //     background-image: linear-gradient(210deg, transparent 50%, green 50%), linear-gradient(90deg, green 50%, transparent 50%);
-                    //     // background-image: linear-gradient(0deg, transparent 50%, red 50%), linear-gradient(-120deg, red 50%, transparent 50%);
-                    //     top: 50%;
-                    //     left: 50%;
-                    //     transform: translate(-50%, -50%);
-                    //     z-index: 2;
-                    //     // background-color: ;
-                    // }
-                }
-            }
+            display: flex;
+            justify-content: center;
+            align-items: center;
         }
     }
     

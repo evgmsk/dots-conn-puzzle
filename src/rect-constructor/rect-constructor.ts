@@ -1,5 +1,5 @@
 import { MinLinesNumber, LineColors, Height, Width } from '../constant/constants'
-import { IStartPoint, IUtmostPoints, UtmostPointsValue } from '../constant/interfaces'
+import { IStartPoint, IUtmostPoints, UtmostPointsValue, ITakenPoints } from '../constant/interfaces'
 import { LinedRectBase } from './rect-base'
 
 
@@ -10,9 +10,9 @@ export class LinedRect extends LinedRectBase {
     lastStartPoint = {} as IStartPoint
     targetPoint = {} as IStartPoint
    
-    get startPoints() {
-        return this.lineEndPoints
-    }
+    // get startPoints() {
+    //     return this.lineEndPoints
+    // }
 
     createRandomUtmostPoints = (linesNumber = 0) => {
         const linesToDimention = linesNumber 
@@ -23,129 +23,129 @@ export class LinedRect extends LinedRectBase {
             // this.lineEndPoints[color] = this.getPairPoints(color)
             this.linesInterfering[LineColors[i]] = {} as {[key: string]: number}
         }
-        this.getRelativeDifficulty()
+        // this.getRelativeDifficulty()
     }
 
-    getPoint(key: string | null) {
-        let x = Math.floor(Math.random() * this._width),
-            y = Math.floor(Math.random() * this._height)
-        if (!key) { return [x, y] }
-        const point = this.rect[key].point
-        if (point[0] === this._width && x === 0) {
-            x = Math.floor(Math.random() * (this._width - 1) + 1)
-        }
-        if (point[0] === 0 && x === this._width) {
-            x = Math.floor(Math.random() * (this._width - 1))
-        }
-        if (point[1] === this._height && y === 0) {
-            y = Math.floor(Math.random() * (this._height - 1) + 1)
-        }
-        if (point[1] === 0 && y === this._height) {
-            y = Math.floor(Math.random() * (this._height - 1))
-        }
+    // getPoint(key: string | null) {
+    //     let x = Math.floor(Math.random() * this._width),
+    //         y = Math.floor(Math.random() * this._height)
+    //     if (!key) { return [x, y] }
+    //     const point = this.rect[key].point
+    //     if (point[0] === this._width && x === 0) {
+    //         x = Math.floor(Math.random() * (this._width - 1) + 1)
+    //     }
+    //     if (point[0] === 0 && x === this._width) {
+    //         x = Math.floor(Math.random() * (this._width - 1))
+    //     }
+    //     if (point[1] === this._height && y === 0) {
+    //         y = Math.floor(Math.random() * (this._height - 1) + 1)
+    //     }
+    //     if (point[1] === 0 && y === this._height) {
+    //         y = Math.floor(Math.random() * (this._height - 1))
+    //     }
         
-        return [x, y]
-    }
+    //     return [x, y]
+    // }
 
-    getPairPoints = (color: string) => {
-        const utmost = {
-            points: {},
-            intervals: {x: [], y: []},
-            difficulty: 0,
-        } as UtmostPointsValue
-        let firstPoint = null as unknown as string
-        // while (true) {
-        //     const [x, y] = this.getPoint(firstPoint) 
-        //     const key = `${x}-${y}`
-        //     if (this._takenPoints[key] || this.checkNeighbor(key, firstPoint)) continue
-        //     if (firstPoint) {
-        //         const xInterval = [utmost.points[firstPoint].xy[0], x].sort()
-        //         const yInterval = [utmost.points[firstPoint].xy[1], y].sort()
-        //         utmost.points[key] = {xy: [x, y]}
-        //         utmost.intervals.x = xInterval
-        //         utmost.intervals.y = yInterval
-        //         this._takenPoints[key] = {color, direction: JoinPointDirections.sp}
-        //         return utmost
-        //     } 
-        //     if (!firstPoint) {
-        //         utmost.points[key] = {xy: [x, y]}
-        //         this._takenPoints[key] = {color, direction: JoinPointDirections.sp}
-        //         firstPoint = key
-        //     }
-        // }
-    }
+    // // getPairPoints = (color: string) => {
+    // //     const utmost = {
+    // //         points: {},
+    // //         intervals: {x: [], y: []},
+    // //         difficulty: 0,
+    // //     } as UtmostPointsValue
+    // //     let firstPoint = null as unknown as string
+    // //     // while (true) {
+    // //     //     const [x, y] = this.getPoint(firstPoint) 
+    // //     //     const key = `${x}-${y}`
+    // //     //     if (this._takenPoints[key] || this.checkNeighbor(key, firstPoint)) continue
+    // //     //     if (firstPoint) {
+    // //     //         const xInterval = [utmost.points[firstPoint].xy[0], x].sort()
+    // //     //         const yInterval = [utmost.points[firstPoint].xy[1], y].sort()
+    // //     //         utmost.points[key] = {xy: [x, y]}
+    // //     //         utmost.intervals.x = xInterval
+    // //     //         utmost.intervals.y = yInterval
+    // //     //         this._takenPoints[key] = {color, direction: JoinPointDirections.sp}
+    // //     //         return utmost
+    // //     //     } 
+    // //     //     if (!firstPoint) {
+    // //     //         utmost.points[key] = {xy: [x, y]}
+    // //     //         this._takenPoints[key] = {color, direction: JoinPointDirections.sp}
+    // //     //         firstPoint = key
+    // //     //     }
+    // //     // }
+    // // }
 
-    getLinesInterfering = () => {
-        const colors = Object.keys(this.lineEndPoints)
-        for (let color of colors) {
-            const restColors = colors.filter((c) => c !== color)
-            let interfering = 0
-            for (let col of restColors) {
-                if (!(this.linesInterfering[color] || {})[col]) {
-                    this.getTwoLinesInterfering(color, col)
-                } 
-                interfering += this.linesInterfering[color][col]
-                if (typeof interfering !== 'number') {
-                    console.error('invalid type data intersection', color, col, this.linesInterfering)
-                }              
-            }
-        }
-        // console.warn('interfering', this.linesInterfering, colors)
-    }
+    // getLinesInterfering = () => {
+    //     const colors = Object.keys(this.lineEndPoints)
+    //     for (let color of colors) {
+    //         const restColors = colors.filter((c) => c !== color)
+    //         let interfering = 0
+    //         for (let col of restColors) {
+    //             if (!(this.linesInterfering[color] || {})[col]) {
+    //                 this.getTwoLinesInterfering(color, col)
+    //             } 
+    //             interfering += this.linesInterfering[color][col]
+    //             if (typeof interfering !== 'number') {
+    //                 console.error('invalid type data intersection', color, col, this.linesInterfering)
+    //             }              
+    //         }
+    //     }
+    //     // console.warn('interfering', this.linesInterfering, colors)
+    // }
 
     getXYLinesIntersection = (points1: UtmostPointsValue, points2: UtmostPointsValue) => {
-        const {x: x1I, y: y1I} = points1.intervals
-        const {x: x2I, y: y2I} = points2.intervals
-        if (x1I[1] < x2I[0] 
-            || x2I[1] < x1I[0] 
-            || y2I[1] < y1I[0]
-            || y1I[1] < y2I[0]) {
-                return []
-            }
-        const startX = Math.max(x1I[0], x2I[0])
-        const endX = Math.min(x1I[1], x2I[1])
-        const startY = Math.max(y1I[0], y2I[0])
-        const endY = Math.min(y1I[1], y2I[1])
-        const [xInt, yInt] = [endX - startX + 1, endY - startY + 1]
-        if (typeof xInt !== 'number' || typeof yInt !== 'number') {
-            console.error('invalid type data intersection', points1, points2)
-        }
-        return [
-            [
-                xInt / (x1I[1] - x1I[0] + 1),
-                yInt / (y1I[1] - y1I[0] + 1)
-            ],
-            [
-                xInt / (x2I[1] - x2I[0] + 1),
-                yInt / (y2I[1] - y2I[0] + 1)
-            ]
-        ]
+        // const {x: x1I, y: y1I} = points1.intervals
+        // const {x: x2I, y: y2I} = points2.intervals
+        // if (x1I[1] < x2I[0] 
+        //     || x2I[1] < x1I[0] 
+        //     || y2I[1] < y1I[0]
+        //     || y1I[1] < y2I[0]) {
+        //         return []
+        //     }
+        // const startX = Math.max(x1I[0], x2I[0])
+        // const endX = Math.min(x1I[1], x2I[1])
+        // const startY = Math.max(y1I[0], y2I[0])
+        // const endY = Math.min(y1I[1], y2I[1])
+        // const [xInt, yInt] = [endX - startX + 1, endY - startY + 1]
+        // if (typeof xInt !== 'number' || typeof yInt !== 'number') {
+        //     console.error('invalid type data intersection', points1, points2)
+        // }
+        // return [
+        //     [
+        //         xInt / (x1I[1] - x1I[0] + 1),
+        //         yInt / (y1I[1] - y1I[0] + 1)
+        //     ],
+        //     [
+        //         xInt / (x2I[1] - x2I[0] + 1),
+        //         yInt / (y2I[1] - y2I[0] + 1)
+        //     ]
+        // ]
     } 
 
-    getTwoLinesInterfering(col1: string, col2: string) {
-        const pair1 = this.lineEndPoints[col1]
-        const pair2 = this.lineEndPoints[col2]
-        const xyIntersection = this.getXYLinesIntersection(pair1, pair2)
-        if (!xyIntersection.length) {
-            this.linesInterfering[col2][col1] = 0
-            this.linesInterfering[col1][col2] = 0
-        } else {
-            this.linesInterfering[col2][col1] = xyIntersection[0][0] + xyIntersection[0][1]
-            this.linesInterfering[col1][col2] = xyIntersection[1][0] + xyIntersection[1][1]
-        }
-    }
+    // getTwoLinesInterfering(col1: string, col2: string) {
+    //     const pair1 = this.lineEndPoints[col1]
+    //     const pair2 = this.lineEndPoints[col2]
+    //     const xyIntersection = this.getXYLinesIntersection(pair1, pair2)
+    //     if (!xyIntersection.length) {
+    //         this.linesInterfering[col2][col1] = 0
+    //         this.linesInterfering[col1][col2] = 0
+    //     } else {
+    //         this.linesInterfering[col2][col1] = xyIntersection[0][0] + xyIntersection[0][1]
+    //         this.linesInterfering[col1][col2] = xyIntersection[1][0] + xyIntersection[1][1]
+    //     }
+    // }
 
-    getRelativeDifficulty = () => {
-        this.getLinesInterfering()
-        const colors = Object.keys(this.lineEndPoints)
-        for (let color of colors) {
-            const lineInterfering = this.linesInterfering[color]
-            const interferingValue = colors.filter(c => c !== color).reduce((acc, c) => {
-                return acc + lineInterfering[c]
-            }, 0)
-            this.lineEndPoints[color].difficulty = interferingValue
-        }
-    }
+    // getRelativeDifficulty = () => {
+    //     this.getLinesInterfering()
+    //     const colors = Object.keys(this.lineEndPoints)
+    //     for (let color of colors) {
+    //         const lineInterfering = this.linesInterfering[color]
+    //         const interferingValue = colors.filter(c => c !== color).reduce((acc, c) => {
+    //             return acc + lineInterfering[c]
+    //         }, 0)
+    //         this.lineEndPoints[color].difficulty = interferingValue
+    //     }
+    // }
 
     getLeastMeddlingPointKey() {
         const {key, color} = this.lastStartPoint
@@ -160,7 +160,7 @@ export class LinedRect extends LinedRectBase {
             console.error('neighbors', this.rect[key].neighbors, color, key, rectConstructor)
         }
         console.error('neighbors', neighbors, rectConstructor)
-        return this.getLeastMeddlesomePoint(neighbors, color)
+        // return this.getLeastMeddlesomePoint(neighbors, color)
     }
 
     getLeastMeddlesomePoint = (points: string[], color: string) => {
@@ -197,19 +197,19 @@ export class LinedRect extends LinedRectBase {
     getPointMeddling(point: number[], color: string) {
         const restColors = Object.keys(this.lineEndPoints).filter(col => col !== color)
         return restColors.reduce((acc, col) => {
-            return acc + this.getPointInterfering(this.lineEndPoints[col], point)
+            return acc + 1 /// this.getPointInterfering(this.lineEndPoints[col], point)
         }, 0)
     }
 
-    getPointInterfering = (utmostPoints: UtmostPointsValue, point: number[]) => {
-        if (utmostPoints.intervals.x[0] > point[0]
-            || utmostPoints.intervals.x[1] < point[0]
-            || utmostPoints.intervals.y[0] > point[1]
-            || utmostPoints.intervals.y[1] < point[1]) {
-                return 0
-            }
-            return 1
-    }
+    // getPointInterfering = (utmostPoints: UtmostPointsValue, point: number[]) => {
+    //     if (utmostPoints.intervals.x[0] > point[0]
+    //         || utmostPoints.intervals.x[1] < point[0]
+    //         || utmostPoints.intervals.y[0] > point[1]
+    //         || utmostPoints.intervals.y[1] < point[1]) {
+    //             return 0
+    //         }
+    //         return 1
+    // }
 
     getMeddlestUnresolvedLine() {
         return Object.keys(this.lineEndPoints)

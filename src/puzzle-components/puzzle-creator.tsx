@@ -1,4 +1,4 @@
-import {  useState } from 'react'
+import { useState } from 'react'
 
 import { Puzzle } from './rect/rect'
 import { ITakenPoints } from '../constant/interfaces'
@@ -7,18 +7,27 @@ import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
 
 import { Height, LineColors, Width } from '../constant/constants'
 import { rectCreator } from '../rect-constructor/rect-creator'
+import { Confirmation } from './confirmation'
 
+console.log(rectCreator._height)
+export interface IConfirm {
+    question: string
+    cb: Function
+    args: any[]
+}
 
 export const PuzzleCreator: React.FC = () => {
     const [width, setWidth] = useState(Width)
-    const [height, setHeight] = useState(Height)
+    const [height, setHeight] = useState(Height / 2)
     const [color, setColor] = useState(LineColors[0])
-    // const [update, setUpdate] = useState(0)
-    
-    // useEffect(() => {
-    // }, [update])
-   
+    const [confirm, setConfirm] = useState({} as IConfirm)
+
     const [points, setPoints] = useState(rectCreator.takenPoints)
+   
+    const confirmationHandler = (data: boolean) => {
+        confirm.cb(...confirm.args, data)
+        setConfirm({} as IConfirm)
+    }
     
     const savePuzzle = () => {
         
@@ -42,22 +51,36 @@ export const PuzzleCreator: React.FC = () => {
     }
 
     const handleMouseUp = (key: string, key2: string) => {
+
         rectCreator.resolveMouseUp(key, key2, color)
     }
 
     const handleMouseDown = (key: string) => {
+        if (confirm.question) return
         console.warn('donw', key, color)
         rectCreator.resolveMouseDown(key, color)
         setPoints(rectCreator.takenPoints)
     }
 
     const handleMouseEnter = (key: string, key2: string) => {
-        rectCreator.resolveMouseEnter(key, key2, color)
-        setPoints(rectCreator.takenPoints)
+        if (confirm.question) return
+        const existed = rectCreator.takenPoints[key]
+        if (existed && rectCreator.checkIfDifferentStartPoints(key, key2, color)) {
+            console.warn('exist', key, key2)
+            setConfirm({
+                question: 'Do you want to create join point',
+                cb: rectCreator.resolveMouseEnter,
+                args: [key, key2, color]
+            })         
+        } else {
+            rectCreator.resolveMouseEnter(key, key2, color)
+        }
+        
     }
 
     const handleMouseLeave = (key: string, key2: string) => {
-        rectCreator.resolveMouseLeave(key, key2, color)
+        if (confirm.question) return
+        rectCreator.resolveMouseLeave(key, color)
         setPoints(rectCreator.takenPoints)
     }
  
@@ -102,5 +125,10 @@ export const PuzzleCreator: React.FC = () => {
                     dimention={{width, height}} 
                     handlers={customPuzzleHandlers}
                 />
+                <Confirmation 
+                    handler={confirmationHandler} 
+                    question={confirm.question} 
+                />
+        
             </div>
 }

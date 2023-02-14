@@ -1,4 +1,13 @@
-import { IPointConnections, IPointSectorProps, LineDirections } from "../../constant/interfaces"
+import { IPointSectorProps, ITakenPointProps, LineDirections } from "../../constant/interfaces"
+
+import './point.scss'
+
+export const defaultSectors = [
+    {dir: LineDirections.top},
+    {dir: LineDirections.right},
+    {dir: LineDirections.left},
+    {dir: LineDirections.bottom}
+] as IPointSectorProps[]
 
 export const getOppositeDirection = (dir: LineDirections) => {
     switch (dir) {
@@ -13,19 +22,12 @@ export const getOppositeDirection = (dir: LineDirections) => {
     } 
 }
 
-export const defaultSectors = [
-    {dir: LineDirections.top},
-    {dir: LineDirections.right},
-    {dir: LineDirections.bottom},
-    {dir: LineDirections.left}
-] as IPointSectorProps[]
-
-export const getSectorsData = (props: {connections: IPointConnections}): IPointSectorProps[] => {
-    const {connections} = props
+export const getSectorsData = (props: ITakenPointProps): IPointSectorProps[] => {
+    const {connections, utmost} = props
     const colors = Object.keys(connections)
     const firstColor = colors[0]
     const singleColor = colors.length === 1
-    const simpleLine = singleColor && connections[firstColor].length === 2
+    const simpleLine = singleColor && !utmost && connections[firstColor].length === 2 
     const mapedConnections = colors.reduce((acc, col) => {
         const dirs = connections[col] as LineDirections[]
         dirs.forEach(d => {
@@ -37,43 +39,42 @@ export const getSectorsData = (props: {connections: IPointConnections}): IPointS
         })
         return acc
     }, {} as {[dir: string]: string})
-    return defaultSectors.map(sec => {
+    return defaultSectors.map(_sec => {
+        const sec = Object.assign({}, _sec)
         const lineColor = mapedConnections[sec.dir]
-        sec.fill = simpleLine ? '' : lineColor || firstColor
-        sec.line = !!lineColor
-        sec.turn = simpleLine 
+        sec.fill = !utmost ? '' : lineColor || firstColor
+        sec.line = lineColor || ''
+        sec.turn = simpleLine && connections[lineColor]
             ? connections[lineColor].filter(d => d !== sec.dir)[0] 
             : null
         return sec as IPointSectorProps
     })
 }
 
-export const PointSector: React.FC<IPointSectorProps> = (props: IPointSectorProps) => {
-    const {color, turn, dir, line, fill} = props
-    const filledClass = fill.length ? ` filled-${fill}` : ''
-    const lineClass = line ? ` line-${color}` : ''
-    const turnClass = turn === getOppositeDirection(dir) ? '' : ` turn-${turn}`
-    const className = `puzzle-point_${dir}${filledClass}${lineClass}${turnClass}`
-    return <div className={className}></div>
-}
-
-export const Point: React.FC<{connections: IPointConnections}> = (props: {connections: IPointConnections}) => {
-    
-    const sectorsData = getSectorsData(props)
+export const Point: React.FC<ITakenPointProps> = (props: ITakenPointProps) => {
    
-    return <div className="point-wrapper">
+    const sectorsData = getSectorsData(props)
+    
+    return <>
+        <div className="point-wrapper">
             {
                 sectorsData.map(sec => {
-                    const {dir, fill, color, turn, line} = sec as IPointSectorProps
-                    return <PointSector 
-                                color={color}
-                                key={dir}
-                                dir={dir}
-                                line={line}
-                                fill={fill}
-                                turn={turn}
-                            />
+                    const {dir, fill} = sec as IPointSectorProps
+                    // console.warn(turn === getOppositeDirection(dir), turn, dir )
+                    const fillCl = !!fill ? ` fill-${fill}` : ''
+                    const sectorName = `puzzle-point_${dir}${fillCl}`
+                    return !!fill ? <div className={sectorName} key={dir}></div> : null
                 })
             }
         </div>
+        {
+            sectorsData.map(sec => {
+                const {dir, turn, line} = sec as IPointSectorProps
+                const lineCl = !!line ? ` line-${line}` : ''
+                const turnCl = !turn ? '' : ` turn-${turn}`
+                const lineName = `line-${dir}${lineCl}${turnCl}`
+                return !!line ? <div className={lineName} key={dir}></div> : null
+            })
+        }
+    </>
 }
