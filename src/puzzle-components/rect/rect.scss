@@ -8,6 +8,7 @@
         margin: 20px;
         flex-direction: column;
     }
+    
     &_creator {
         width: 80vw;
         height: auto;
@@ -26,6 +27,15 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            &::after {
+                content: '';
+                position: absolute;
+                width: 100%;
+                height: 100%;
+                z-index: 100000;
+                top: 0;
+                left: 0;
+            }
         }
     }
     
@@ -48,4 +58,6 @@
             }
         }
     }
+    
 }
+

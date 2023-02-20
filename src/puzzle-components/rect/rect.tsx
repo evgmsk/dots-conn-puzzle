@@ -5,6 +5,7 @@ import './rect.scss'
 
 import { IPuzzleProps, ITakenPointProps } from "../../constant/interfaces"
 import { Point } from "../point/point"
+// import { copyObj } from "../../helper-fns/helper-fn"
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
     const containerSizes = document.querySelector(selector)?.getBoundingClientRect()
@@ -21,7 +22,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     const [enteredCell, setEnteredCell] = useState('')
     const [mouseDown, setMouseDown] = useState(false)
     const {
-        dimention: {width, height},
+        dimension: {width, height},
         points,
         handlers: {
             handleMouseDown,
@@ -31,24 +32,24 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         }
     } = props
 
-    const handleDown = (e: any) => {
-        // console.log(e.type, e.preventDefault)
+    const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
         if (e.type !== 'touchstart') {
             e.preventDefault()
         }
-        const key = (e.target as HTMLElement).getAttribute('id') || ''
-        console.log('mouseDown', mouseDown, key)
+        const key = (e.target as HTMLElement).getAttribute('id')
+        if (!key) return
         setMouseDown(true)
         handleMouseDown(key, enteredCell)
         setEnteredCell(key)        
     }
 
-    const handlePointerMove = (e: any) => {
+    const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
         if (!mouseDown) return
         const {clientX, clientY } =
-            e.type === 'touchmove' ? e.changedTouches['0'] : e
+            e.type === 'touchmove' 
+                ? (e as React.TouchEvent).changedTouches['0'] 
+                : e as React.MouseEvent
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
-        // console.log('move', enteredCell, targetKey)
         if (targetKey !== enteredCell) {
             handleMouseEnter(targetKey, enteredCell)
             setEnteredCell(targetKey)
@@ -58,7 +59,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     const handleUp = (key: string) => {
         if (!mouseDown) return 
         setMouseDown(false)
-        handleMouseUp(key, enteredCell)
+        handleMouseUp(key)
     }
 
     const mouseLeave = () => {
@@ -73,11 +74,11 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     const rect = new Array(height).fill('1').map((i, k) => {
         return new Array(width).fill('1').map((j, n) => {
             const key = `${n}-${k}`
-            const point = points[key] as ITakenPointProps
+            const point = points[key] || {} as ITakenPointProps
             const className = !point 
                 ? `${cellClass} empty-cell`
                 : `${cellClass}`
-            const {connections, utmost} = point || {}
+            const {connections, utmost} = point
             return <div 
                         className = {className} 
                         key={key}
@@ -85,9 +86,14 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                         onMouseDown={handleDown}
                         onTouchStart={handleDown}
                         onMouseUp={() => handleUp(key)}
+                        onTouchEnd={() => handleUp(key)}
                     >
-                        {point 
-                            ? <Point connections={connections} utmost={utmost} /> 
+                        {point.connections
+                            ? <Point 
+                                connections={connections}
+                                utmost={utmost}
+                                inv={'point' + key}
+                             /> 
                             : null}
                     </div>
         })

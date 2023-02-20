@@ -3,8 +3,6 @@ import './confirmation.scss'
 
 export interface IConfirm {handler: Function, question: string}
 
-
-
 export const Confirmation: React.FC<IConfirm> = (props: IConfirm) => {
     if (!props.question) {
         return null
@@ -13,8 +11,20 @@ export const Confirmation: React.FC<IConfirm> = (props: IConfirm) => {
         <div className="confirmation-window">
             <div className="confirmation-title">{props.question}?</div>
             <div className="confirmation-footer">
-                <button type="button" value="1" onClick={() => props.handler(true)}>Yes</button>
-                <button type="button" value="0" onClick={() => props.handler(false)}>No</button> 
+                <button 
+                    type="button" 
+                    value="1" 
+                    onClick={() => props.handler(true)}
+                >
+                    Yes
+                </button>
+                <button 
+                    type="button" 
+                    value="0" 
+                    onClick={() => props.handler(false)}
+                >
+                    No
+                </button> 
             </div>
         </div>
     )

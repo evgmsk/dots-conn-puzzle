@@ -1,0 +1,23 @@
+.dots-puzzle_menu {
+    &__footer {
+        margin-top: 10px;
+        display: flex;
+        justify-content: space-between;
+    }
+    // &__dimensions {
+       
+    // }
+    &__size-range {
+        label {
+            display: inline-block;
+            width: 3rem;
+        }
+        display: flex;
+        align-items: center;
+        justify-content: flex-start;
+    }
+    &__colors-wrapper {
+        display: flex;
+        align-items: center;
+    }
+}

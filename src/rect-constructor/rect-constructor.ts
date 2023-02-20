@@ -238,16 +238,6 @@ export class LinedRect extends LinedRectBase {
         }
     }
 
-    // checkCircleLine = (key: string, color: string) => {
-    //     for (let neighbor of this.rect[key].neighbors) {
-    //         if (this.finishLine(neighbor)) {return false}
-    //         if (neighbor !== this.lastStartPoint.key 
-    //             && this._takenPoints[neighbor] 
-    //             && this._takenPoints[neighbor].color === color) { return true }
-    //     }
-    //     return false
-    // }
-
     // setStartPointMeddlestLine() {
     //     const color = this.getMeddlestUnresolvedLine()
     //     const keys = Object.keys(this.lineEndPoints[color].points) 

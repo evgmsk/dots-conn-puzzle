@@ -8,14 +8,14 @@ export const PuzzleWrapper: React.FC = () => {
     const [puzzle, setPuzzle] = useState({} as IRectProps)
     return puzzle 
       ? <PuzzleResolver
-          dimention={{...puzzle.dimention}}
+          dimension={{...puzzle.dimension}}
           points={{...puzzle.points}}
         /> 
       : <PuzzleSelector setPuzzle={setPuzzle} />
   }
 
 export const PuzzleResolver: React.FC<IRectProps> = (props: IRectProps) => {
-    const {dimention: {width, height}, points} = props
+    const {dimension: {width, height}, points} = props
 
     // const [update, setUpdate] = useState(0)
     
@@ -48,7 +48,7 @@ export const PuzzleResolver: React.FC<IRectProps> = (props: IRectProps) => {
     return <div className={puzzleClassName}>
                 <Puzzle 
                         points={points} 
-                        dimention={{width, height}} 
+                        dimension={{width, height}}
                         handlers={resolvePuzzleHandlers} 
                     />
             </div>

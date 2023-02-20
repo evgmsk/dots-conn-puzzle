@@ -1,6 +1,7 @@
 export interface IRectProps {
-    dimention: IRectDimention,
+    dimension: IRRectDimension,
     points: ITakenPoints,
+    mouseColor?: string
 }
 
 export type PuzzleMode = 'create_custom' | 'resolve' | 'generate'
@@ -26,7 +27,7 @@ export interface ISwitcherProps {
 export interface IPointSectorProps {
     dir: LineDirections,
     line: string,
-    turn: LineDirections | null,
+    turn?: LineDirections,
     fill: string
 }
 
@@ -35,13 +36,18 @@ export interface IColorBTN {
     color: string
 }
 
-export interface IRectDimention {
+export interface IRRectDimension {
     width: number
     height: number
 }
 
+export interface IConnection {
+    dir: LineDirections,
+    neighbor?: string
+}
+
 export interface IPointConnections {
-    [color: string]: LineDirections[]
+    [color: string]: IConnection[]
 }
 
 export interface IPointValue {
@@ -55,16 +61,25 @@ export enum LineDirections {
     top = 'top', 
 }
 
+export interface IPuzzle {
+    name: string
+    startPoints: IStartPoints
+    resolvedPoints: ITakenPoints
+    width: number
+    height: number
+}
+
 export interface IStartPoint {
     key: string,
     coordinates?: number[],
     color?: string,
-    connections: IPointConnections
+    connections?: IPointConnections
 }
 
 export interface ITakenPointProps {
     utmost: boolean,
     connections: IPointConnections
+    inv?: string
 }
 
 export interface ITakenPoints {
@@ -78,6 +93,17 @@ export interface IStartPoints {
 
 export interface IUtmostPoints {
     [color: string]: UtmostPointsValue
+}
+
+export interface IUpContext {
+    freeCells: boolean
+    sameColorNeighbors?: ISameColorNeighbor
+}
+
+export interface ISameColorNeighbor {
+    utmost?: boolean
+    sameLine?: boolean
+    key: string
 }
 
 export interface UtmostPointsValue {
@@ -101,5 +127,11 @@ export interface ILinedRect {
     _height: number
     rect: IRectCell
     _takenPoints: ITakenPoints
+    _utmostPoints: IStartPoints
 }
 
+export interface ICollision {
+    sameColor?: boolean
+    joinPoint?: boolean
+    sameLine?: boolean
+}
