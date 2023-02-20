@@ -8,7 +8,7 @@ import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
 import { Height, LineColors, Width } from '../constant/constants'
 import { rectCreator } from '../rect-constructor/rect-creator'
 import { Confirmation } from './confirmation'
-import {puzzleCompiler} from '../puzzles/compiler'
+import { puzzleCompiler } from '../puzzles/compiler'
 
 
 export interface IConfirm {
@@ -29,7 +29,7 @@ export const PuzzleCreator: React.FC = () => {
         rectCreator.setHeight(height)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
-    
+
     const confirmationHandler = (data: boolean) => {
         const {args} = confirm
         setConfirm({} as IConfirm)
@@ -42,7 +42,15 @@ export const PuzzleCreator: React.FC = () => {
     }
     
     const savePuzzle = () => {
-        puzzleCompiler.savePuzzle()
+        const valid = puzzleCompiler.checkPuzzle()
+        if (valid !== 'valid') {
+            // TODO resolve errors
+            console.error(valid)
+            return
+        }
+        
+        const puzzle = puzzleCompiler.savePuzzle()
+        console.log('save', puzzle)
     }
 
     const undo = () => {

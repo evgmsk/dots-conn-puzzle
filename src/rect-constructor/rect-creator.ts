@@ -336,6 +336,7 @@ export class RectCreator extends LinedRectBase! {
         if (this._width * this._height === Object.keys(this._takenPoints).length) {
             return []
         }
+        console.log(this._takenPoints)
         for (let i = 0; i < this._width; i++) {
             for (let j = 0; j < this._height; j++) {
                 const key = `${i}-${j}`
@@ -344,6 +345,7 @@ export class RectCreator extends LinedRectBase! {
                 }
             }
         }
+        console.log(emptyCells)
         return emptyCells
     }
 

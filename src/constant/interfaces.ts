@@ -63,8 +63,8 @@ export enum LineDirections {
 
 export interface IPuzzle {
     name: string
-    startPoints: IStartPoints
-    resolvedPoints: ITakenPoints
+    startPoints: ITakenPoints
+    dotsSegragatedByColor: {[key: string]: ITakenPoints}
     width: number
     height: number
 }
