@@ -54,7 +54,7 @@ describe('test rect-creator methods', () => {
                             return {dir: LineDirections.left, neighbor: '3-1'}
                         }
                         if (d.dir === LineDirections.bottom) {
-                            return {dir: LineDirections.left, neighbor: '4-2'}
+                            return {dir: LineDirections.bottom, neighbor: '4-2'}
                         }
                         return d
                     })

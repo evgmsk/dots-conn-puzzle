@@ -78,7 +78,9 @@
                 background-color: #{$col}; 
                 @include sector-border($dir, $col);
                 border: 1px solid #{$col};
-                
+                @if $col == lightgray {
+                    border-color: darken($col, 20%);
+                }
             }
         }
 

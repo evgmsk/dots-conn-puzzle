@@ -26,17 +26,19 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         points,
         handlers: {
             handleMouseDown,
-            handleMouseUp,
+            handleMouseUp = () => {},
             handleMouseEnter,
-            handleMouseLeave
+            checkPoint,
+            checkLine
         }
     } = props
-
+    // console.warn('rect', props)
     const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
         if (e.type !== 'touchstart') {
             e.preventDefault()
         }
         const key = (e.target as HTMLElement).getAttribute('id')
+        console.warn('down', key)
         if (!key) return
         setMouseDown(true)
         handleMouseDown(key, enteredCell)
@@ -50,7 +52,15 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 ? (e as React.TouchEvent).changedTouches['0'] 
                 : e as React.MouseEvent
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
+        // console.warn('move', targetKey, enteredCell, checkPoint(enteredCell), checkLine(targetKey, enteredCell))
+        if (enteredCell !== targetKey 
+            && (!checkPoint(enteredCell) 
+            || !checkLine(targetKey, enteredCell))) {
+            setMouseDown(false)
+            return
+        }
         if (targetKey !== enteredCell) {
+            console.warn('move2', targetKey, enteredCell)
             handleMouseEnter(targetKey, enteredCell)
             setEnteredCell(targetKey)
         }
@@ -64,9 +74,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
 
     const mouseLeave = () => {
         if (!mouseDown) return
-        console.error('Oops!', mouseDown)
         setMouseDown(false)
-        handleMouseLeave(enteredCell)
     }
 
     const rectClassName = `dots-conn-puzzle_body size-${width}-${height}`

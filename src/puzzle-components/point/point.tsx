@@ -1,5 +1,5 @@
 import { memo, useEffect} from "react"
-import { IPointSectorProps, ITakenPointProps } from "../../constant/interfaces"
+import { IDotSectorProps, ITakenPointProps } from "../../constant/interfaces"
 
 import './point.scss'
 import {getSectorsData} from "../../helper-fns/helper-fn";
@@ -30,14 +30,14 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
     
     const sectorsData = getSectorsData(props)
     useEffect(() => {
-        console.log('point', props, sectorsData)
+        // console.log('point', props, sectorsData)
     }, [])
     
     return <>
         <div className="point-wrapper">
             {
                 sectorsData.map((sec, i) => {
-                    const {dir, fill} = sec as IPointSectorProps
+                    const {dir, fill} = sec as IDotSectorProps
                     const fillCl = !!fill ? ` fill-${fill}` : ''
                     const sectorName = `puzzle-point_${dir}${fillCl}`
                     return !!fill 
@@ -48,7 +48,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
         </div>
         {
             sectorsData.map((sec) => {
-                const {dir, turn, line} = sec as IPointSectorProps
+                const {dir, turn, line} = sec as IDotSectorProps
                 const lineCl = !!line ? ` line-${line}` : ''
                 const turnCl = !turn ? '' : ` turn-${turn}`
                 const lineName = `line-${dir}${lineCl}${turnCl}`

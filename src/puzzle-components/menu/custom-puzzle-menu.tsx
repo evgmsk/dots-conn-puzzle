@@ -73,7 +73,7 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
             </div>
             <div className='dots-puzzle_menu__colors-wrapper'>
                 {
-                    LineColors.map(c => {
+                    LineColors.slice(1).map(c => {
                         return <ColorBTN 
                                     handlers={{selectColor}} 
                                     color={c} 

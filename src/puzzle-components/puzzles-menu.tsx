@@ -1,22 +1,28 @@
-import { IPuzzleProps } from "../constant/interfaces"
+import { IPuzzle } from "../constant/interfaces"
+
+import './puzzles-menu.scss'
 
 export interface IPuzzleSelectorProps {
     setPuzzle: Function
+    puzzles: IPuzzle[]
 }
 
 
 export const PuzzleSelector: React.FC<IPuzzleSelectorProps> = (props: IPuzzleSelectorProps) => {
-    const puzzles = [] as IPuzzleProps[]
-    const {setPuzzle} = props
+    
+    const {puzzles, setPuzzle} = props
 
     return <>{
             puzzles.map((p, i) => {
-                return <button 
+                return p.name 
+                ? <button 
                     type="button"
-                    key={i}
+                    key={p.name}
                     onClick={() => setPuzzle(puzzles[i])}
                 >
+                    {p.name.slice(0, 15)}
                 </button>
+                : null
             })
     }</>
 }

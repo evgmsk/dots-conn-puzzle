@@ -14,7 +14,7 @@
     @each $color in $colors {
         &.btn-#{$color} {
             background-color: #{$color};
-            cursor: url('../../assets/images/#{$color}-cursor.png') 10 10, pointer;
+            // cursor: url('../../assets/images/#{$color}-cursor.png') 10 10, pointer;
             @if $color == yellow {
                 background-color: darken($color, 5);
             }

@@ -1,6 +1,7 @@
-import {IConnection, IPointSectorProps, ITakenPointProps, LineDirections} from "../constant/interfaces";
+import { LineColors } from "../constant/constants";
+import {IConnection, ILineProps, ILines, IDotSectorProps, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
 
-export const getSectorsData = (props: ITakenPointProps): IPointSectorProps[] => {
+export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
     // console.warn(props)
     const {connections, utmost} = props
     const colors = Object.keys(connections)
@@ -13,10 +14,10 @@ export const getSectorsData = (props: ITakenPointProps): IPointSectorProps[] => 
         const colorConns = connections[color] as IConnection[]
         colorConns.forEach(con => {
             const line = con.neighbor ? color : ''
-            const sector = {dir: con.dir, line} as IPointSectorProps
+            const sector = {dir: con.dir, line} as IDotSectorProps
             if (utmost) {
                 sector.dir = con.dir
-                sector.fill = color
+                sector.fill = singleColor ? color : (line || LineColors[0])
             } else {
                 sector.fill = ''
                 sector.turn = simpleLine 
@@ -28,9 +29,8 @@ export const getSectorsData = (props: ITakenPointProps): IPointSectorProps[] => 
             return acc
         })
         return acc
-    }, [] as IPointSectorProps[])
+    }, [] as IDotSectorProps[])
 }
-
 
 export const sectorIndex = (dir: LineDirections) => {
     switch (dir) {
@@ -52,7 +52,7 @@ export const defaultSectors = () => Object.assign([], [
     {dir: LineDirections.bottom},
 ]) as IConnection[]
 
-export const getOppositeDirection = (dir: LineDirections) => {
+export const oppositeDirection = (dir: LineDirections) => {
     switch (dir) {
         case LineDirections.bottom: 
             return LineDirections.top
@@ -78,4 +78,19 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
         }
     }
     return copy
+}
+
+
+export const getLines = (props: {[key: string]: ITakenPoints}): ILines => {
+    const lines = {} as ILines
+    for (const color in props) {
+        const line = {
+            dots: props[color],
+            defaultDotsNumber: Object.keys(props[color]).length,
+            currentDotsNumber: false,
+            resolved: false
+        } as ILineProps
+        lines[color] = {...line}
+    }
+    return lines
 }

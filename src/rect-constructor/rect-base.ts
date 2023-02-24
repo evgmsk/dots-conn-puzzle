@@ -31,6 +31,7 @@ export class LinedRectBase implements ILinedRect {
         return copyObj(this._takenPoints) as ITakenPoints
     }
 
+    
     getPoint = (key: string) => {
         return copyObj(this._takenPoints[key]) as ITakenPointProps
     }
@@ -39,7 +40,8 @@ export class LinedRectBase implements ILinedRect {
         return this._takenPoints[key].utmost
     }
 
-    addTakenPoints(points: ITakenPoints) {
+    addTakenPoints = (points: ITakenPoints) => {
+        // console.warn(points)
         const pts = this.takenPoints
         for (const key in points) {
             if (!this.checkPointConnections(points[key])) {
@@ -121,7 +123,8 @@ export class LinedRectBase implements ILinedRect {
         const stopFn = (key2: string, col = color) => {
             const nPoint = this.getPoint(key2)
             const outLineNeighborsSameColorSameLine = this.rect[key2].neighbors.filter(n => {
-                return nPoint.connections[col].findIndex(c => c.neighbor === n) < 0 
+                return nPoint.connections[col].findIndex(c => c.neighbor === n) < 0
+                    && this.getPoint(n)
                     && this.getPoint(n).connections 
                     && this.getPoint(n).connections[col]
                     && line.includes(n)
@@ -155,6 +158,10 @@ export class LinedRectBase implements ILinedRect {
             neighbors.push(`${x + 1}-${y}`)
         }
         return neighbors
+    }
+
+    isNeighbors = (key: string, key2: string) =>{
+        return this.rect[key].neighbors.includes(key2)
     }
 
     haveNeighbor = (pointKey: string, neighbor: string, color: string): boolean => {
@@ -204,19 +211,19 @@ export class LinedRectBase implements ILinedRect {
             return current
     }
 
-    // getStartPoint(key: string, color: string, prevKey = ''): string[] {
-    //     let connections = this.takenPoints[key].connections[color]
-    //     if (connections.length > 1 && !prevKey) {
-    //         return connections.map((con, i) => {
-    //             return this.goToLinePoint(con.neighbor, key, color, this.isUtmost)
-    //         }).filter(key => key)
-    //     }
-    //     if (!prevKey && connections.length === 1) {
-    //         const nextKey = connections[0].neighbor
-    //         return [this.goToLinePoint(nextKey, key, color, this.isUtmost)]
-    //     }
-    //     return [this.goToLinePoint(key, prevKey, color, this.isUtmost)]
-    // }
+    getStartPoint(key: string, color: string, prevKey = ''): string[] {
+        let connections = this.takenPoints[key].connections[color]
+        if (connections.length > 1 && !prevKey) {
+            return connections.map((con, i) => {
+                return this.goToLinePoint(con.neighbor!, key, color, this.isUtmost)
+            }).filter(key => key)
+        }
+        if (!prevKey && connections.length === 1) {
+            const nextKey = connections[0].neighbor
+            return [this.goToLinePoint(nextKey!, key, color, this.isUtmost)]
+        }
+        return [this.goToLinePoint(key, prevKey, color, this.isUtmost)]
+    }
 
     checkIfSameLineNeighbors = (key: string, key2: string, color: string) => {
         const point1 = this.getPoint(key)

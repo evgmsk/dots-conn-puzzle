@@ -1,18 +1,62 @@
 import { Height, Width } from "../constant/constants";
 import { 
     ICollision,
-    IPointConnections,
+    IDotConnections,
+    IPuzzle,
     IStartPoint,
     ITakenPointProps,
     ITakenPoints,
     IUpContext 
 } from "../constant/interfaces";
-import { LinedRectBase } from "./rect-base";
+import { PuzzleCommons } from "./rect-commons";
 import { defaultSectors, getSectorsData } from "../helper-fns/helper-fn";
 
-export class RectCreator extends LinedRectBase! {
+export class RectCreator extends PuzzleCommons {
     steps: ITakenPoints[] = []
     currentStep = 0
+    puzzle = {} as IPuzzle
+
+    checkPuzzle = (data = rectCreator.takenPoints): string => {
+        const linesContinuity = rectCreator.checkLinesContinuity()
+        const emptyCelss = rectCreator.checkEmptyCells()
+        if (emptyCelss.length) {
+            return 'empty cells'
+        }
+        if (!linesContinuity) {
+            return 'broken lines'
+        }
+        return 'valid'
+    }
+
+    createPuzzle = () => {
+        const {takenPoints, width, height} = rectCreator
+        const points = takenPoints
+        const startPoints = {} as ITakenPoints
+        const dotsSegragatedByColor = {} as {[key: string]: ITakenPoints}
+        for (const key in points) {
+            if (points[key].utmost) {
+                startPoints[key] = this.cutNeighborsInStartPoints(key, points)
+            } 
+            for (const color in points[key].connections) {
+                const coloredDots = dotsSegragatedByColor[color] || {}
+                dotsSegragatedByColor[color] = {
+                    ...coloredDots, [key]: points[key]
+                }
+            }
+        }
+        const date = new Date()
+        const colors = Object.keys(dotsSegragatedByColor).length
+        const name = `puzzle${width}x${height}_colors${colors}_date${date}`
+        const puzzle = {
+            name,
+            startPoints,
+            dotsSegragatedByColor,
+            width,
+            height
+        } as IPuzzle
+        this.puzzle = puzzle
+        return puzzle
+    }
 
     resolveMouseUp = (key1: string, key2: string, color: string, context: IUpContext) => {
         console.log('up', key1, key2, color, context)
@@ -27,8 +71,12 @@ export class RectCreator extends LinedRectBase! {
 
     undo = () => {
         this.currentStep = this.currentStep > 0 ? this.currentStep - 1 : 0
-        console.log(this.currentStep, this._takenPoints, this.steps)
         this._takenPoints = this.steps[this.currentStep]
+        for (const val of Object.values(this.takenPoints)) {
+            if (!val.connections) {
+                console.error(this.currentStep, this._takenPoints, this.steps)
+            }
+        }
     }
 
     redo = () => {
@@ -36,6 +84,7 @@ export class RectCreator extends LinedRectBase! {
             ? this.currentStep + 1 
             : this.steps.length - 1
         this._takenPoints = this.steps[this.currentStep]
+        
     }
 
     clearAll = () => {
@@ -143,145 +192,30 @@ export class RectCreator extends LinedRectBase! {
         })
     }
 
-
     resolveMouseEnter = (
         key: string, 
         key2: string, 
         color: string, 
         interfere?: ICollision) => {
-            console.warn('enter', key, key2, color, interfere)
             const {sameLine, joinPoint, sameColor} = interfere || {}
+            if (sameLine) {
+                return this.removeLinePart(key2, key, color, this.delPoint, this.addPoints)
+            }
+            const jointToSameColorUtmostPoint = (joinPoint && !sameColor)
+               || (sameColor 
+               && !sameLine 
+               && this.getLineNeighbors(key, color).length < 2
+               && this.getLineNeighbors(key2, color).length < 2)
+            this.updateLineStart(key, key2, color, this.addPoints)
+            if (jointToSameColorUtmostPoint) {
+                this.createJoinPoint(key, key2, color, this.addPoints, sameColor)
+            }
             if (!interfere) {
-                this.updateLineStart(key, key2, color)
                 this.continueLine(key, key2, color)
-            } else if (joinPoint && !sameColor) {
-                this.updateLineStart(key, key2, color)
-                this.createJoinPoint(key, key2, color)
-            } else if (sameLine) {
-                this.removeLinePart(key2, key, color)
             } else if (!joinPoint && !sameLine && !sameColor) {
-                this.updateLineStart(key, key2, color)
-                this.removeLinesInterfereWithoutJoin(key)
-                this.continueLine(key, key2, color)
-            } else if (sameColor 
-                    && !sameLine 
-                    && this.getLineNeighbors(key, color).length < 2) {
-                this.updateLineStart(key, key2, color)
-                this.createJoinPoint(key, key2, color, sameColor)
-            }
-    }
-
-    removeLinesInterfereWithoutJoin = (key: string) => {
-        const connections = this.getPoint(key).connections
-        const colors = Object.keys(connections)
-        this.delPoint(key)
-        let lastDeleted = key
-        const fn = (pointKey: string, col: string) => {
-            const point = this.getPoint(pointKey)
-            console.log(point, pointKey, this.takenPoints, lastDeleted)
-            if (!point.utmost) { 
-                this.delPoint(pointKey)
-                lastDeleted = pointKey
-            } else {
-                const dir = this.determineDirection(pointKey, lastDeleted)
-                const sectors = point.connections[col].map(sec => 
-                    sec.dir === dir ? {dir} : sec)
-                const connections = {...point.connections, [col]: sectors}
-                this.addPoints({[pointKey]: {...point, connections}} as ITakenPoints)
-            }
-            return point.utmost
-        }
-        for (const col of colors) {
-            const neighbors = connections[col].map(c => c.neighbor)
-            neighbors.forEach(n => {
-                n && this.goToLinePoint(n, key, col, fn)
-            })
-        }
-    }
-
-    removeLinePart(from: string, to: string, color: string) {
-        console.warn('remove', from)
-        const toFn = (key: string) => {
-            const neighbor = this.haveNeighbor(key, to, color)
-            this.delPoint(key)
-            if (neighbor) {
-                let {connections, utmost} = this.getPoint(to)
-                const sectors = connections[color].map(s => {
-                    const dir = s.dir
-                    return s.neighbor === key ? {dir} : s
-                })
-                connections = {
-                    ...connections,
-                    [color]: sectors
-                }
-                
-                this.addPoints({[to]: {utmost, connections}})
-            }
-            return neighbor
-        }
-        this.goToLinePoint(from, to, color, toFn)
-    }
-
-    createJoinPoint = (key: string, key2: string, color: string, sameColor = false) => {
-        console.log('create join p', key, key2, color)
-        const existedPoint = this.getPoint(key)
-        const dir = this.determineDirection(key, key2)
-        let connections = {} as IPointConnections
-        let joinSectors = existedPoint.connections[color] || []
-        let index = sameColor ? this.getSectorIndex(dir, joinSectors) : -1
-        joinSectors[index >= 0 ? index : joinSectors.length] = {dir, neighbor: key2}
-        for (const col in existedPoint.connections) {
-            const sectors = existedPoint.connections[col]
-            connections[col] = index < 0 && col !== color 
-                ? sectors.filter(d => d.dir !== dir)
-                : sectors
-        }
-        connections[color] = joinSectors        
-        const updatedPointProps = { 
-            utmost: !sameColor || existedPoint.utmost,
-            connections 
-        }
-        this.addPoints({[key]: updatedPointProps})
-        // console.log('after create join', key, connections, updatedPointProps,  this.takenPoints, )
-    }
-
-    updateLineStart = (key: string, key2: string, color: string) => {
-        const point = this.getPoint(key2)
-        if (!point || !point.connections) return
-        const {connections, utmost} = point
-        const dir = this.determineDirection(key2, key)
-        const sectors = connections[color]
-        const index = this.getSectorIndex(dir, sectors)
-        sectors[index] = { dir, neighbor: key}
-        connections[color] = sectors
-        const newPoint = {
-            [key2]: {
-                utmost,
-                connections
-            }
-        } as ITakenPoints 
-        this.addPoints(newPoint)
-    }
-
-    continueLine = (key: string, key2: string, color: string) => {
-        const dir = this.determineDirection(key, key2)
-        const sectors = defaultSectors()
-        const index = this.getSectorIndex(dir, sectors)
-        sectors[index] = {dir, neighbor: key2}
-        const point = {
-            [key]: {
-                utmost: false,
-                connections: {
-                    [color]: sectors
-                } 
-            }
-        } as ITakenPoints
-        console.warn('line continue', point)  
-        this.addPoints(point)
-    }
-
-    resolveMouseLeave = (key: string, color: string) => {
-
+                this.removeInterferedLines(key, this.delPoint, this.addPoints)
+                this.continueLine(key, key2, color, this.addPoints)
+            }            
     }
 
     changePointColor = (key: string, color: string, colorToReplace: string) => {

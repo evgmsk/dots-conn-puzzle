@@ -8,7 +8,7 @@ import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
 import { Height, LineColors, Width } from '../constant/constants'
 import { rectCreator } from '../rect-constructor/rect-creator'
 import { Confirmation } from './confirmation'
-import { puzzleCompiler } from '../puzzles/compiler'
+import { manager } from '../puzzles/puzzles-manager'
 
 
 export interface IConfirm {
@@ -42,15 +42,15 @@ export const PuzzleCreator: React.FC = () => {
     }
     
     const savePuzzle = () => {
-        const valid = puzzleCompiler.checkPuzzle()
+        const valid = rectCreator.checkPuzzle()
         if (valid !== 'valid') {
             // TODO resolve errors
             console.error(valid)
             return
         }
-        
-        const puzzle = puzzleCompiler.savePuzzle()
+        const puzzle = rectCreator.createPuzzle()
         console.log('save', puzzle)
+        manager.savePuzzle(puzzle)
     }
 
     const undo = () => {
@@ -80,6 +80,7 @@ export const PuzzleCreator: React.FC = () => {
             || upPoint?.utmost 
             || confirm.question
             || rectCreator.getLineNeighbors(key, color).length > 1
+            || !rectCreator.getLineNeighbors(key, color).length
         ) {
             return
         }
@@ -148,7 +149,11 @@ export const PuzzleCreator: React.FC = () => {
     }
 
     const handleMouseEnter = (key: string, key2: string) => {
-        if (confirm.question) return
+        console.log('enter', key, key2, rectCreator.isNeighbors(key, key2))
+        if (confirm.question || !rectCreator.isNeighbors(key, key2)) {
+            console.error('line broken', key, key2)
+            return
+        }
         const existed = rectCreator.getPoint(key)
         if (existed) {
             console.warn('exist', key, key2, existed)
@@ -156,7 +161,7 @@ export const PuzzleCreator: React.FC = () => {
         if ((existed)) {
             const {connections, utmost} = existed 
             const sameColor = !!connections[color] 
-                && !!rectCreator.getPoint(key2).connections[color]
+                // && !!rectCreator.getPoint(key2).connections[color]
             if (!sameColor) {
                     setConfirm({
                         question: 'Do you want to create join point',
@@ -171,23 +176,29 @@ export const PuzzleCreator: React.FC = () => {
                 let interfere = {joinPoint, sameLine, sameColor}
                 rectCreator.resolveMouseEnter(key, key2, color, interfere)
             } 
-        } else {
+        } else { 
             rectCreator.resolveMouseEnter(key, key2, color)
         }
         setPoints(rectCreator.takenPoints)
     }
 
-    const handleMouseLeave = (key: string, key2: string) => {
-        if (confirm.question) return
-        rectCreator.resolveMouseLeave(key, color)
-        setPoints(rectCreator.takenPoints)
+    const checkPoint = (key: string) => {
+        console.log(key, rectCreator.getPoint(key))
+        return rectCreator.getPoint(key)
     }
+
+    const checkLine = (key: string, key2: string) => {
+        console.log(key2, key, rectCreator.getPoint(key2))
+        return rectCreator.getPoint(key2) && rectCreator.rect[key2].neighbors.includes(key)
+    }
+
  
     const customPuzzleHandlers = {
         handleMouseDown,
         handleMouseUp,
         handleMouseEnter,
-        handleMouseLeave
+        checkPoint,
+        checkLine
     }
 
     const changeWidth = (width: string) => {
@@ -223,6 +234,7 @@ export const PuzzleCreator: React.FC = () => {
                     points={points}
                     dimension={{width, height}}
                     handlers={customPuzzleHandlers}
+                    mouseColor={color}
                 />
                 <Confirmation 
                     handler={confirmationHandler} 

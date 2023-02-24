@@ -11,11 +11,13 @@ export class PuzzleManager {
     savePuzzle = (puzzle: IPuzzle) => {
         this._puzzles.push(puzzle)
         localStorage.setItem(LocalStorageName, JSON.stringify(this._puzzles))
+        return JSON.stringify(puzzle)
     }
+
 
     getFromStorage = (): IPuzzle[] => {
         this._puzzles = JSON.parse(localStorage.getItem(LocalStorageName) || "[]")
-        return this._puzzles
+        return this._puzzles.filter(p => p.name)
     }
 
     get puzzles() {

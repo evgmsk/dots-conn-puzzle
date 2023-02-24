@@ -4,7 +4,7 @@ export interface IRectProps {
     mouseColor?: string
 }
 
-export type PuzzleMode = 'create_custom' | 'resolve' | 'generate'
+export type PuzzleMode = 'create' | 'resolve' | 'generate'
 
 export interface IPuzzleProps extends IRectProps {
     handlers: IHandlers
@@ -24,7 +24,7 @@ export interface ISwitcherProps {
     mode: PuzzleMode
 }
 
-export interface IPointSectorProps {
+export interface IDotSectorProps {
     dir: LineDirections,
     line: string,
     turn?: LineDirections,
@@ -46,7 +46,7 @@ export interface IConnection {
     neighbor?: string
 }
 
-export interface IPointConnections {
+export interface IDotConnections {
     [color: string]: IConnection[]
 }
 
@@ -61,24 +61,36 @@ export enum LineDirections {
     top = 'top', 
 }
 
+export interface ILineProps {
+    dots?: ITakenPoints
+    defaultDotsNumber: number
+    currentDotsNumber: boolean
+    resolved: boolean
+}
+
+export interface ILines {
+    [color: string]: ILineProps
+}
+
 export interface IPuzzle {
     name: string
     startPoints: ITakenPoints
     dotsSegragatedByColor: {[key: string]: ITakenPoints}
     width: number
     height: number
+    difficulty?: number
 }
 
 export interface IStartPoint {
     key: string,
     coordinates?: number[],
-    color?: string,
-    connections?: IPointConnections
+    color?: string
+    connections?: IDotConnections
 }
 
 export interface ITakenPointProps {
-    utmost: boolean,
-    connections: IPointConnections
+    utmost: boolean
+    connections: IDotConnections
     inv?: string
 }
 

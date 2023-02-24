@@ -1,6 +1,6 @@
 export const MinLinesNumber = 4
 export const LineColors = [
-    'blue', 'green', 'red', 'orange', 'yellow', 'purple', 'aqua', 'brown', 
+    'lightgray', 'blue', 'green', 'red', 'orange', 'yellow', 'purple', 'aqua', 'brown', 
 ]
 
 export const Width = 6

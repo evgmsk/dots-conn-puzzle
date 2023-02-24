@@ -1,5 +1,5 @@
 import { IPuzzle } from '../constant/interfaces'
-import {PuzzleManager} from './manager'
+import {PuzzleManager} from './puzzles-manager'
 
 describe('test puzzle manager', () => {
     const manager = new PuzzleManager()
@@ -10,5 +10,6 @@ describe('test puzzle manager', () => {
         expect(manager.puzzles.length).toBe(puzzleLength + 1)
         const puzzles = manager.getFromStorage()
         expect(puzzles[puzzles.length - 1]).toEqual({name: 'test'})
+        // console.log(puzzles)
     })
 })
