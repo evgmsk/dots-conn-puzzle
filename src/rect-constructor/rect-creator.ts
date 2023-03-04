@@ -1,25 +1,48 @@
-import { Height, Width } from "../constant/constants";
-import { 
+import {DefaultColor, Height, Width} from "../constant/constants";
+import {
     ICollision,
-    IDotConnections,
-    IPuzzle,
-    IStartPoint,
-    ITakenPointProps,
+    IPuzzle, ITakenPointProps,
     ITakenPoints,
-    IUpContext 
 } from "../constant/interfaces";
 import { PuzzleCommons } from "./rect-commons";
-import { defaultSectors, getSectorsData } from "../helper-fns/helper-fn";
+import { defaultConnectionsWithColor } from "../helper-fns/helper-fn";
 
 export class RectCreator extends PuzzleCommons {
-    steps: ITakenPoints[] = []
+    steps: ITakenPoints[] = [{}]
     currentStep = 0
     puzzle = {} as IPuzzle
 
-    checkPuzzle = (data = rectCreator.takenPoints): string => {
-        const linesContinuity = rectCreator.checkLinesContinuity()
-        const emptyCelss = rectCreator.checkEmptyCells()
-        if (emptyCelss.length) {
+    undo = () => {
+        this.currentStep = this.currentStep > 0
+            ? this.currentStep - 1
+            : 0
+        this._takenPoints = this.steps[this.currentStep] || {}
+        console.warn('undo', this.currentStep, this.steps, this.takenPoints)
+    }
+
+    redo = () => {
+        this.currentStep = this.currentStep < this.steps.length - 1
+            ? this.currentStep + 1
+            : this.steps.length - 1
+        this._takenPoints = Object.assign({},this.steps[this.currentStep] || {})
+    }
+
+    clearAll = () => {
+        this.clearPoints()
+        this.steps = [{}]
+        this.steps.length = 0
+    }
+
+    updateSteps = () => {
+        this.currentStep = this.steps.length
+        const steps = Object.assign([], this.steps.slice(0, this.currentStep))
+        steps.push(this._takenPoints)
+        this.steps = steps
+    }
+
+    checkPuzzle = (): string => {
+        const linesContinuity = this.checkLinesContinuity()
+        if (this.width * this.height - Object.keys(this.takenPoints).length) {
             return 'empty cells'
         }
         if (!linesContinuity) {
@@ -28,29 +51,76 @@ export class RectCreator extends PuzzleCommons {
         return 'valid'
     }
 
-    createPuzzle = () => {
-        const {takenPoints, width, height} = rectCreator
+    prepareUtmostPointForResolver = (point: ITakenPointProps): ITakenPointProps => {
+        const {utmost, connections} = point
+        const lineNeighbors = this.getLineNeighbors(point.connections)
+        const colors = this.getColors(connections)
+        const crossLine = lineNeighbors.length === 4 && colors.length === 2
+            ? colors
+            : undefined
+        const joinPoint = utmost && !crossLine && lineNeighbors.length > 1
+            ? colors
+            : undefined
+        const color = crossLine || joinPoint ? DefaultColor : colors[0]
+        return {
+            connections: defaultConnectionsWithColor(color),
+            crossLine,
+            joinPoint,
+            utmost
+        }
+    }
+
+    changePointColorCreator = (key: string, newColor: string, oldColor: string) => {
+        let {utmost, connections} = this.getPoint(key)
+        const lineNeighbors = this.getLineNeighbors(key, oldColor)
+        for (const dir in connections) {
+            const sector = connections[dir]
+            if (!utmost || sector.color === oldColor) {
+                sector.color = newColor
+            }
+            connections[dir] = sector
+        }
+        this.addTakenPoints({[key]: {utmost, connections}})
+        return lineNeighbors
+    }
+
+    changeLineColor = (key: string, newColor: string, oldColor: string) => {
+        console.log('change line color', key, newColor)
+        let neighbors = this.changePointColorCreator(key, newColor, oldColor)
+        const stopFn = (point: string) => {
+            neighbors = this.changePointColorCreator(point, newColor, oldColor)
+            return neighbors.length < 2
+        }
+        for (const neighbor of neighbors) {
+            this.goToLinePoint(neighbor, key, stopFn)
+        }
+    }
+
+    buildPuzzle = () => {
+        const {takenPoints, width, height} = rc
         const points = takenPoints
         const startPoints = {} as ITakenPoints
-        const dotsSegragatedByColor = {} as {[key: string]: ITakenPoints}
+        const dotsSegregatedByColor = {} as {[color: string]: ITakenPoints}
         for (const key in points) {
-            if (points[key].utmost) {
-                startPoints[key] = this.cutNeighborsInStartPoints(key, points)
+            const {utmost, connections} = this.getPoint(key)
+            if (utmost) {
+                startPoints[key] = this.prepareUtmostPointForResolver(points[key])
             } 
-            for (const color in points[key].connections) {
-                const coloredDots = dotsSegragatedByColor[color] || {}
-                dotsSegragatedByColor[color] = {
+            for (const dir in connections) {
+                const color = connections[dir].color
+                const coloredDots = dotsSegregatedByColor[color] || {}
+                dotsSegregatedByColor[color] = {
                     ...coloredDots, [key]: points[key]
                 }
             }
         }
         const date = new Date()
-        const colors = Object.keys(dotsSegragatedByColor).length
+        const colors = Object.keys(dotsSegregatedByColor).length
         const name = `puzzle${width}x${height}_colors${colors}_date${date}`
         const puzzle = {
             name,
             startPoints,
-            dotsSegragatedByColor,
+            dotsSegregatedByColor,
             width,
             height
         } as IPuzzle
@@ -58,196 +128,95 @@ export class RectCreator extends PuzzleCommons {
         return puzzle
     }
 
-    resolveMouseUp = (key1: string, key2: string, color: string, context: IUpContext) => {
-        console.log('up', key1, key2, color, context)
-        const {freeCells, sameColorNeighbors, } = context
-        const utmostNeighbor = sameColorNeighbors?.utmost && sameColorNeighbors?.key
-        if (utmostNeighbor) {
-            this.connectToUtmostNeighbor(key1, key2, utmostNeighbor, color)
-        } else if (!freeCells) {
-            this.convertLastPointToUtmost(key1, key2, color)
+    resolveMouseUp = (point: string, color: string) => {
+        console.log('up', point, color)
+        const freeCells = this.rect[point].neighbors.filter(n => !this.getPoint(n)).length
+        if (!freeCells) {
+            this.convertLastPointToUtmost(point)
+            this.updateSteps()
         }
     }
 
-    undo = () => {
-        this.currentStep = this.currentStep > 0 ? this.currentStep - 1 : 0
-        this._takenPoints = this.steps[this.currentStep]
-        for (const val of Object.values(this.takenPoints)) {
-            if (!val.connections) {
-                console.error(this.currentStep, this._takenPoints, this.steps)
-            }
-        }
-    }
-
-    redo = () => {
-        this.currentStep = this.currentStep < this.steps.length - 1 
-            ? this.currentStep + 1 
-            : this.steps.length - 1
-        this._takenPoints = this.steps[this.currentStep]
-        
-    }
-
-    clearAll = () => {
-        this.clearPoints()
-        this.steps.length = 0
-    }
-
-    updateSteps = () => {
-        this.currentStep += 1
-        this.steps = this.steps.slice(0, this.currentStep)
-        this.steps.push(this._takenPoints)
-    }
-
-    addPoints = (points: ITakenPoints) => {
-        this.addTakenPoints(points)
-        this.updateSteps()
-    }
-
-    delPoint = (key: string) => {
-        this.deletePoint(key)
-        this.updateSteps()
-    } 
-
-    connectToUtmostNeighbor = (key1: string, key2: string, utmost: string, color: string) => {
-        const pointProps: ITakenPointProps = {
-            utmost: false,
-            connections: {
-                [color]: defaultSectors().map(d => {
-                    if (d.dir === this.determineDirection(key1, key2)) {
-                        return { dir: d.dir, neighbor: key2 }
-                    }
-                    if (d.dir === this.determineDirection(key1, utmost)) {
-                        return  { dir: d.dir, neighbor: utmost}
-                    }
-                    return d
-                }) 
-            }
-        }
-        const utmostPoint = this.getPoint(utmost)
-        let connections = utmostPoint.connections
-        const sameColorConnection = connections[color]
-        const dir = this.determineDirection(utmost, key1)
-        const index = this.getSectorIndex(dir, sameColorConnection)
-        sameColorConnection[index] = {dir, neighbor: key1}
-        const utmostPointProps: ITakenPointProps = {
-            utmost: true,
-            connections: {
-                ...connections,
-                [color]: [
-                    ...sameColorConnection,
-                ]
-            }
-        }
-        this.addPoints({[utmost]: utmostPointProps})
-        this.addPoints({[key1]: pointProps})
-    }
-
-    convertLastPointToUtmost = (key: string, key2: string, color: string) => {
-        const dir = this.determineDirection(key, key2)
-        const sectors = defaultSectors().map(s => {
-            return s.dir === dir 
-                ? {...s, neighbor: key2}
-                : s
-        })
-        const pointProps: ITakenPointProps = {
+    convertLastPointToUtmost = (key: string) => {
+        this.addTakenPoints({
+            [key]: {
                 utmost: true,
-                connections: {
-                    [color]: sectors
+                connections: this.getPoint(key).connections
             }
-        }
-        this.addPoints({[key]: pointProps})
+        })
     }
 
     resolveNewPointDown(key: string, color: string) {
         if (!key) {
             return
         }
-        const connections = {[color]: defaultSectors()}
-        this.addPoints({[key]: {
+        this.addTakenPoints({[key]: {
             utmost: true,
-            connections
+            connections: defaultConnectionsWithColor(color)
         }})
 
     }
 
     resolveMouseDown = (key: string, color: string, interfere?: ICollision) => {
         console.warn('down rect', key, color, interfere)
+        const {sameColor, joinPoint} = interfere || {}
         if (!interfere) {
             this.resolveNewPointDown(key, color)
-        } else if (interfere.joinPoint) {
-            this.resolveJoinOnMouseDown(key, color)
-        } else {
-
+        } else if (!joinPoint && sameColor) {
+            this.removeForks(key, color)
         }
-    }
-
-    resolveJoinOnMouseDown = (key: string, color: string) => {
-        const point = this.getPoint(key)
-        const sectors = getSectorsData(point)
-        // const directions = this.rect[key].neighbors.map(n => this.determineDirection(key, n))
-        sectors.forEach(sec => {
-            if (!sec.line) {
-
-            }
-        })
+        this.updateSteps()
     }
 
     resolveMouseEnter = (
-        key: string, 
-        key2: string, 
+        next: string,
+        prev: string,
         color: string, 
         interfere?: ICollision) => {
-            const {sameLine, joinPoint, sameColor} = interfere || {}
-            if (sameLine) {
-                return this.removeLinePart(key2, key, color, this.delPoint, this.addPoints)
-            }
-            const jointToSameColorUtmostPoint = (joinPoint && !sameColor)
-               || (sameColor 
-               && !sameLine 
-               && this.getLineNeighbors(key, color).length < 2
-               && this.getLineNeighbors(key2, color).length < 2)
-            this.updateLineStart(key, key2, color, this.addPoints)
-            if (jointToSameColorUtmostPoint) {
-                this.createJoinPoint(key, key2, color, this.addPoints, sameColor)
-            }
-            if (!interfere) {
-                this.continueLine(key, key2, color)
-            } else if (!joinPoint && !sameLine && !sameColor) {
-                this.removeInterferedLines(key, this.delPoint, this.addPoints)
-                this.continueLine(key, key2, color, this.addPoints)
-            }            
-    }
-
-    changePointColor = (key: string, color: string, colorToReplace: string) => {
-        let {utmost, connections} = this.getPoint(key)
-        const sectors = connections[colorToReplace]
-        const neighbors = this.getLineNeighbors(key, colorToReplace)
-        delete connections[colorToReplace]
-        connections = {...connections, [color]: sectors}
-        this.addPoints({[key]: {utmost, connections}})
-        return neighbors
-    }
-
-    changeColor = (key: string, color: string, colorToReplace: string) => {
-        const neighbors = this.changePointColor(key, color, colorToReplace)
-        const stopFn = (point: string) => {
-            const neighbors = this.getLineNeighbors(point, colorToReplace)
-            this.changePointColor(point, color, colorToReplace)
-            return neighbors.length < 2
+        const {sameLine, joinPoint, sameColor} = interfere || {}
+        console.log('enter', next, prev, color, interfere, sameColor, sameLine, joinPoint)
+        if (sameLine) {
+            this.removeLineCirclePart(prev, next, color)
+            return this.updateSteps()
         }
-        for (const neighbor of neighbors) {
-            this.goToLinePoint(neighbor, key, colorToReplace, stopFn)
+        this.updateLineStart(next, prev, color, false)
+        if (joinPoint) {
+            this.createJoinPoint(next, prev, color, sameColor)
         }
+        if (!interfere) {
+            this.continueLine(next, prev, color)
+        } else if (!joinPoint && !sameLine && !sameColor) {
+            this.removeInterferedLines(next)
+            this.continueLine(next, prev, color)
+        } else if (!joinPoint && !sameLine && sameColor) {
+            this.resolveSameColorInterfering(next, prev, color)
+        }
+        this.updateSteps()
     }
 
-    
+    resolveSameColorInterfering = (next: string, prev: string, color: string) => {
+        const {connections, utmost} = this.getPoint(next)
+        if (utmost) {
+            console.error('invalid props or method', next, prev, this.takenPoints)
+            return
+        }
+        const neighbors = this.getLineNeighbors(connections)
+        if (neighbors.length < 2) {
+            return this.createJoinPoint(next, prev, color, true)
+        }
+        for (const nei of neighbors) {
+            this.removeLineFork(nei, next, color)
+        }
+        this.continueLine(next, prev, color)
+    }
+
     checkLineContinuity = (start: string, color: string) => {
         const fn = (point: string) => {
             const utmost = this.getPoint(point).utmost && point !== start
             const circle = this.checkCircleLine(point, color)
             return circle || utmost
         }
-        const end = this.goToLinePoint(start, '', color, fn)
+        const end = this.goToLinePoint(start, '', fn)
         return end || this.getPoint(end).utmost
     }
 
@@ -264,47 +233,6 @@ export class RectCreator extends PuzzleCommons {
         }
         return valid
     }
-    
-    checkEmptyCells = (): string[] => {
-        const emptyCells = [] as string[]
-        if (this._width * this._height === Object.keys(this._takenPoints).length) {
-            return []
-        }
-        console.log(this._takenPoints)
-        for (let i = 0; i < this._width; i++) {
-            for (let j = 0; j < this._height; j++) {
-                const key = `${i}-${j}`
-                if (!this.getPoint(key)) {
-                    emptyCells.push(key)
-                }
-            }
-        }
-        console.log(emptyCells)
-        return emptyCells
-    }
-
-    combineAndCheckUtmostPoints = () => {
-        for (const key in this.takenPoints) {
-            const point = this.getPoint(key)
-            if (!point.utmost) {
-                continue
-            }
-            for (const color in point.connections) {
-                const utmostPoint: IStartPoint = {key} 
-                this._utmostPoints[color] = this._utmostPoints[color] 
-                                            ? [...this._utmostPoints[color], utmostPoint]
-                                            : [utmostPoint]
-            }
-        }
-        for (const color in this._utmostPoints) {
-            const pointsNum = this._utmostPoints[color].length
-            if (pointsNum < 2) {
-                return false
-            }
-        }
-        return this._utmostPoints
-    }
-
 }
 
-export const rectCreator = new RectCreator({width: Width, height: Height / 2})
+export const rc = new RectCreator({width: Width, height: Height / 2})

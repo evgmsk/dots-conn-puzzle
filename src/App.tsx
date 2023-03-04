@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import React, {useEffect, useState} from 'react';
 
 import { PuzzleWrapper } from './puzzle-components/puzzle-resolver';
 import { PuzzleCreator } from './puzzle-components/puzzle-creator';
@@ -12,13 +12,13 @@ function App() {
   const selectMode = (mode: PuzzleMode) => {
     setPuzzleMode(mode)
   }
-  
+
   return (
     <div className="App">
       <ModeSwitcher mode={puzzleMode} handlers={{selectMode}} />
-      {puzzleMode === 'create' 
-        ? <PuzzleCreator /> 
-        : <PuzzleWrapper />} 
+      {puzzleMode === 'create'
+        ? <PuzzleCreator />
+        : <PuzzleWrapper />}
     </div>
   );
 }

@@ -1,145 +1,342 @@
-import { Height, Width } from "../constant/constants";
-import { IConnection, IDotConnections, ITakenPointProps, ITakenPoints } from "../constant/interfaces";
-import { copyObj, defaultSectors } from "../helper-fns/helper-fn";
+import {DefaultColor, Height, Width} from "../constant/constants";
+import { ITakenPointProps, ITakenPoints, LineDirections } from "../constant/interfaces";
+import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../helper-fns/helper-fn";
 import { LinedRectBase } from "./rect-base";
+
 
 export class PuzzleCommons extends LinedRectBase {
 
-    continueLine = (key: string, key2: string, color: string, addPoints?: Function) => {
-        const addTakenPoints = addPoints || this.addTakenPoints
-        const dir = this.determineDirection(key, key2)
-        const sectors = defaultSectors()
-        const index = this.getSectorIndex(dir, sectors)
-        sectors[index] = {dir, neighbor: key2}
+    continueLine = (nextPoint: string, prevPoint: string, color: string) => {
+        const dir = this.determineDirection(nextPoint, prevPoint)
         const point = {
-            [key]: {
+            [nextPoint]: {
                 utmost: false,
                 connections: {
-                    [color]: sectors
-                } 
+                    ...defaultConnectionsWithColor(color),
+                    [dir]: {color, neighbor: prevPoint}
+                }
             }
-        } as ITakenPoints
-        addTakenPoints(point)
+        }
+        console.log('continue line', nextPoint, prevPoint, point)
+        this.addTakenPoints(point)
     }
 
     createJoinPoint = (
-        key: string,
-        key2: string,
+        nextPoint: string,
+        prevPoint: string,
         color: string,
-        addPoints = this.addTakenPoints,
         sameColor = false) => {
-    
-            const existedPoint = this.getPoint(key)
-            const dir = this.determineDirection(key, key2)
-            const connections = {} as IDotConnections
-            const joinSectors = copyObj(existedPoint.connections[color] || []) as IConnection[]
-            const index = sameColor ? this.getSectorIndex(dir, joinSectors) : -1
-            console.log('create join', key, key2, color, this.takenPoints, sameColor)
-            console.warn('index', index, dir, joinSectors)
-            joinSectors[index >= 0 ? index : joinSectors.length] = {dir, neighbor: key2}
-            for (const col in existedPoint.connections) {
-                const sectors = existedPoint.connections[col]
-                connections[col] = index < 0 && col !== color 
-                    ? sectors.filter(d => d.dir !== dir)
-                    : sectors
-            }
-            connections[color] = joinSectors        
+            const {connections, utmost ,joinPoint ,crossLine} = this.getPoint(nextPoint)
+            const dir = this.determineDirection(nextPoint, prevPoint)
+            console.log('create join')
             const updatedPointProps = { 
-                utmost: !sameColor || existedPoint.utmost,
-                connections 
-            }
-            addPoints({[key]: updatedPointProps})
-    }
-
-    
-    removeLinePart(
-        from: string,
-        to: string,
-        color: string,
-        delPoint = this.deletePoint,
-        addPoints = this.addTakenPoints) {
-        console.warn('remove', from, to)
-        const toFn = (key: string) => {
-            const neighbor = this.haveNeighbor(key, to, color)
-            delPoint(from)
-            if (neighbor) {
-                console.warn(neighbor)
-                let {connections, utmost} = this.getPoint(to)
-                const sectors = connections[color].map(s => {
-                    const dir = s.dir
-                    return s.neighbor === key ? {dir} : s
-                })
-                connections = {
+                utmost: !sameColor || utmost,
+                connections: {
                     ...connections,
-                    [color]: sectors
+                    [dir]: {color, neighbor: prevPoint}
+                },
+                joinPoint,
+                crossLine
+            }
+            this.addTakenPoints({[nextPoint]: updatedPointProps})
+    }
+
+    tryContinueLine = (next: string, prev: string, color: string): string => {
+        const {utmost, connections, crossLine, joinPoint} = this.getPoint(prev) || {}
+        if (!connections) {
+            console.error('invalid props for the dots connecting')
+            return ''
+        }
+        const nextNeighbors = this.rect[next].neighbors
+        const prevNeighbors = this.rect[prev].neighbors
+        for (const neighbor of nextNeighbors) {
+            if (prevNeighbors.includes(neighbor) && !this.getPoint(neighbor)) {
+                const dirToNext = this.determineDirection(neighbor, next)
+                const dirToPrev = this.determineDirection(neighbor, prev)
+                this.addTakenPoints({
+                    [neighbor]: {
+                        utmost: false,
+                        connections: {
+                            ...defaultConnectionsWithColor(color),
+                            [dirToPrev]: {color, neighbor: prev}
+                        }
+                    },
+                    [prev]: {
+                        utmost,
+                        crossLine,
+                        joinPoint,
+                        connections: {
+                            ...connections,
+                            [oppositeDirection(dirToPrev)]: {
+                                color, neighbor: neighbor
+                            }
+                        }
+                    }
+                })
+                return neighbor
+            }
+        }
+        return ''
+    }
+
+    lineContinuationIsImpossible = (nextPoint: string, prevPoint: string, color: string) =>
+        !this.getColors(prevPoint).includes(color) || !this.getPoint(prevPoint)
+
+    isLast = (point: ITakenPointProps, prev: string, endPoint: string, color: string) => {
+        const neighbors = this.getLineNeighbors(point.connections, color)
+        const neighbor = neighbors.filter(n => n !== prev)[0]
+        const last = neighbor === endPoint
+            || this.getPoint(neighbor)?.utmost
+            || (prev && neighbors.length === 1)
+        isDev() && console.log('last point', point, prev, endPoint, neighbors, neighbor,
+            neighbor === endPoint, )
+        return last ? neighbor : ''
+    }
+
+    removeLineToUtmostPoint = (start: string, prev: string, color: string) => {
+        console.warn('remove part line to utmost', start, prev)
+        let passed = prev
+        const toFn = (key: string) => {
+            const {utmost} = this.getPoint(key)
+            !utmost && this.deletePoint(key)
+            if (utmost) {
+                this.updateLastPoint(key, passed, color)
+            }
+            passed = key
+            return utmost
+        }
+        this.goToLinePoint(start, prev, toFn)
+    }
+    
+    removeLineCirclePart(prevP: string, next: string, color: string) {
+        const {connections, utmost} = this.getPoint(prevP)
+        console.warn('remove circle', prevP, next, connections, utmost)
+        if (utmost) return
+        const lineNeighbors = this.getLineNeighbors(connections)
+        if (lineNeighbors.length > 1) {
+            const nextPointExtraNeighbor = this.getLineNeighbors(next)
+                .filter(n => n !== prevP)[0]
+            if (!nextPointExtraNeighbor) return
+            console.warn('next extra')
+            const nextDir = this.determineDirection(next, nextPointExtraNeighbor)
+            const nextPoint = this.getPoint(next)
+            this.addTakenPoints({
+                [next]: {
+                    ...nextPoint,
+                    connections: {
+                        ...nextPoint.connections,
+                        [nextDir]: {color}
+                    }
                 }
-                
-                addPoints({[to]: {utmost, connections}})
-            }
-            return neighbor
-        }
-        this.goToLinePoint(from, to, color, toFn)
-    }
-
-
-    updateLineStart = (key: string, key2: string, color: string, addPoints?: Function) => {
-        const addTakenPoints = addPoints || this.addTakenPoints
-        const point = this.getPoint(key2)
-        if (!point || !point.connections) return
-        const {connections, utmost} = point
-        const dir = this.determineDirection(key2, key)
-        const sectors = connections[color]
-        console.warn(key, point, color, connections)
-        const index = this.getSectorIndex(dir, sectors)
-        sectors[index] = { dir, neighbor: key }
-        connections[color] = sectors
-        const newPoint = {
-            [key2]: {
-                utmost,
-                connections
-            }
-        } as ITakenPoints 
-        addTakenPoints(newPoint)
-    }
-
-    cutNeighborsInStartPoints = (key: string, points: ITakenPoints): ITakenPointProps => {
-        const startPoint = copyObj(points[key]) as ITakenPointProps
-        for (const color in startPoint.connections) {
-            const sectors = startPoint.connections[color]
-            startPoint.connections[color] = sectors.map(sec => ({dir: sec.dir}))
-        }
-        return startPoint
-    }
-
-    removeInterferedLines = (key: string, delPoint?: Function, addPoints?: Function) => {
-        const deletePoint = delPoint || this.deletePoint
-        const addTakenPoints = addPoints || this.addTakenPoints
-        const connections = this.getPoint(key).connections
-        const colors = Object.keys(connections)
-        deletePoint(key)
-        let lastDeleted = key
-        const fn = (pointKey: string, col: string) => {
-            const point = this.getPoint(pointKey)
-            console.log(point, pointKey, this.takenPoints, lastDeleted)
-            if (!point.utmost) { 
-                deletePoint(pointKey)
-                lastDeleted = pointKey
-            } else {
-                const dir = this.determineDirection(pointKey, lastDeleted)
-                const sectors = point.connections[col].map(sec => 
-                    sec.dir === dir ? {dir} : sec)
-                const connections = {...point.connections, [col]: sectors}
-                addTakenPoints({[pointKey]: {...point, connections}} as ITakenPoints)
-            }
-            return point.utmost
-        }
-        for (const col of colors) {
-            const neighbors = connections[col].map(c => c.neighbor)
-            neighbors.forEach(n => {
-                n && this.goToLinePoint(n, key, col, fn)
             })
+            return this.removeLineFork(nextPointExtraNeighbor, next, color)
+            return
+        }
+        let prev = ''
+        const toFn = (key: string) => {
+            const point = this.getPoint(key)
+            if (!point?.connections) { return true }
+            const last = this.isLast(point, prev, next, color)
+            prev = key
+            this.deletePoint(key)
+            if (last) {
+                this.updateLastPoint(last, prev, color)
+            }
+            return last
+        }
+        this.goToLinePoint(prevP, next, toFn)
+    }
+
+    removeForks = (start: string, color: string, down = false) => {
+        const {utmost, connections, crossLine, joinPoint} = this.getPoint(start)
+        const lineNeighbors = this.getLineNeighbors(start)
+        let firstUtmost = ''
+        console.log('rem fork', start, color, lineNeighbors)
+        if (lineNeighbors.length < 2) {
+            return
+        }
+        for (const neighbor of lineNeighbors) {
+            const lastPointUtmost = this.checkStartPointUtmost(neighbor, start)
+            if (!lastPointUtmost) {
+                this.removeLineFork(neighbor, start, color)
+            } else {
+                (firstUtmost || utmost) && this.removeLineToUtmostPoint(neighbor, start, color)
+                firstUtmost = !firstUtmost ? neighbor : firstUtmost;
+            }
+        }
+        const dir = this.determineDirection(start, firstUtmost)
+        const dirToClean = this.getLineDirections(start).filter(d => d !== dir)[0]
+        this.addTakenPoints({
+            [start]: {
+                joinPoint,
+                crossLine,
+                utmost,
+                connections: {
+                    ...connections,
+                    [dirToClean]: {color}
+                }
+            }
+        })
+    }
+
+    removeUtmostExtraLine = (next: string, prev: string, color: string) => {
+        console.log( 'remove utmost fork')
+        let passed = prev
+        const stopFn = (key: string) => {
+            const {utmost, crossLine} = this.getPoint(key) || {}
+            const next = this.getLineNeighbors(key, color).filter(n => n !== prev)[0]
+            !utmost && this.deletePoint(key)
+            const col = crossLine ? DefaultColor : color
+            utmost && this.updateLastPoint(key, passed, col)
+            return !next
+        }
+        this.goToLinePoint(next, prev, stopFn)
+    }
+
+    removeLineFork = (next: string, prev: string, color: string) => {
+        console.warn('remove forked line', next, prev)
+        let passed = prev
+        const toFn = (key: string) => {
+            const point = this.getPoint(key)
+            const last = this.isLast(point, passed, 'none', color)
+            passed = key
+            this.deletePoint(key)
+            if (last) {
+                this.updateLastPoint(last, passed, color)
+            }
+            return last
+        }
+        this.goToLinePoint(next, prev, toFn)
+    }
+
+    updateLineStart = (
+        nextPoint: string,
+        prevPoint: string,
+        color: string,
+        removeFork = true
+    ) => {
+        const {connections, utmost, joinPoint, crossLine} = this.getPoint(prevPoint)
+            || {} as ITakenPointProps
+        if (!connections) return
+        const dir = this.determineDirection(prevPoint, nextPoint)
+        if (removeFork && utmost && !crossLine && !joinPoint) {
+            const neighbors = Object.keys(connections).reduce((acc, d) => {
+                const neighbor = d !== dir && connections[d].neighbor
+                neighbor && acc.push(neighbor)
+                return acc
+            }, [] as string[])
+            console.warn('rem utmost fork', nextPoint, prevPoint, color, neighbors, crossLine)
+            for (const nei of neighbors) {
+                const dir = this.determineDirection(prevPoint, nei)
+                this.addTakenPoints({
+                    [prevPoint]: {
+                        utmost,
+                        connections: {
+                            ...connections,
+                            [dir]: {color: connections[dir].color}
+                        },
+                        crossLine,
+                        joinPoint
+                    }
+                })
+                this.removeUtmostExtraLine(nei, prevPoint, color)
+            }
+        }
+        const updatedPoint = {
+            [prevPoint]: {
+                crossLine,
+                joinPoint,
+                utmost,
+                connections: {
+                    ...this.getPoint(prevPoint).connections,
+                    [dir]: {
+                        color, neighbor: nextPoint
+                    }
+                }
+            }
+        } as ITakenPoints
+        isDev() && console.log('update line start', dir, updatedPoint, this.getPoint(prevPoint).connections, nextPoint, prevPoint, utmost, removeFork)
+        this.addTakenPoints(updatedPoint)
+    }
+
+
+    updateLastPoint = (last: string, prev: string, color?: string) => {
+        const {utmost, connections, crossLine, joinPoint} = this.getPoint(last)
+        const dir = this.determineDirection(last, prev)
+        const lineColor = color || connections[dir].color
+        const newColor = crossLine ? DefaultColor : lineColor
+        const directions = this.getLineDirections(connections, lineColor)
+        const oneDir = !crossLine
+            || (crossLine && directions.length < 2)
+        const extraDir = directions.filter(d => d !== dir)[0]
+
+        isDev() && console.warn('update last', last, prev, color, this.getPoint(last),
+            'dir', dir, directions, 'line color', lineColor, newColor, extraDir)
+        if (oneDir) {
+            this.addTakenPoints({
+                [last]: {
+                    utmost,
+                    crossLine,
+                    joinPoint,
+                    connections: {
+                        ...connections,
+                        [dir]: {color: newColor}
+                    }
+                }
+            })
+        } else {
+            this.addTakenPoints({
+                [last]: {
+                    utmost,
+                    crossLine,
+                    joinPoint,
+                    connections: {
+                        ...connections,
+                        [dir]: {color: DefaultColor},
+                        [extraDir]: {color: DefaultColor}
+                    }
+                }
+            })
+            const extraConn = connections[extraDir].neighbor
+            extraConn && this.removeLineFork(extraConn, last, lineColor)
+        }
+    }
+
+
+    removeInterferedLines = (start: string) => {
+        const startConnections = this.getPoint(start).connections
+        const lineNeighbors = this.getLineNeighbors(startConnections)
+        const lineColor = startConnections[LineDirections.top].color
+        this.deletePoint(start)
+        let prevPoint = [start, start, start, start]
+        console.log('remove interfere', start, startConnections)
+        const stopFn = (pointKey: string, index = 0) => {
+            const {connections, utmost, crossLine, joinPoint} = this.getPoint(pointKey)
+            const lineNeighbors = this.getLineNeighbors(connections)
+            const last = utmost || lineNeighbors.length < 2
+            if (!utmost) {
+                this.deletePoint(pointKey)
+                prevPoint[index] = pointKey
+            } else {
+                const dir = this.determineDirection(pointKey, prevPoint[index])
+                const LastPointProps: ITakenPointProps = {
+                    utmost,
+                    joinPoint,
+                    crossLine,
+                    connections: !(crossLine || joinPoint)
+                        ? defaultConnectionsWithColor(lineColor)
+                        : {
+                            ...connections,
+                            [dir]: {color: DefaultColor}
+                        }
+                }
+                this.addTakenPoints({[pointKey]: LastPointProps})
+            }
+            return last
+        }
+        for (let i = 0;  i < lineNeighbors.length; i++) {
+            const neighbor = lineNeighbors[i]
+            this.goToLinePoint(neighbor, start, stopFn, i)
         }
     }
 }
-
-export const puzzleResolver = new PuzzleCommons({width: Width, height: Height})

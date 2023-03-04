@@ -1,7 +1,9 @@
 export interface IRectProps {
-    dimension: IRRectDimension,
-    points: ITakenPoints,
+    dimension: IRRectDimension
+    points: ITakenPoints
     mouseColor?: string
+    mouseDown?: string
+    creator?: boolean
 }
 
 export type PuzzleMode = 'create' | 'resolve' | 'generate'
@@ -26,9 +28,11 @@ export interface ISwitcherProps {
 
 export interface IDotSectorProps {
     dir: LineDirections,
-    line: string,
     turn?: LineDirections,
-    fill: string
+    fill?: string,
+    line?: string
+    crossLine?: string
+    joinPoint?: string
 }
 
 export interface IColorBTN {
@@ -41,13 +45,17 @@ export interface IRRectDimension {
     height: number
 }
 
+export interface ISector {
+    dir: LineDirections
+}
+
 export interface IConnection {
-    dir: LineDirections,
     neighbor?: string
+    color: string
 }
 
 export interface IDotConnections {
-    [color: string]: IConnection[]
+    [dir: string | LineDirections]: IConnection
 }
 
 export interface IPointValue {
@@ -75,7 +83,7 @@ export interface ILines {
 export interface IPuzzle {
     name: string
     startPoints: ITakenPoints
-    dotsSegragatedByColor: {[key: string]: ITakenPoints}
+    dotsSegregatedByColor: {[key: string]: ITakenPoints}
     width: number
     height: number
     difficulty?: number
@@ -91,7 +99,9 @@ export interface IStartPoint {
 export interface ITakenPointProps {
     utmost: boolean
     connections: IDotConnections
-    inv?: string
+    invent?: string
+    crossLine?: string[]
+    joinPoint?: string[]
 }
 
 export interface ITakenPoints {

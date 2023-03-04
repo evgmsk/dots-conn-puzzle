@@ -1,35 +1,40 @@
-import { LineColors } from "../constant/constants";
-import {IConnection, ILineProps, ILines, IDotSectorProps, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
+import {DefaultColor, DefaultConnections, DefaultSectors, LineColors} from "../constant/constants";
+import {
+    IConnection,
+    ILineProps,
+    ILines,
+    IDotSectorProps,
+    ITakenPointProps,
+    ITakenPoints,
+    LineDirections,
+    ISector, IDotConnections
+} from "../constant/interfaces";
+
+const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
+
+export const isDev = () => development
 
 export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
     // console.warn(props)
-    const {connections, utmost} = props
-    const colors = Object.keys(connections)
-    const firstColor = colors[0]
-    const singleColor = colors.length === 1
-    const simpleLine = singleColor 
-        && !utmost 
-        && connections[firstColor].filter(c => c.neighbor).length === 2
-    return colors.reduce((acc, color) => {
-        const colorConns = connections[color] as IConnection[]
-        colorConns.forEach(con => {
-            const line = con.neighbor ? color : ''
-            const sector = {dir: con.dir, line} as IDotSectorProps
-            if (utmost) {
-                sector.dir = con.dir
-                sector.fill = singleColor ? color : (line || LineColors[0])
-            } else {
-                sector.fill = ''
-                sector.turn = simpleLine 
-                    ? connections[color].filter(sec => 
-                        sec.neighbor && sec.dir !== con.dir)[0].dir 
-                    : undefined
-            }
-            acc[sectorIndex(con.dir)] = sector
-            return acc
-        })
-        return acc
-    }, [] as IDotSectorProps[])
+    const {connections, utmost, crossLine, joinPoint} = props
+    const singleColor = (!crossLine && !joinPoint) || joinPoint?.length === 1
+    const neighborDirs = Object.keys(connections)
+        .filter(key => connections[key].neighbor) as LineDirections[]
+    const simpleLine = singleColor && !utmost
+        && neighborDirs.length === 2
+    const sectors = defaultSectors().map(sector => {
+        const {neighbor, color} = connections[sector.dir]
+        const turn = simpleLine
+            ? neighborDirs.filter(dir => dir !== sector.dir)[0]
+            : undefined
+        return {
+            dir: sector.dir,
+            line: neighbor ? color : '',
+            fill: utmost ? color : '',
+            turn,
+        }
+    })
+    return sectors
 }
 
 export const sectorIndex = (dir: LineDirections) => {
@@ -45,12 +50,18 @@ export const sectorIndex = (dir: LineDirections) => {
     }
 }
 
-export const defaultSectors = () => Object.assign([], [
-    {dir: LineDirections.top},
-    {dir: LineDirections.right},
-    {dir: LineDirections.left},
-    {dir: LineDirections.bottom},
-]) as IConnection[]
+
+export const defaultConnectionsWithColor = (color = DefaultColor) => {
+    const connections = Object.assign({}, DefaultConnections)
+    if (color !== DefaultColor) {
+        defaultSectors().forEach(sec => {
+            connections[sec.dir] = {color}
+        })
+    }
+    return connections
+}
+
+export const defaultSectors = () => Object.assign([], DefaultSectors) as ISector[]
 
 export const oppositeDirection = (dir: LineDirections) => {
     switch (dir) {

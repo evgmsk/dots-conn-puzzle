@@ -4,27 +4,27 @@ import { IDotSectorProps, ITakenPointProps } from "../../constant/interfaces"
 import './point.scss'
 import {getSectorsData} from "../../helper-fns/helper-fn";
 
-export const compareProps = (prevProps: ITakenPointProps, nextProps: ITakenPointProps) => {
-    const equal = prevProps.utmost === nextProps.utmost 
-        && Object.keys(prevProps.connections).length === 
-        Object.keys(nextProps.connections).length
-    // console.log(equal, prevProps, nextProps)
-    if (!equal) return equal
-    for (const color in nextProps.connections) {
-        const prevSectors = prevProps.connections[color]
-        const nextSectors = nextProps.connections[color]
-        if (!prevSectors || prevSectors.length !== nextSectors.length) {
-            return false
-        }
-        for (const index in nextSectors) {
-            if (nextSectors[index].dir !== prevSectors[index].dir
-                || nextSectors[index].neighbor !== prevSectors[index].neighbor) {
-                    return false
-                }
-        }
-    }
-    return equal
-}
+// export const compareProps = (prevProps: ITakenPointProps, nextProps: ITakenPointProps) => {
+//     const equal = prevProps.utmost === nextProps.utmost
+//         && Object.keys(prevProps.connections).length ===
+//         Object.keys(nextProps.connections).length
+//     // console.log(equal, prevProps, nextProps)
+//     if (!equal) return equal
+//     for (const color in nextProps.connections) {
+//         const prevSectors = prevProps.connections[color]
+//         const nextSectors = nextProps.connections[color]
+//         if (!prevSectors || prevSectors.length !== nextSectors.length) {
+//             return false
+//         }
+//         for (const index in nextSectors) {
+//             if (nextSectors[index].dir !== prevSectors[index].dir
+//                 || nextSectors[index].neighbor !== prevSectors[index].neighbor) {
+//                     return false
+//                 }
+//         }
+//     }
+//     return equal
+// }
 
 export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointProps) => {
     
@@ -32,16 +32,23 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
     useEffect(() => {
         // console.log('point', props, sectorsData)
     }, [])
-    
+    const {crossLine, joinPoint, invent} = props
+    joinPoint?.forEach((color, i) => {
+        sectorsData[i] = {...sectorsData[i], joinPoint: color}
+    })
+    const crossLineClass = !crossLine
+        ? ''
+        : ' cross-line'
     return <>
         <div className="point-wrapper">
             {
                 sectorsData.map((sec, i) => {
                     const {dir, fill} = sec as IDotSectorProps
                     const fillCl = !!fill ? ` fill-${fill}` : ''
-                    const sectorName = `puzzle-point_${dir}${fillCl}`
+                    const jointCl = joinPoint ? ` join-${joinPoint}` : ''
+                    const sectorName = `puzzle-point_${dir}${fillCl}${crossLineClass}`
                     return !!fill 
-                        ? <div className={sectorName} key={i + props.inv!}></div> 
+                        ? <div className={sectorName} key={i + invent!}> </div>
                         : null
                 })
             }
@@ -53,7 +60,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
                 const turnCl = !turn ? '' : ` turn-${turn}`
                 const lineName = `line-${dir}${lineCl}${turnCl}`
                 return !!line 
-                    ? <div className={lineName} key={dir + props.inv}></div> 
+                    ? <div className={lineName} key={dir + invent}> </div>
                     : null
             })
         }
