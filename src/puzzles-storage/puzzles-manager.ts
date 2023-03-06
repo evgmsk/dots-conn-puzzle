@@ -17,6 +17,7 @@ export class PuzzleManager {
 
     getFromStorage = (): IPuzzle[] => {
         this._puzzles = JSON.parse(localStorage.getItem(LocalStorageName) || "[]")
+        console.log(this.puzzles)
         return this._puzzles.filter(p => p.name)
     }
 

@@ -1,4 +1,4 @@
-import {DefaultColor, Height, Width} from "../constant/constants";
+import { DefaultColor } from "../constant/constants";
 import { ITakenPointProps, ITakenPoints, LineDirections } from "../constant/interfaces";
 import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../helper-fns/helper-fn";
 import { LinedRectBase } from "./rect-base";
@@ -51,7 +51,6 @@ export class PuzzleCommons extends LinedRectBase {
         const prevNeighbors = this.rect[prev].neighbors
         for (const neighbor of nextNeighbors) {
             if (prevNeighbors.includes(neighbor) && !this.getPoint(neighbor)) {
-                const dirToNext = this.determineDirection(neighbor, next)
                 const dirToPrev = this.determineDirection(neighbor, prev)
                 this.addTakenPoints({
                     [neighbor]: {
@@ -130,7 +129,6 @@ export class PuzzleCommons extends LinedRectBase {
                 }
             })
             return this.removeLineFork(nextPointExtraNeighbor, next, color)
-            return
         }
         let prev = ''
         const toFn = (key: string) => {
@@ -147,7 +145,7 @@ export class PuzzleCommons extends LinedRectBase {
         this.goToLinePoint(prevP, next, toFn)
     }
 
-    removeForks = (start: string, color: string, down = false) => {
+    removeForks = (start: string, color: string) => {
         const {utmost, connections, crossLine, joinPoint} = this.getPoint(start)
         const lineNeighbors = this.getLineNeighbors(start)
         let firstUtmost = ''
@@ -336,7 +334,7 @@ export class PuzzleCommons extends LinedRectBase {
         }
         for (let i = 0;  i < lineNeighbors.length; i++) {
             const neighbor = lineNeighbors[i]
-            this.goToLinePoint(neighbor, start, stopFn, i)
+            this.goToLinePoint(neighbor, start, stopFn, lineColor, i)
         }
     }
 }

@@ -1,13 +1,9 @@
-import {DefaultColor, DefaultConnections, DefaultSectors, LineColors} from "../constant/constants";
+import {DefaultColor, DefaultConnections, DefaultSectors} from "../constant/constants";
 import {
-    IConnection,
-    ILineProps,
-    ILines,
     IDotSectorProps,
     ITakenPointProps,
-    ITakenPoints,
     LineDirections,
-    ISector, IDotConnections
+    ISector
 } from "../constant/interfaces";
 
 const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
@@ -22,7 +18,7 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
         .filter(key => connections[key].neighbor) as LineDirections[]
     const simpleLine = singleColor && !utmost
         && neighborDirs.length === 2
-    const sectors = defaultSectors().map(sector => {
+    return defaultSectors().map(sector => {
         const {neighbor, color} = connections[sector.dir]
         const turn = simpleLine
             ? neighborDirs.filter(dir => dir !== sector.dir)[0]
@@ -34,7 +30,6 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
             turn,
         }
     })
-    return sectors
 }
 
 export const sectorIndex = (dir: LineDirections) => {
@@ -89,19 +84,4 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
         }
     }
     return copy
-}
-
-
-export const getLines = (props: {[key: string]: ITakenPoints}): ILines => {
-    const lines = {} as ILines
-    for (const color in props) {
-        const line = {
-            dots: props[color],
-            defaultDotsNumber: Object.keys(props[color]).length,
-            currentDotsNumber: false,
-            resolved: false
-        } as ILineProps
-        lines[color] = {...line}
-    }
-    return lines
 }

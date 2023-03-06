@@ -3,7 +3,7 @@ import './confirmation.scss'
 
 export interface IConfirm {handler: Function, question: string}
 
-export const Confirmation: React.FC<IConfirm> = (props: IConfirm) => {
+export const CreatorConfirmationModal: React.FC<IConfirm> = (props: IConfirm) => {
     if (!props.question) {
         return null
     }

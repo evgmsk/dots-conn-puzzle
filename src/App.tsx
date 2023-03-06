@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, { useState } from 'react';
 
 import { PuzzleWrapper } from './puzzle-components/puzzle-resolver';
 import { PuzzleCreator } from './puzzle-components/puzzle-creator';

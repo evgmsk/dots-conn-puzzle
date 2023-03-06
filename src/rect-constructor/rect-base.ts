@@ -44,27 +44,14 @@ export class LinedRectBase implements ILinedRect {
         }
         this._takenPoints = pts
         if (!isDev()) return
-        for (const key in points) {
-            if (!this.checkPointConnections(key, points[key])) {
-                console.error('invalid point connections',
-                    Object.values(points[key].connections).length, key, points[key])
-                return
-            }
-        }
+        // for (const key in points) {
+        //     if (!this.checkPointConnections(key, points[key])) {
+        //         console.error('invalid point connections',
+        //             Object.values(points[key].connections).length, key, points[key])
+        //         return
+        //     }
+        // }
         // console.warn('add points', points, this.takenPoints)
-    }
-
-    checkStartPointUtmost = (next: string, prev: string) => {
-        console.log('check start point', next, prev)
-        if (!this.getPoint(next)) {
-            console.error('invalid props to check start point', next, this.takenPoints)
-            return false
-        }
-        const stopFn = (key: string) => {
-            return this.getPoint(key)?.utmost
-        }
-        const last = this.goToLinePoint(next, prev, stopFn)
-        return !!this.getPoint(last)?.utmost
     }
 
     checkPointConnections = (point: string, pointProps: ITakenPointProps) => {
@@ -84,6 +71,20 @@ export class LinedRectBase implements ILinedRect {
         }
         return Object.keys(connections).length === 4
             && (utmost ? validNeighbors : connectedToUtmost)
+    }
+
+
+    checkStartPointUtmost = (next: string, prev: string) => {
+        if (!this.getPoint(next)) {
+            console.error('invalid props to check start point', next, this.takenPoints)
+            return false
+        }
+        const stopFn = (key: string) => {
+            return this.getPoint(key)?.utmost
+        }
+        const last = this.goToLinePoint(next, prev, stopFn)
+        console.log('check start point', next, prev, last)
+        return !!this.getPoint(last)?.utmost
     }
 
     deletePoint = (key: string) => {
@@ -194,12 +195,13 @@ export class LinedRectBase implements ILinedRect {
         from: string, // start line point
         passed: string, // passed line point to set moving direction
         stopFn: Function, // function to determine condition to stop loop (target point reached)
+        color?: string,
         index?: number,
         stepCB?: Function, // function to call with params of a current line point
         ): string {
             let current = from
             let prevPoint = passed
-            let lineNeighbors = this.getLineNeighbors(current)
+            let lineNeighbors = this.getLineNeighbors(current, color)
             let nextPoint = lineNeighbors.filter(n => n !== passed)[0]
             if (!prevPoint && lineNeighbors.length > 1) {
                 console.error('invalid props because of two ways',
@@ -211,12 +213,14 @@ export class LinedRectBase implements ILinedRect {
                 stepCB &&  stepCB(current)
                 prevPoint = current
                 current = nextPoint
+
                 if (!current) {
                     return ''
                 }
-                lineNeighbors = this.getLineNeighbors(nextPoint)
+                lineNeighbors = this.getLineNeighbors(nextPoint, color)
                 // eslint-disable-next-line no-loop-func
                 nextPoint = lineNeighbors.filter(n => n !== prevPoint)[0]
+                console.log('go while', current, lineNeighbors, nextPoint, color)
             }
             return current
     }

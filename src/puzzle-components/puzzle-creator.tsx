@@ -7,8 +7,8 @@ import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
 
 import { Height, LineColors, Width } from '../constant/constants'
 import { rc as RC } from '../rect-constructor/rect-creator'
-import { Confirmation } from './confirmation'
-import { manager } from '../puzzles/puzzles-manager'
+import { CreatorConfirmationModal } from './creator-modals/creator-confirmation-modal'
+import { manager } from '../puzzles-storage/puzzles-manager'
 import {isDev} from "../helper-fns/helper-fn";
 
 
@@ -115,9 +115,10 @@ export const PuzzleCreator: React.FC = () => {
         setPoints(RC.takenPoints)
     }
 
-    const changeColor = (key: string, color: string) => {
-        const colorToReplace = RC.getPoint(key).connections[LineDirections.top].color
-        RC.changeLineColor(key, color, colorToReplace)
+    const changeColor = (key: string, newColor: string) => {
+        const oldColor = RC.getPoint(key).connections[LineDirections.top].color
+        RC.changeLineColor(key, newColor, oldColor)
+        console.warn('change color', key, newColor, oldColor)
     }
 
     const handleMouseEnter = (nextPoint: string, prev: string) => {
@@ -226,7 +227,7 @@ export const PuzzleCreator: React.FC = () => {
                 handlers={customPuzzleHandlers}
                 mouseColor={color}
             />
-            <Confirmation
+            <CreatorConfirmationModal
                 handler={confirmationHandler}
                 question={confirm.question}
             />

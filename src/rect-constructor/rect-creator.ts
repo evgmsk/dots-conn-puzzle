@@ -72,7 +72,9 @@ export class RectCreator extends PuzzleCommons {
 
     changePointColorCreator = (key: string, newColor: string, oldColor: string) => {
         let {utmost, connections} = this.getPoint(key)
+        const colors = this.getColors(key)
         const lineNeighbors = this.getLineNeighbors(key, oldColor)
+        console.log('ch col point', lineNeighbors, key, newColor, oldColor, colors)
         for (const dir in connections) {
             const sector = connections[dir]
             if (!utmost || sector.color === oldColor) {
@@ -89,10 +91,11 @@ export class RectCreator extends PuzzleCommons {
         let neighbors = this.changePointColorCreator(key, newColor, oldColor)
         const stopFn = (point: string) => {
             neighbors = this.changePointColorCreator(point, newColor, oldColor)
+            console.log('fn ch col', neighbors, newColor, point)
             return neighbors.length < 2
         }
         for (const neighbor of neighbors) {
-            this.goToLinePoint(neighbor, key, stopFn)
+            this.goToLinePoint(neighbor, key, stopFn, oldColor)
         }
     }
 
@@ -216,7 +219,7 @@ export class RectCreator extends PuzzleCommons {
             const circle = this.checkCircleLine(point, color)
             return circle || utmost
         }
-        const end = this.goToLinePoint(start, '', fn)
+        const end = this.goToLinePoint(start, '', fn, color)
         return end || this.getPoint(end).utmost
     }
 

@@ -10,6 +10,6 @@ describe('test puzzle manager', () => {
         expect(manager.puzzles.length).toBe(puzzleLength + 1)
         const puzzles = manager.getFromStorage()
         expect(puzzles[puzzles.length - 1]).toEqual({name: 'test'})
-        // console.log(puzzles)
+        // console.log(puzzles-storage)
     })
 })

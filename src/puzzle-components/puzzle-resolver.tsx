@@ -1,13 +1,14 @@
 import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from './rect/rect'
-import {ICollision, IPuzzle, ITakenPoints, LineDirections} from '../constant/interfaces'
+import { IPuzzle, ITakenPoints, LineDirections } from '../constant/interfaces'
 import { PuzzleSelector } from './puzzles-menu'
-import {manager} from '../puzzles/puzzles-manager'
-import {rr} from '../rect-constructor/rect-resolver'
-import {rc as RC} from "../rect-constructor/rect-creator";
+import {manager} from '../puzzles-storage/puzzles-manager'
+import {PuzzleResolver as PR} from '../rect-constructor/rect-resolver'
+import {CongratulationModal} from "./resolver-modals/congratulation-modal";
+import {isDev} from "../helper-fns/helper-fn";
 
-
+let resolver: PR
 
 export const PuzzleWrapper: React.FC = () => {
     const [puzzles, setPuzzles] = useState(manager.puzzles)
@@ -17,42 +18,40 @@ export const PuzzleWrapper: React.FC = () => {
     useEffect(() => {
         setPuzzles(manager.puzzles)
     }, [])
-    useEffect(() => {
-        console.log('puzzle', puzzle)
-    }, [puzzle])
+
     return puzzle.name 
       ? <PuzzleResolver puzzle={puzzle} />
       : <PuzzleSelector setPuzzle={setPuzzle} puzzles={puzzles} />
 }
 
 export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuzzle}) => {
-    const {width, height, startPoints, dotsSegregatedByColor, name, difficulty} = props.puzzle
+    const {width, height} = props.puzzle
     const [points, setPoints] = useState({} as ITakenPoints)
     const [color, setColor] = useState('lightgray')
     const [mouseDown, setMouseDown] = useState('')
+    const [resolved, setResolved] = useState(false)
 
-    // let entered = ''
     useEffect(() => {
-        rr.clearPoints()
-        rr.addTakenPoints(startPoints)
-        setPoints(rr.takenPoints)
-        console.log('taken points & props', rr.takenPoints, props)
-    }, [])
+        resolver = new PR(props.puzzle)
+        setResolved(resolver.checkIfPuzzleIsResolved())
+        setPoints(resolver.takenPoints)
+        console.log('taken points & props', resolver.takenPoints, props)
+    }, [props])
 
     const handleMouseDown = (key: string) => {
         setMouseDown(key)
-        const {utmost, connections, crossLine, joinPoint} = rr.getPoint(key) || {}
+        const {utmost, connections} = resolver.getPoint(key) || {}
         if (!connections) { return }
-        const colors = rr.getColors(connections)
+        const colors = resolver.getColors(connections)
         const newColor = colors.length === 1 ? colors[0] : 'lightgray'
         if (!utmost) {
             console.log('rm forks')
             const lineColor = connections[LineDirections.top].color
-            rr.removeForks(key, lineColor)
-            setPoints(rr.takenPoints)
+            resolver.removeForks(key, lineColor)
+            setPoints(resolver.takenPoints)
         }
         color !== newColor && setColor(newColor)
-        console.log('down', key, rr.takenPoints, utmost, connections, color, newColor)
+        console.log('down', key, resolver.takenPoints, utmost, connections, color, newColor)
     }
 
     const handleMouseEnter = (nextPoint: string, prevPoint: string) => {
@@ -62,18 +61,18 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
             resolveMouseEnter,
             getLineNeighbors,
             getPoint
-        } = rr
+        } = resolver
         if (!mouseDown
             || prevPoint !== mouseDown
             || lineContinuationIsImpossible(nextPoint, prevPoint, color)
             || (getLineNeighbors(prevPoint).length > 1
                 && !getPoint(prevPoint).utmost)) {
-            console.error('line broken', nextPoint, prevPoint, mouseDown, color, RC.takenPoints)
+            console.error('line broken', nextPoint, prevPoint, mouseDown, color, resolver.takenPoints)
             setMouseDown('')
             return
         }
         const nextCanBeJoin = checkIfCanJoin(nextPoint, prevPoint, color)
-        console.log('enter', nextPoint, prevPoint, color, mouseDown, nextCanBeJoin, rr.takenPoints)
+        console.log('enter', nextPoint, prevPoint, color, mouseDown, nextCanBeJoin, resolver.takenPoints)
         if (lineContinuationIsImpossible(nextPoint, prevPoint, color)
             || !nextCanBeJoin) {
             console.error('line broken', nextCanBeJoin
@@ -83,19 +82,38 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
         }
         setMouseDown(nextPoint)
         resolveMouseEnter(nextPoint, prevPoint, color)
-        setPoints(rr.takenPoints)
+        setPoints(resolver.takenPoints)
+    }
+
+    const handleMouseUp = () => {
+        setMouseDown('')
+        const lineResolved = resolver.checkLineIsResolved(color)
+        const resolved = resolver.puzzleFilled() && resolver.checkIfPuzzleIsResolved();
+        resolved && setResolved(resolved)
+        isDev() && console.log('filled: ', resolver.puzzleFilled(),
+            'resolved: ', resolved, 'line: ', lineResolved)
+    }
+
+    const handleMouseLeave = () => {
+        setMouseDown('')
+        const lineResolved = resolver.checkLineIsResolved(color)
+        const resolved = resolver.puzzleFilled()
+            && resolver.checkIfPuzzleIsResolved();
+        resolved && setResolved(resolved)
+        isDev() && console.log('resolved', resolved, lineResolved)
     }
 
     const resolvePuzzleHandlers = {
         handleMouseDown,
         handleMouseEnter,
-        handleMouseUp: () => {setMouseDown('')},
-        handleMouseLeave: () => {setMouseDown('')}
+        handleMouseUp,
+        handleMouseLeave
     }
 
     const puzzleClassName = `dots-conn-puzzle_${width}-${height}`
 
     return <div className={puzzleClassName}>
+                {resolved ? <CongratulationModal message={''} />  : null}
                 <Puzzle 
                         points={points}
                         mouseDown={mouseDown}

@@ -12,10 +12,10 @@ export interface IPuzzleProps extends IRectProps {
     handlers: IHandlers
 }
 
-export interface IPuzzles {
-    puzzles: IRectProps[]
-    handlers?: IHandlers
-}
+// export interface IPuzzles {
+//     puzzles: IRectProps[]
+//     handlers?: IHandlers
+// }
 
 export interface IHandlers {
     [key: string]: Function
@@ -87,6 +87,7 @@ export interface IPuzzle {
     width: number
     height: number
     difficulty?: number
+    points?: ITakenPoints
 }
 
 export interface IStartPoint {
