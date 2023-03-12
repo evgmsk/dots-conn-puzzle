@@ -1,10 +1,9 @@
 import { Height, Width } from '../constant/constants'
 import {
     IDotConnections,
-    ILinedRect,
+    ILinedRect, ILines,
     IRectCell,
-    IRRectDimension,
-    IStartPoints,
+    IRectDimension,
     ITakenPointProps,
     ITakenPoints,
     LineDirections,
@@ -17,16 +16,16 @@ export class LinedRectBase implements ILinedRect {
     _height: number
     rect = {} as IRectCell
     _takenPoints = {} as ITakenPoints
-    _utmostPoints = {} as IStartPoints 
-    constructor(size: IRRectDimension) {
+    _lines = {} as ILines
+    constructor(size: IRectDimension) {
         this._width = size.width
         this._height = size.height
         this.createRect()
     }
 
-    get startPoints() {
-        return copyObj(this._utmostPoints)
-    }
+    // get startPoints() {
+    //     return copyObj(this._startPoints)
+    // }
 
     get takenPoints() {
         return copyObj(this._takenPoints) as ITakenPoints
@@ -71,20 +70,6 @@ export class LinedRectBase implements ILinedRect {
         }
         return Object.keys(connections).length === 4
             && (utmost ? validNeighbors : connectedToUtmost)
-    }
-
-
-    checkStartPointUtmost = (next: string, prev: string) => {
-        if (!this.getPoint(next)) {
-            console.error('invalid props to check start point', next, this.takenPoints)
-            return false
-        }
-        const stopFn = (key: string) => {
-            return this.getPoint(key)?.utmost
-        }
-        const last = this.goToLinePoint(next, prev, stopFn)
-        console.log('check start point', next, prev, last)
-        return !!this.getPoint(last)?.utmost
     }
 
     deletePoint = (key: string) => {
@@ -196,24 +181,24 @@ export class LinedRectBase implements ILinedRect {
         passed: string, // passed line point to set moving direction
         stopFn: Function, // function to determine condition to stop loop (target point reached)
         color?: string,
-        index?: number,
+        index?: number, // required to select neighbor (prevPoint) in case of more than one valid neighbors of start point
         stepCB?: Function, // function to call with params of a current line point
         ): string {
             let current = from
             let prevPoint = passed
             let lineNeighbors = this.getLineNeighbors(current, color)
             let nextPoint = lineNeighbors.filter(n => n !== passed)[0]
-            if (!prevPoint && lineNeighbors.length > 1) {
-                console.error('invalid props because of two ways',
-                    current, prevPoint, lineNeighbors, nextPoint, index)
+            isDev() && console.warn('go to', from, passed, nextPoint, lineNeighbors, color)
+            if (!lineNeighbors.length || (!prevPoint && lineNeighbors.length !== 1)) {
+                console.error('invalid props because of two ways or no ways', color,
+                    current, prevPoint, lineNeighbors, nextPoint, index, this.takenPoints)
                 return ''
             }
-            isDev() && console.warn('go to', from, passed, nextPoint, lineNeighbors)
+
             while(!stopFn(current, index)) {
                 stepCB &&  stepCB(current)
                 prevPoint = current
                 current = nextPoint
-
                 if (!current) {
                     return ''
                 }
@@ -242,16 +227,47 @@ export class LinedRectBase implements ILinedRect {
         return directions
     }
 
-    getStartPoint(start: string, prev: string): string {
-        let last = start
-        const stopFn = (key: string) => {
-            last = key
-            const {utmost, connections} = this.getPoint(key) || {}
-            return connections
-                && (utmost || this.getLineNeighbors(connections).length < 2)
+    checkStartPointUtmost = (
+        next: string,
+        prev: string,
+        color?: string,
+    ): string => {
+        if (!this.getPoint(next)) {
+            console.error('invalid props to check start point', next, this.takenPoints)
+            return ''
         }
-        console.log('start point', last, this.goToLinePoint(start, prev, stopFn))
-        return this.goToLinePoint(start, prev, stopFn) || last
+        const stopFn = (key: string) => {
+            const {utmost, crossLine} = this.getPoint(key) || {}
+            return (utmost && !crossLine)
+        }
+        const last = this.goToLinePoint(next, prev, stopFn, color)
+        isDev() && console.log('check start point', next, prev, last)
+        return last
+    }
+
+    getLinePoints(start: string, color?: string): string[] {
+        const {connections, utmost, joinPoint} = this.getPoint(start)
+        const linePoints = [start]
+        if (!connections || !utmost) {
+            return linePoints
+        }
+        const next = this.getLineNeighbors(start, color)[0]
+        if (!next) {
+            console.error('broken line')
+            return linePoints
+        }
+        const stopFn = (key: string) => {
+            linePoints.push(key)
+            const {connections} = this.getPoint(key) || {}
+            return connections && this.getLineNeighbors(connections, color).length < 2
+        }
+        this.goToLinePoint(next, start, stopFn, color)
+
+        if (!linePoints[linePoints.length - 1]) {
+            console.error('line utmost points', linePoints, color, start)
+            return linePoints.slice(0, -1)
+        }
+        return linePoints
     }
 
     sameUtmostOrSameLine = (next: string, prev: string, color: string) => {

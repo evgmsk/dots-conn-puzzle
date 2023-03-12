@@ -1,5 +1,6 @@
 import { LocalStorageName } from "../constant/constants";
 import { IPuzzle } from "../constant/interfaces";
+import {isDev} from "../helper-fns/helper-fn";
 
 
 export class PuzzleManager {
@@ -17,7 +18,7 @@ export class PuzzleManager {
 
     getFromStorage = (): IPuzzle[] => {
         this._puzzles = JSON.parse(localStorage.getItem(LocalStorageName) || "[]")
-        console.log(this.puzzles)
+        // isDev() && console.log(this.puzzles)
         return this._puzzles.filter(p => p.name)
     }
 

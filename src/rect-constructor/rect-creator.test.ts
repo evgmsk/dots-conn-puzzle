@@ -6,8 +6,50 @@ import {DefaultColor} from "../constant/constants";
 
 describe('test rect-creator methods', () => {
     test('get start point function', () => {
+        const points0 = {
+
+            '0-0': {
+                utmost: true,
+                connections: {
+                    ...defaultConnectionsWithColor('green'),
+                    [LineDirections.right]: {neighbor: '1-0', color: 'green'}
+                }
+            },
+            '1-0': {
+                utmost: false,
+                connections: {
+                    ...defaultConnectionsWithColor('green'),
+                    [LineDirections.left]: {neighbor: '0-0', color: 'green'},
+                    [LineDirections.bottom]: {neighbor: '1-1', color: 'green'}
+                }
+            },
+            '1-1': {
+                utmost: true,
+                crossLine: ['green', 'red'],
+                connections: {
+                    [LineDirections.top]: {neighbor: '1-0', color: 'green'},
+                    [LineDirections.right]: {neighbor: '2-1', color: 'red'},
+                    [LineDirections.left]: {neighbor: '0-1', color: 'red'},
+                    [LineDirections.bottom]: {neighbor: '1-2', color: 'green'}
+                }
+            },
+            '1-2': {
+                utmost: false,
+                connections: {
+                    ...defaultConnectionsWithColor('green'),
+                    [LineDirections.top]: {neighbor: '1-1', color: 'green'},
+                    [LineDirections.bottom]: {neighbor: '1-3', color: 'green'}
+                }
+            },
+            '1-3': {
+                utmost: true,
+                connections: {
+                    ...defaultConnectionsWithColor('green'),
+                    [LineDirections.top]: {neighbor: '1-2', color: 'green'},
+                }
+            },
+        }
         const points1 = {
-           
             '1-1': {
                 utmost: true,
                 connections: {
@@ -89,18 +131,19 @@ describe('test rect-creator methods', () => {
         }
 
         const rectCR1 = new RectCreator({width: 6, height: 4})
-        // const rectCR2 = new RectCreator({width: 6, height: 4})
+        const rectCR0 = new RectCreator({width: 6, height: 4})
         rectCR1.addTakenPoints(points1)
-        // rectCR2.addTakenPoints(points2)
-        expect(rectCR1.getStartPoint('2-1', '3-1')).toBe('1-1')
-        expect(rectCR1.checkStartPointUtmost('2-2', '1-2')).toBe(true)
-        expect(rectCR1.checkStartPointUtmost('3-1', '2-1')).toBe(false)
-        expect(rectCR1.getStartPoint('3-1', '2-1')).toBe('1-2')
+        rectCR0.addTakenPoints(points0)
+        expect(rectCR1.checkStartPointUtmost('2-1', '3-1')).toBe('1-1')
+        expect(rectCR1.checkStartPointUtmost('2-2', '1-2')).toBe('1-1')
+        expect(rectCR1.checkStartPointUtmost('3-1', '2-1')).toBe('')
+        expect(rectCR1.checkStartPointUtmost('3-1', '2-1')).toBe('')
         expect(rectCR1.checkPointConnections('2-1', rectCR1.getPoint('2-1'))).toBe(true)
         expect(rectCR1.checkIfSameLinePoints('2-1', '2-2', 'blue').same).toBe(true)
         expect(rectCR1.getLineDirections('2-1', 'blue')).toEqual([LineDirections.left,
             LineDirections.right])
-        // expect(rectCR1.checkCircleLine('2-2', 'blue')).toBe(true)
+        expect(rectCR0.checkCircleLine('0-0', 'blue')).toBe(false)
+        expect(!!rectCR0.checkLineContinuity('0-0', 'green')).toBe(true)
         // expect(!!rectCR2.checkLineContinuity('0-1', 'blue')).toBe(true)
         // expect(!!rectCR2.takenPoints['4-2']).toBe(true)
         // rectCR2.deletePoint('4-2')

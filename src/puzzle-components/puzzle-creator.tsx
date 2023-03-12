@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from './rect/rect'
-import {ICollision, ITakenPoints, LineDirections} from '../constant/interfaces'
+import {ICollision, ITakenPointProps, ITakenPoints, LineDirections} from '../constant/interfaces'
 
 import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
 
@@ -29,7 +29,7 @@ export const PuzzleCreator: React.FC = () => {
     useEffect(() => {
         RC.setWidth(width)
         RC.setHeight(height)
-        isDev() && console.log(points)
+        // isDev() && console.log(points)
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
@@ -53,7 +53,7 @@ export const PuzzleCreator: React.FC = () => {
         }
         const puzzle = RC.buildPuzzle()
         console.log('save', puzzle)
-        manager.savePuzzle(puzzle)
+        puzzle && manager.savePuzzle(puzzle)
     }
 
     const undo = () => {
@@ -115,7 +115,8 @@ export const PuzzleCreator: React.FC = () => {
         setPoints(RC.takenPoints)
     }
 
-    const changeColor = (key: string, newColor: string) => {
+    const changeColor = (key: string, newColor: string, interfere: ICollision) => {
+        if (interfere && !interfere.joinPoint) return
         const oldColor = RC.getPoint(key).connections[LineDirections.top].color
         RC.changeLineColor(key, newColor, oldColor)
         console.warn('change color', key, newColor, oldColor)
@@ -126,8 +127,6 @@ export const PuzzleCreator: React.FC = () => {
             lineContinuationIsImpossible,
             tryContinueLine,
             getPoint,
-            getColors,
-            sameUtmostOrSameLine,
             rect,
             resolveMouseEnter,
             checkStartPointUtmost,
@@ -137,7 +136,6 @@ export const PuzzleCreator: React.FC = () => {
         const forkCreating = getLineNeighbors(prevPoint).length > 1
             && !getLineNeighbors(prevPoint).includes(nextPoint)
             && !getPoint(prevPoint).utmost
-
         if (!mouseDown
             || prevPoint !== mouseDown
             || confirm.question
@@ -151,7 +149,7 @@ export const PuzzleCreator: React.FC = () => {
         if (!rect[nextPoint].neighbors.includes(prevPoint)) {
             prevPoint = tryContinueLine(nextPoint, prevPoint, color)
             isDev() && console.warn('new prevP', prevPoint)
-            if (!prevPoint || (prevPoint && !checkStartPointUtmost(prevPoint, nextPoint))) {
+            if (!prevPoint || (prevPoint && !checkStartPointUtmost(prevPoint, nextPoint, color))) {
                 isDev() && console.error('line without utmost', nextPoint, prev, RC.takenPoints,
                     'prevP: ', prevPoint)
                 setMouseDown('')
@@ -162,27 +160,35 @@ export const PuzzleCreator: React.FC = () => {
         const existed = getPoint(nextPoint)
 
         if (existed) {
-            const {utmost} = existed
-            const sameColor = getColors(nextPoint).includes(color)
-            console.warn('exist', nextPoint, prevPoint, existed, sameColor)
-            if (!sameColor) {
-                setConfirm({
-                    question: 'Do you want to create join point',
-                    cb: resolveMouseEnter,
-                    args: [nextPoint, prevPoint, color, {sameColor}]
-                })
-            } else if (sameColor) {
-                const sameLine = sameUtmostOrSameLine(nextPoint, prevPoint, color)
-                const joinPoint = utmost && !sameLine
-                let interfere = {joinPoint, sameLine, sameColor} as ICollision
-                resolveMouseEnter(nextPoint, prevPoint, color, interfere)
-            } 
+            resolveMouseEnterIfNextPointExist(existed, nextPoint, prevPoint)
         } else { 
             resolveMouseEnter(nextPoint, prevPoint, color)
         }
         setPoints(RC.takenPoints)
     }
- 
+
+    const resolveMouseEnterIfNextPointExist = (
+        existed: ITakenPointProps,
+        nextPoint: string,
+        prevPoint: string) => {
+        const {utmost} = existed
+        const sameColor = RC.getColors(nextPoint).includes(color)
+        console.warn('exist', nextPoint, prevPoint, existed, sameColor)
+        if (!sameColor) {
+            setConfirm({
+                question: 'Do you want to create join point',
+                cb: RC.resolveMouseEnter,
+                args: [nextPoint, prevPoint, color, {sameColor}]
+            })
+        } else if (sameColor) {
+            const sameLine = RC.sameUtmostOrSameLine(nextPoint, prevPoint, color)
+            const joinPoint = utmost && !sameLine
+            let interfere = {joinPoint, sameLine, sameColor} as ICollision
+            RC.resolveMouseEnter(nextPoint, prevPoint, color, interfere)
+        }
+    }
+
+
     const customPuzzleHandlers = {
         handleMouseDown,
         handleMouseUp,

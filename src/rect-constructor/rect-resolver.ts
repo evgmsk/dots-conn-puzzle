@@ -1,31 +1,33 @@
 import { DefaultColor } from "../constant/constants";
 import { PuzzleCommons } from "./rect-commons";
-import { defaultConnectionsWithColor } from "../helper-fns/helper-fn";
-import {IPuzzle, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
+import {defaultConnectionsWithColor, isDev} from "../helper-fns/helper-fn";
+import {ILines, IPuzzle, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
 
 
 export class PuzzleResolver extends PuzzleCommons {
-    segregatedByColor: {[color: string]: ITakenPoints} = {}
     puzzleName: string = ''
     difficulty: number = 0
     resolvedLines = {} as {[color: string]: boolean}
-    totalPoints: ITakenPoints = {}
+
     constructor(props: IPuzzle) {
         super(props);
-        this._takenPoints = props.startPoints
-        this.segregatedByColor = props.dotsSegregatedByColor
+        this._takenPoints = props.startPoints || this.getStartPoints(props.lines)
+        this._lines = props.dotsSegregatedByColor || props.lines
         this.puzzleName = props.name
-        this.getTotalPoints()
-        console.log('puzzle created', this.totalPoints)
+        isDev() && console.log('puzzle created', this.takenPoints)
     }
 
-    getTotalPoints = () => {
-        for (const color in this.segregatedByColor) {
-            const pointsOfColor = this.segregatedByColor[color]
-            for (const point in pointsOfColor) {
-                this.totalPoints[point] = pointsOfColor[point]
+    getStartPoints = (lines: ILines): ITakenPoints => {
+        const takenPoints = {} as ITakenPoints
+        for (const color in lines) {
+            const line = lines[color]
+            for (const point in line) {
+                if (line[point].utmost) {
+                    takenPoints[point] = this.prepareUtmostPointForResolver(line[point])
+                }
             }
         }
+        return takenPoints
     }
 
     checkIfCanJoin = (next: string, prev: string, color: string) => {
@@ -47,7 +49,7 @@ export class PuzzleResolver extends PuzzleCommons {
         const {utmost, connections, joinPoint} = this.getPoint(next) || {}
         if (!connections) {
             this.updateLineStart(next, prev, color, true)
-            return this.continueLine(next, prev, color)
+            return this.addNextPoint(next, prev, color)
         }
         const colors = this.getColors(connections)
         const sameColor = colors.includes(color)
@@ -66,7 +68,7 @@ export class PuzzleResolver extends PuzzleCommons {
         }
         if (connections && !utmost && !sameColor) {
             this.removeInterferedLines(next)
-            this.continueLine(next, prev, color)
+            this.addNextPoint(next, prev, color)
         }
     }
 
@@ -109,13 +111,9 @@ export class PuzzleResolver extends PuzzleCommons {
         this.goToLinePoint(prevPoint, nextPoint, toFn)
     }
 
-    pointsAreEqual = (point1: ITakenPointProps, point2: ITakenPointProps, color: string): boolean => {
+    arePointsEqual = (point1: ITakenPointProps, point2: ITakenPointProps, color: string): boolean => {
         const topColor1 = point1.connections[LineDirections.top].color,
               topColor2 = point2.connections[LineDirections.top].color
-        console.log('equal points', point1, point2,
-            topColor1 === DefaultColor || topColor2 === DefaultColor,
-            point2.crossLine && point1.crossLine === point2.crossLine,
-            topColor1 === topColor2)
         if (topColor1 === DefaultColor || topColor2 === DefaultColor) {
             return false
         }
@@ -128,21 +126,20 @@ export class PuzzleResolver extends PuzzleCommons {
             }
             return true
         }
-        console.log('point are equal: ', topColor1 === topColor2)
+        // console.log('point are equal: ', topColor1 === topColor2)
         return topColor1 === topColor2
     }
 
-    checkLineIsResolved = (color: string) => {
+    checkIfLineIsResolved = (color: string) => {
         console.log('check line resolve', color)
-        const pointsOfColor = this.segregatedByColor[color]
+        const pointsOfColor = this._lines[color]
         this.resolvedLines[color] = true
         for (const point in pointsOfColor) {
             const pointAreEqual = this.getPoint(point)
-                && this.pointsAreEqual(this.getPoint(point), pointsOfColor[point], color)
-            console.log('point are equal2: ', point, pointAreEqual, this.getPoint(point),
-                this.takenPoints)
+                && this.arePointsEqual(this.getPoint(point), pointsOfColor[point], color)
             if (!pointAreEqual) {
                 this.resolvedLines[color] = false
+                console.warn('points are not equal', color, point, this.takenPoints, pointsOfColor)
                 break
             }
         }
@@ -152,9 +149,10 @@ export class PuzzleResolver extends PuzzleCommons {
     checkIfPuzzleIsResolved = () => {
         console.log('check puzzle resolve')
         let resolved = true
-        for (const color in this.segregatedByColor) {
-            resolved = this.resolvedLines[color] || this.checkLineIsResolved(color)
+        for (const color in this._lines) {
+            resolved = this.resolvedLines[color] || this.checkIfLineIsResolved(color)
             if (!resolved) {
+                console.warn('not resolved', color, this.resolvedLines)
                 break
             }
         }

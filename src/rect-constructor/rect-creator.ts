@@ -1,16 +1,27 @@
 import {DefaultColor, Height, Width} from "../constant/constants";
 import {
     ICollision,
-    IPuzzle, ITakenPointProps,
+    ILines,
+    IPuzzle,
+    IRectDimension, IStartPoints,
+    ITakenPointProps,
     ITakenPoints,
+    IUtmostPoints,
+    IUtmostPointsValue
 } from "../constant/interfaces";
-import { PuzzleCommons } from "./rect-commons";
 import { defaultConnectionsWithColor } from "../helper-fns/helper-fn";
+import {PuzzleEvaluator} from "./rect-evaluator";
 
-export class RectCreator extends PuzzleCommons {
+
+export class RectCreator extends PuzzleEvaluator {
     steps: ITakenPoints[] = [{}]
     currentStep = 0
     puzzle = {} as IPuzzle
+
+    constructor(props: IRectDimension) {
+        super(props);
+        // console.log(this)
+    }
 
     undo = () => {
         this.currentStep = this.currentStep > 0
@@ -29,8 +40,14 @@ export class RectCreator extends PuzzleCommons {
 
     clearAll = () => {
         this.clearPoints()
-        this.steps = [{}]
-        this.steps.length = 0
+        this.steps = [{}] as ITakenPoints[]
+        this._lines = {}
+        this.currentStep = 0
+        this.puzzle = {} as IPuzzle
+        this.lineError = ''
+        this.linesInterfering = {}
+        this.utmostPoints = {} as IUtmostPoints
+        this.lineStartPoints = {} as IStartPoints
     }
 
     updateSteps = () => {
@@ -43,6 +60,7 @@ export class RectCreator extends PuzzleCommons {
     checkPuzzle = (): string => {
         const linesContinuity = this.checkLinesContinuity()
         if (this.width * this.height - Object.keys(this.takenPoints).length) {
+            console.log(Object.keys(this.takenPoints).length)
             return 'empty cells'
         }
         if (!linesContinuity) {
@@ -51,26 +69,59 @@ export class RectCreator extends PuzzleCommons {
         return 'valid'
     }
 
-    prepareUtmostPointForResolver = (point: ITakenPointProps): ITakenPointProps => {
-        const {utmost, connections} = point
-        const lineNeighbors = this.getLineNeighbors(point.connections)
-        const colors = this.getColors(connections)
-        const crossLine = lineNeighbors.length === 4 && colors.length === 2
-            ? colors
-            : undefined
-        const joinPoint = utmost && !crossLine && lineNeighbors.length > 1
-            ? colors
-            : undefined
-        const color = crossLine || joinPoint ? DefaultColor : colors[0]
-        return {
-            connections: defaultConnectionsWithColor(color),
-            crossLine,
-            joinPoint,
-            utmost
+    separatePointsByLines = () => {
+        const lines = {} as ILines
+        console.warn('sep1', this.takenPoints, lines)
+        for (const key in this.takenPoints) {
+            const {utmost, connections} = this.getPoint(key)
+            let pointProps = this.getPoint(key)
+            if (utmost
+                || (this.getLineNeighbors(connections).length === 1
+                    && !this.rect[key].neighbors.filter(n => !this.getPoint(n)).length)) {
+                pointProps.utmost = true
+                // const startPoint = this.prepareUtmostPointForResolver(pointProps)
+                if (!pointProps.crossLine) {
+                    this.addToStartPoints(key, pointProps)
+                }
+
+            }
+            for (const dir in connections) {
+                const color = connections[dir].color
+                const line = lines[color] || {}
+                lines[color] = {
+                    ...line, [key]: pointProps
+                }
+            }
         }
+        this._lines = lines
+        console.log('lines', this._lines)
     }
 
-    changePointColorCreator = (key: string, newColor: string, oldColor: string) => {
+
+    buildPuzzle = (): IPuzzle | undefined => {
+        this.separatePointsByLines()
+        if (!this.getLinesUtmostPoints()) {
+            console.error(this.lineError)
+            return
+        }
+
+        const difficulty = this.evaluatePuzzle()
+        const {width, height, _lines : lines} = this
+        const date = new Date()
+        const colors = Object.keys(lines).length
+        const name = `puzzle${width}x${height}_colors${colors}_date${date}`
+        const puzzle = {
+            name,
+            difficulty,
+            lines,
+            width,
+            height
+        } as IPuzzle
+        this.puzzle = puzzle
+        return puzzle
+    }
+
+    changePointColor = (key: string, newColor: string, oldColor: string) => {
         let {utmost, connections} = this.getPoint(key)
         const colors = this.getColors(key)
         const lineNeighbors = this.getLineNeighbors(key, oldColor)
@@ -88,47 +139,15 @@ export class RectCreator extends PuzzleCommons {
 
     changeLineColor = (key: string, newColor: string, oldColor: string) => {
         console.log('change line color', key, newColor)
-        let neighbors = this.changePointColorCreator(key, newColor, oldColor)
+        let neighbors = this.changePointColor(key, newColor, oldColor)
         const stopFn = (point: string) => {
-            neighbors = this.changePointColorCreator(point, newColor, oldColor)
+            neighbors = this.changePointColor(point, newColor, oldColor)
             console.log('fn ch col', neighbors, newColor, point)
             return neighbors.length < 2
         }
         for (const neighbor of neighbors) {
             this.goToLinePoint(neighbor, key, stopFn, oldColor)
         }
-    }
-
-    buildPuzzle = () => {
-        const {takenPoints, width, height} = rc
-        const points = takenPoints
-        const startPoints = {} as ITakenPoints
-        const dotsSegregatedByColor = {} as {[color: string]: ITakenPoints}
-        for (const key in points) {
-            const {utmost, connections} = this.getPoint(key)
-            if (utmost) {
-                startPoints[key] = this.prepareUtmostPointForResolver(points[key])
-            } 
-            for (const dir in connections) {
-                const color = connections[dir].color
-                const coloredDots = dotsSegregatedByColor[color] || {}
-                dotsSegregatedByColor[color] = {
-                    ...coloredDots, [key]: points[key]
-                }
-            }
-        }
-        const date = new Date()
-        const colors = Object.keys(dotsSegregatedByColor).length
-        const name = `puzzle${width}x${height}_colors${colors}_date${date}`
-        const puzzle = {
-            name,
-            startPoints,
-            dotsSegregatedByColor,
-            width,
-            height
-        } as IPuzzle
-        this.puzzle = puzzle
-        return puzzle
     }
 
     resolveMouseUp = (point: string, color: string) => {
@@ -147,6 +166,8 @@ export class RectCreator extends PuzzleCommons {
                 connections: this.getPoint(key).connections
             }
         })
+        // const point = this.getPoint(key)
+
     }
 
     resolveNewPointDown(key: string, color: string) {
@@ -187,10 +208,10 @@ export class RectCreator extends PuzzleCommons {
             this.createJoinPoint(next, prev, color, sameColor)
         }
         if (!interfere) {
-            this.continueLine(next, prev, color)
+            this.addNextPoint(next, prev, color)
         } else if (!joinPoint && !sameLine && !sameColor) {
             this.removeInterferedLines(next)
-            this.continueLine(next, prev, color)
+            this.addNextPoint(next, prev, color)
         } else if (!joinPoint && !sameLine && sameColor) {
             this.resolveSameColorInterfering(next, prev, color)
         }
@@ -210,25 +231,29 @@ export class RectCreator extends PuzzleCommons {
         for (const nei of neighbors) {
             this.removeLineFork(nei, next, color)
         }
-        this.continueLine(next, prev, color)
+        this.addNextPoint(next, prev, color)
     }
 
     checkLineContinuity = (start: string, color: string) => {
+        console.log('check line continue before', start, color)
+        let circle = false
         const fn = (point: string) => {
-            const utmost = this.getPoint(point).utmost && point !== start
+            const {utmost, crossLine} = this.getPoint(point)
+            const last = utmost && point !== start && !crossLine
             const circle = this.checkCircleLine(point, color)
-            return circle || utmost
+            return circle || last
         }
         const end = this.goToLinePoint(start, '', fn, color)
-        return end || this.getPoint(end).utmost
+        console.log('check line continue after', start, color, 'cir', circle, 'end', end)
+        return !circle ? end : ''
     }
 
     checkLinesContinuity = () => {
         let valid = true
-        for (const color in this._utmostPoints) {
-            const points = this._utmostPoints[color]
-            for (const point of points) {
-                valid = !!this.checkLineContinuity(point.key, color)
+        for (const color in this._lines) {
+            const points = this._lines[color]
+            for (const point in points) {
+                valid = !!this.checkLineContinuity(point, color)
                 if (!valid) {
                     break
                 }

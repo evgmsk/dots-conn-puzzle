@@ -6,7 +6,27 @@ import { LinedRectBase } from "./rect-base";
 
 export class PuzzleCommons extends LinedRectBase {
 
-    continueLine = (nextPoint: string, prevPoint: string, color: string) => {
+    prepareUtmostPointForResolver = (point: ITakenPointProps): ITakenPointProps => {
+        const {utmost, connections} = point
+        const colors = this.getColors(connections)
+        const lineNeighbors = this.getLineNeighbors(point.connections)
+        const firstColorNeighbors = this.getLineNeighbors(point.connections, colors[0])
+        const crossLine = lineNeighbors.length === 4 && firstColorNeighbors.length === 2
+            ? colors
+            : undefined
+        const joinPoint = utmost && !crossLine && lineNeighbors.length > 1
+            ? colors
+            : undefined
+        const color = crossLine || joinPoint ? DefaultColor : colors[0]
+        return {
+            connections: defaultConnectionsWithColor(color),
+            crossLine,
+            joinPoint,
+            utmost
+        }
+    }
+
+    addNextPoint = (nextPoint: string, prevPoint: string, color: string) => {
         const dir = this.determineDirection(nextPoint, prevPoint)
         const point = {
             [nextPoint]: {

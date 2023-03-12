@@ -32,7 +32,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
     useEffect(() => {
         // console.log('point', props, sectorsData)
     }, [])
-    const {crossLine, joinPoint, invent} = props
+    const {crossLine, joinPoint, indKey} = props
     joinPoint?.forEach((color, i) => {
         sectorsData[i] = {...sectorsData[i], joinPoint: color}
     })
@@ -48,7 +48,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
                     const jointCl = joinPoint ? ` join-${joinPoint}` : ''
                     const sectorName = `puzzle-point_${dir}${fillCl}${crossLineClass}`
                     return !!fill 
-                        ? <div className={sectorName} key={i + invent!}> </div>
+                        ? <div className={sectorName} key={i + indKey!}> </div>
                         : null
                 })
             }
@@ -60,7 +60,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
                 const turnCl = !turn ? '' : ` turn-${turn}`
                 const lineName = `line-${dir}${lineCl}${turnCl}`
                 return !!line 
-                    ? <div className={lineName} key={dir + invent}> </div>
+                    ? <div className={lineName} key={dir + indKey}> </div>
                     : null
             })
         }

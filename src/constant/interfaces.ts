@@ -1,5 +1,12 @@
+// export enum LineError {
+//     broken = 'broken',
+//     utmost = 'one utmost',
+//     extra = 'extra points',
+//     no = 'no error'
+// }
+
 export interface IRectProps {
-    dimension: IRRectDimension
+    dimension: IRectDimension
     points: ITakenPoints
     mouseColor?: string
     mouseDown?: string
@@ -40,7 +47,7 @@ export interface IColorBTN {
     color: string
 }
 
-export interface IRRectDimension {
+export interface IRectDimension {
     width: number
     height: number
 }
@@ -69,38 +76,29 @@ export enum LineDirections {
     top = 'top', 
 }
 
-export interface ILineProps {
-    dots?: ITakenPoints
-    defaultDotsNumber: number
-    currentDotsNumber: boolean
-    resolved: boolean
-}
-
 export interface ILines {
-    [color: string]: ILineProps
+    [color: string]: ITakenPoints
 }
 
 export interface IPuzzle {
     name: string
-    startPoints: ITakenPoints
-    dotsSegregatedByColor: {[key: string]: ITakenPoints}
+    startPoints?: ITakenPoints
+    dotsSegregatedByColor?: ILines
+    lines: ILines
     width: number
     height: number
     difficulty?: number
     points?: ITakenPoints
 }
 
-export interface IStartPoint {
-    key: string,
-    coordinates?: number[],
-    color?: string
-    connections?: IDotConnections
+export interface IStartPoints {
+    [color: string]: string[]
 }
 
 export interface ITakenPointProps {
     utmost: boolean
     connections: IDotConnections
-    invent?: string
+    indKey?: string
     crossLine?: string[]
     joinPoint?: string[]
 }
@@ -109,30 +107,15 @@ export interface ITakenPoints {
     [key: string]: ITakenPointProps
 }
 
-export interface IStartPoints {
-    [color: string]: IStartPoint[]
-}
-
-
 export interface IUtmostPoints {
-    [color: string]: UtmostPointsValue
+    [color: string]: IUtmostPointsValue[]
 }
 
-export interface IUpContext {
-    freeCells: boolean
-    sameColorNeighbors?: ISameColorNeighbor
-}
-
-export interface ISameColorNeighbor {
-    utmost?: boolean
-    sameLine?: boolean
-    key: string
-}
-
-export interface UtmostPointsValue {
-    points?: IPoint
-    key: string
-    intervals?: {x: number[], y: number[]}
+export interface IUtmostPointsValue {
+    pairKey: string
+    coords1: number[]
+    coords2: number[]
+    intervals: {x: number, y: number}
     difficulty?: number
     resolved?: boolean
 }
@@ -150,7 +133,6 @@ export interface ILinedRect {
     _height: number
     rect: IRectCell
     _takenPoints: ITakenPoints
-    _utmostPoints: IStartPoints
 }
 
 export interface ICollision {

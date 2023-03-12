@@ -94,7 +94,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                             ? <Point
                                 connections={connections}
                                 utmost={utmost}
-                                invent={'p' + key}
+                                indKey={'p' + key}
                              />
                             : null}
                     </div>
