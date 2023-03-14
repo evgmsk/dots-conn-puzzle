@@ -8,6 +8,7 @@ import {PuzzleResolver as PR} from '../rect-constructor/rect-resolver'
 import {CongratulationModal} from "./resolver-modals/congratulation-modal";
 import {isDev} from "../helper-fns/helper-fn";
 import {ResolverTopPanel} from './resolver-components/resolver-top-panel'
+import {rc as RC} from "../rect-constructor/rect-creator";
 
 
 let resolver: PR
@@ -29,10 +30,10 @@ export const PuzzleWrapper: React.FC = () => {
 export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuzzle}) => {
     const {width, height} = props.puzzle
     const [points, setPoints] = useState({} as ITakenPoints)
-    const [color, setColor] = useState('lightgray')
+    const [color, setColor] = useState('')
     const [mouseDown, setMouseDown] = useState('')
     const [resolved, setResolved] = useState(false)
-
+    const [possibleColors, setPossibleColors] = useState([] as string[])
 
     useEffect(() => {
         resolver = new PR(props.puzzle)
@@ -41,7 +42,7 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
 
         }
         setPoints(resolver.takenPoints)
-        console.log('taken points & props', resolver.takenPoints, props)
+        console.log('taken points & props', resolver.takenPoints, props, resolver._lines)
     }, [props])
 
     const handleMouseDown = (key: string) => {
@@ -51,6 +52,7 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
         if (!connections) { return }
         const colors = resolver.getColors(connections)
         const newColor = colors.length === 1 ? colors[0] : 'lightgray'
+        setPossibleColors(joinPoint || crossLine || [])
         if (newColor === color && !crossLine) {
             console.log('rm forks', )
             const lineColor = connections[LineDirections.top].color
@@ -79,11 +81,13 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
             lineContinuationIsImpossible,
             resolveMouseEnter,
             getLineNeighbors,
-            getPoint
+            getPoint,
+            tryContinueLine,
+            checkStartPointUtmost,
+            rect
         } = resolver
         if (!mouseDown
             || prevPoint !== mouseDown
-            || lineContinuationIsImpossible(nextPoint, prevPoint, color)
             || (getLineNeighbors(prevPoint).length > 1
                 && !getPoint(prevPoint).utmost)) {
             console.error('line broken', nextPoint, prevPoint, mouseDown, color, resolver.takenPoints)
@@ -94,17 +98,27 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
         console.log('enter', nextPoint, prevPoint, color, mouseDown, nextCanBeJoin, resolver.takenPoints)
         if (lineContinuationIsImpossible(nextPoint, prevPoint, color)
             || !nextCanBeJoin) {
-            console.error('line broken', nextCanBeJoin,
-                lineContinuationIsImpossible(nextPoint, prevPoint, color))
+            console.error('line broken', nextCanBeJoin)
             setMouseDown('')
             return
         }
+        if (!rect[nextPoint].neighbors.includes(prevPoint)) {
+            prevPoint = tryContinueLine(nextPoint, prevPoint, color)
+            isDev() && console.warn('new prevP', prevPoint)
+            if (!prevPoint || (prevPoint && !checkStartPointUtmost(prevPoint, nextPoint, color))) {
+                isDev() && console.error('line without utmost', nextPoint, prevPoint,
+                    'prevP: ', prevPoint)
+                setMouseDown('')
+                return
+            }
+        }
         setMouseDown(nextPoint)
-        resolveMouseEnter(nextPoint, prevPoint, color)
+        resolveMouseEnter(nextPoint, prevPoint, color, possibleColors)
         setPoints(resolver.takenPoints)
     }
 
     const handleMouseUp = () => {
+        if (!mouseDown || !color) return
         setMouseDown('')
         const lineResolved = resolver.checkIfLineIsResolved(color)
         const resolved = resolver.puzzleFilled() && resolver.checkIfPuzzleIsResolved();
@@ -114,6 +128,7 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
     }
 
     const handleMouseLeave = () => {
+        if (!mouseDown || !color) return
         setMouseDown('')
         const lineResolved = resolver.checkIfLineIsResolved(color)
         const resolved = resolver.puzzleFilled()
@@ -132,7 +147,11 @@ export const PuzzleResolver: React.FC<{puzzle: IPuzzle}> = (props: {puzzle: IPuz
     const puzzleClassName = `dots-conn-puzzle_${width}-${height}`
 
     return <div className={puzzleClassName}>
-                <ResolverTopPanel handlers={{revealLine}} resolved={resolved} />
+                <ResolverTopPanel
+                    handlers={{revealLine}}
+                    resolved={resolved}
+                    diff={props.puzzle.difficulty}
+                />
                 {resolved ? <CongratulationModal message={''} />  : null}
                 <Puzzle 
                         points={points}

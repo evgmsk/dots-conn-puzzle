@@ -37,29 +37,29 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
             <div className='dots-puzzle_menu__dimensions'>
                 <div className='dots-puzzle_menu__size-range'>
                     <label>Width:</label>
-                    <input 
-                        type="range" 
-                        min={3} 
-                        max={20} 
-                        step={1} 
-                        value={width}
-                        onChange={e => changeWidth(e.target.value)} 
-                    />
-                    &nbsp;
-                    {width}
+                    {/*<input */}
+                    {/*    type="range" */}
+                    {/*    min={3} */}
+                    {/*    max={20} */}
+                    {/*    step={1} */}
+                    {/*    value={width}*/}
+                    {/*    onChange={e => changeWidth(e.target.value)} */}
+                    {/*/>*/}
+                    {/*&nbsp;*/}
+                    <input type="number" value={width} onChange={e => changeWidth(e.target.value)}/>
                 </div>
                 <div className='dots-puzzle_menu__size-range'>
                     <label>Height:</label>
-                    <input 
-                        type="range" 
-                        min={3} 
-                        max={30} 
-                        step={1} 
-                        value={height}
-                        onChange={(e) => changeHeight(e.target.value)} 
-                    />
-                    &nbsp;
-                    {height}
+                    {/*<input */}
+                    {/*    type="range" */}
+                    {/*    min={3} */}
+                    {/*    max={30} */}
+                    {/*    step={1} */}
+                    {/*    value={height}*/}
+                    {/*    onChange={(e) => changeHeight(e.target.value)} */}
+                    {/*/>*/}
+                    {/*&nbsp;*/}
+                    <input type="number" value={height} onChange={e => changeHeight(e.target.value)}/>
                 </div>
                 {/* <button 
                     className='dots-puzzle_menu-btn' 

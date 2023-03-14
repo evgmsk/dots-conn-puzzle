@@ -17,9 +17,18 @@ export class PuzzleCommons extends LinedRectBase {
         const joinPoint = utmost && !crossLine && lineNeighbors.length > 1
             ? colors
             : undefined
-        const color = crossLine || joinPoint ? DefaultColor : colors[0]
+        const monochrome = crossLine ? DefaultColor : colors[0]
+        const _connections = !joinPoint
+            ? defaultConnectionsWithColor(monochrome)
+            : {
+                ...defaultConnectionsWithColor(joinPoint[0]),
+                [LineDirections.right]: {color: joinPoint[1]},
+                [LineDirections.left]: {color: joinPoint[2] || ''},
+                [LineDirections.bottom]: {color: joinPoint[3] || ''},
+
+            }
         return {
-            connections: defaultConnectionsWithColor(color),
+            connections: _connections,
             crossLine,
             joinPoint,
             utmost
@@ -98,18 +107,15 @@ export class PuzzleCommons extends LinedRectBase {
         return ''
     }
 
-    lineContinuationIsImpossible = (nextPoint: string, prevPoint: string, color: string) =>
-        !this.getColors(prevPoint).includes(color) || !this.getPoint(prevPoint)
-
-    isLast = (point: ITakenPointProps, prev: string, endPoint: string, color: string) => {
+    isLast = (key: string, point: ITakenPointProps, prev: string, endPoint: string, color: string) => {
         const neighbors = this.getLineNeighbors(point.connections, color)
         const neighbor = neighbors.filter(n => n !== prev)[0]
-        const last = neighbor === endPoint
-            || this.getPoint(neighbor)?.utmost
-            || (prev && neighbors.length === 1)
+        const last = (point.utmost && !point.crossLine)
+            || !neighbor
+            || neighbor === endPoint
         isDev() && console.log('last point', point, prev, endPoint, neighbors, neighbor,
-            neighbor === endPoint, )
-        return last ? neighbor : ''
+            neighbor === endPoint, last, color)
+        return last ? (neighbor || key) : ''
     }
 
     removeLineToUtmostPoint = (start: string, prev: string, color: string) => {
@@ -124,7 +130,7 @@ export class PuzzleCommons extends LinedRectBase {
             passed = key
             return utmost
         }
-        this.goToLinePoint(start, prev, toFn)
+        this.goToLinePoint(start, prev, toFn, color)
     }
     
     removeLineCirclePart(prevP: string, next: string, color: string) {
@@ -154,7 +160,7 @@ export class PuzzleCommons extends LinedRectBase {
         const toFn = (key: string) => {
             const point = this.getPoint(key)
             if (!point?.connections) { return true }
-            const last = this.isLast(point, prev, next, color)
+            const last = this.isLast(key, point, prev, next, color)
             prev = key
             this.deletePoint(key)
             if (last) {
@@ -162,7 +168,7 @@ export class PuzzleCommons extends LinedRectBase {
             }
             return last
         }
-        this.goToLinePoint(prevP, next, toFn)
+        this.goToLinePoint(prevP, next, toFn, color)
     }
 
     removeForks = (start: string, color: string) => {
@@ -208,7 +214,7 @@ export class PuzzleCommons extends LinedRectBase {
             utmost && this.updateLastPoint(key, passed, col)
             return !next
         }
-        this.goToLinePoint(next, prev, stopFn)
+        this.goToLinePoint(next, prev, stopFn, color)
     }
 
     removeLineFork = (next: string, prev: string, color: string) => {
@@ -216,15 +222,31 @@ export class PuzzleCommons extends LinedRectBase {
         let passed = prev
         const toFn = (key: string) => {
             const point = this.getPoint(key)
-            const last = this.isLast(point, passed, 'none', color)
-            passed = key
-            this.deletePoint(key)
-            if (last) {
+            const last = this.isLast(key, point, passed, 'none', color)
+            !point.utmost && this.deletePoint(key)
+            point.crossLine && this.updateCrossLineRemovingFork(color, key, point)
+            if (last && point.utmost) {
                 this.updateLastPoint(last, passed, color)
             }
+            passed = key
             return last
         }
-        this.goToLinePoint(next, prev, toFn)
+        this.goToLinePoint(next, prev, toFn, color)
+    }
+
+    updateCrossLineRemovingFork = (color: string, key: string, point: ITakenPointProps) => {
+        const {crossLine, connections, utmost, joinPoint} = point
+        if (!point.crossLine || !point.connections) {
+            console.error('invalid props to update crossLine', point, color)
+            return
+        }
+        for (const dir in connections) {
+            const sec = connections[dir]
+            if (sec.color === color) {
+                connections[dir] = {color: DefaultColor}
+            }
+        }
+        this.addTakenPoints({[key]: {utmost, joinPoint, crossLine, connections}})
     }
 
     updateLineStart = (
@@ -268,7 +290,8 @@ export class PuzzleCommons extends LinedRectBase {
                 connections: {
                     ...this.getPoint(prevPoint).connections,
                     [dir]: {
-                        color, neighbor: nextPoint
+                        color,
+                        neighbor: nextPoint
                     }
                 }
             }
@@ -279,17 +302,19 @@ export class PuzzleCommons extends LinedRectBase {
 
 
     updateLastPoint = (last: string, prev: string, color?: string) => {
-        const {utmost, connections, crossLine, joinPoint} = this.getPoint(last)
+        const {utmost, connections, crossLine, joinPoint} = this.getPoint(last) || {}
+        if (!connections) {
+            console.error('invalid last', last, prev, color, this.takenPoints)
+            return
+        }
         const dir = this.determineDirection(last, prev)
-        const lineColor = color || connections[dir].color
-        const newColor = crossLine ? DefaultColor : lineColor
-        const directions = this.getLineDirections(connections, lineColor)
+        const sectorColor = color || connections[dir].color
+        const directions = this.getLineDirections(connections, sectorColor)
         const oneDir = !crossLine
             || (crossLine && directions.length < 2)
         const extraDir = directions.filter(d => d !== dir)[0]
-
         isDev() && console.warn('update last', last, prev, color, this.getPoint(last),
-            'dir', dir, directions, 'line color', lineColor, newColor, extraDir)
+            'dir', dir, directions, 'line color', sectorColor, crossLine, extraDir)
         if (oneDir) {
             this.addTakenPoints({
                 [last]: {
@@ -298,7 +323,7 @@ export class PuzzleCommons extends LinedRectBase {
                     joinPoint,
                     connections: {
                         ...connections,
-                        [dir]: {color: newColor}
+                        [dir]: {color: crossLine ? DefaultColor : sectorColor}
                     }
                 }
             })
@@ -316,7 +341,7 @@ export class PuzzleCommons extends LinedRectBase {
                 }
             })
             const extraConn = connections[extraDir].neighbor
-            extraConn && this.removeLineFork(extraConn, last, lineColor)
+            extraConn && this.removeLineFork(extraConn, last, sectorColor)
         }
     }
 

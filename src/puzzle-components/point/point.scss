@@ -1,17 +1,10 @@
 @import '../../assets/scss/constant.scss';
 
-#border-radius {
-    border-top-left-radius: 0;
-    border-top-right-radius: 0;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
-}
-
 @mixin line-after($col: $puzzle-bg-color) {
     &::after {
         content: '';
         position: absolute;
-        z-index: 500;
+        z-index: 1500;
         background-color: $puzzle-bg-color;
         border-radius: 100%;
         width: 100%;
@@ -19,6 +12,18 @@
         
         @content;
     }
+}
+
+@mixin circle($col, $size, $ind: 10000) {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: $size;
+    height: $size;
+    border-radius: 50%;
+    background-color: $col;
+    z-index: $ind;
 }
 
 @mixin line-before($col) {
@@ -63,15 +68,22 @@
     grid-template-rows: repeat(2, 1fr);
     border-radius: 100%;
     z-index: 10000;
+    &.join {
+        display: block;
+        width: $point-size * 1.1;
+        height: $point-size * 1.1;
+    }
+
 }
 
+
 @each $dir in $directions {
-    .puzzle-point_#{$dir} {
+    .puzzle-point_sector-#{$dir} {
         position: relative;
         width: 100%;
         height: 100%;
         // box-sizing: border-box;
-        @extend #border-radius;
+        border-radius: 0;
         
         @each $col in $colors {
             &.fill-#{$col} {
@@ -81,7 +93,29 @@
                 @if $col == lightgray {
                     border-color: darken($col, 20%);
                 }
+                @for $j from 2 to 5 {
+                    &.join-#{$j} {
+                        $size: 100%;
+                        @if $dir == 'top' {
+                            @include circle($col, $size)
+                        }
+                        @if $dir == 'right' {
+                            $sz: $size * ($j - 1) / $j;
+                            @include circle($col, $sz, 10001)
+                        }
+                        @if $dir == 'left' and $j > 2 {
+                            $sz: $size * ($j - 2) / $j;
+                            @include circle($col, $sz, 10002)
+                        }
+
+                        @if $dir == 'bottom' and $j > 3 {
+                            @include circle($col, $size / $j, 10003)
+                        }
+                    }
+
+                }
             }
+
         }
 
     }

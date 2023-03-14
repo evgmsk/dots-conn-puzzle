@@ -137,7 +137,7 @@ export class LinedRectBase implements ILinedRect {
             return utmost
         }
         lineNeighbors.forEach(next => {
-            this.goToLinePoint(next, passed, stopFn)
+            this.goToLinePoint(next, passed, stopFn, color)
         })
         return circle
     }
@@ -246,11 +246,12 @@ export class LinedRectBase implements ILinedRect {
     }
 
     getLinePoints(start: string, color?: string): string[] {
-        const {connections, utmost, joinPoint} = this.getPoint(start)
-        const linePoints = [start]
-        if (!connections || !utmost) {
-            return linePoints
+        const {connections, utmost, crossLine} = this.getPoint(start)
+        if (!connections || !utmost || crossLine) {
+            console.error('invalid start line point', start, crossLine, this.takenPoints)
+            return []
         }
+        const linePoints = [start]
         const next = this.getLineNeighbors(start, color)[0]
         if (!next) {
             console.error('broken line')
@@ -299,7 +300,7 @@ export class LinedRectBase implements ILinedRect {
             return this.getPoint(point)?.utmost
         }
         const startPoints = neighbors.map(n => {
-            return this.goToLinePoint(n, prev, fn)
+            return this.goToLinePoint(n, prev, fn, color)
         })
         sameStart.utmost = startPoints[0]
         return sameStart

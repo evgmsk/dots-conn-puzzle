@@ -18,7 +18,7 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
         .filter(key => connections[key].neighbor) as LineDirections[]
     const simpleLine = singleColor && !utmost
         && neighborDirs.length === 2
-    return defaultSectors().map(sector => {
+    return defaultSectors().map((sector, i) => {
         const {neighbor, color} = connections[sector.dir]
         const turn = simpleLine
             ? neighborDirs.filter(dir => dir !== sector.dir)[0]
@@ -26,10 +26,21 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
         return {
             dir: sector.dir,
             line: neighbor ? color : '',
-            fill: utmost ? color : '',
+            fill: utmost
+                ? joinPoint ? joinPoint[i] : color
+                : '',
             turn,
         }
     })
+}
+
+export const getCommonColor = (colors1: string[], colors2: string[]) => {
+    for (let color of colors1) {
+        if (colors2.includes(color)) {
+            return color
+        }
+    }
+    return ''
 }
 
 export const sectorIndex = (dir: LineDirections) => {

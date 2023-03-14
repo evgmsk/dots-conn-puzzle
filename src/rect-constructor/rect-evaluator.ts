@@ -97,6 +97,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 if (this.linesInterfering[color] && this.linesInterfering[color][line]) {
                     continue
                 }
+                // eslint-disable-next-line no-loop-func
                 this.utmostPoints[line].forEach(utPair => {
                     this.utmostPoints[color].forEach(uP => {
                         const interfering = this.twoLinesInterfering(uP, utPair)
@@ -158,56 +159,6 @@ export class PuzzleEvaluator extends PuzzleCommons {
         console.log('interfering', line1, line2, sin, cos, interfering)
         return interfering
     }
-
-
-    getXYLinesIntersection = (points1: IUtmostPointsValue, points2: IUtmostPointsValue) => {
-        // const {x: x1I, y: y1I} = points1.intervals!
-        // const {x: x2I, y: y2I} = points2.intervals!
-
-        // const startX = Math.max(x1I[0], x2I[0])
-        // const endX = Math.min(x1I[1], x2I[1])
-        // const startY = Math.max(y1I[0], y2I[0])
-        // const endY = Math.min(y1I[1], y2I[1])
-        // const [xInt, yInt] = [endX - startX + 1, endY - startY + 1]
-        // if (typeof xInt !== 'number' || typeof yInt !== 'number') {
-        //     console.error('invalid type data intersection', points1, points2)
-        // }
-        // return [
-        //     [
-        //         xInt / (x1I[1] - x1I[0] + 1),
-        //         yInt / (y1I[1] - y1I[0] + 1)
-        //     ],
-        //     [
-        //         xInt / (x2I[1] - x2I[0] + 1),
-        //         yInt / (y2I[1] - y2I[0] + 1)
-        //     ]
-        // ]
-    }
-
-    // getTwoLinesInterfering(col1: string, col2: string) {
-    //     const pair1 = this.lineEndPoints[col1]
-    //     const pair2 = this.lineEndPoints[col2]
-    //     const xyIntersection = this.getXYLinesIntersection(pair1, pair2)
-    //     if (!xyIntersection.length) {
-    //         this.linesInterfering[col2][col1] = 0
-    //         this.linesInterfering[col1][col2] = 0
-    //     } else {
-    //         this.linesInterfering[col2][col1] = xyIntersection[0][0] + xyIntersection[0][1]
-    //         this.linesInterfering[col1][col2] = xyIntersection[1][0] + xyIntersection[1][1]
-    //     }
-    // }
-
-    // getRelativeDifficulty = () => {
-    //     this.getLinesInterfering()
-    //     const colors = Object.keys(this.lineEndPoints)
-    //     for (let color of colors) {
-    //         const lineInterfering = this.linesInterfering[color]
-    //         const interferingValue = colors.filter(c => c !== color).reduce((acc, c) => {
-    //             return acc + lineInterfering[c]
-    //         }, 0)
-    //         this.lineEndPoints[color].difficulty = interferingValue
-    //     }
-    // }
 
     getLeastMeddlingPointKey() {
 

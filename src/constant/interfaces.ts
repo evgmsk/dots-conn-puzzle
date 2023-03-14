@@ -82,12 +82,13 @@ export interface ILines {
 
 export interface IPuzzle {
     name: string
+    date: Date | string
     startPoints?: ITakenPoints
     dotsSegregatedByColor?: ILines
     lines: ILines
     width: number
     height: number
-    difficulty?: number
+    difficulty: number
     points?: ITakenPoints
 }
 

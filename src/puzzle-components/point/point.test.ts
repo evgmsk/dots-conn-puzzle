@@ -13,10 +13,12 @@ test('sectors data', () => {
         }
     } as ITakenPointProps
     const props2 =  { 
-        utmost: false, 
+        utmost: false,
+        joinPoint: ['blue', 'red'],
         connections: {
             ...defaultConnectionsWithColor('blue'),
-            [LineDirections.top]: {color: 'blue', neighbor: '1-1'}
+            [LineDirections.top]: {color: 'blue', neighbor: '1-1'},
+            [LineDirections.bottom]: {color: 'red', neighbor: '1-3'}
         }
     }  as ITakenPointProps
     const props3 =  { 

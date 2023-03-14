@@ -5,11 +5,26 @@ $directions: 'top', 'right', 'bottom', 'left';
 $main-line-size: 65%;
 $minor-line-size: 30%;
 $line-radius: 200px;
-$puzzle-bg-color: white;
+$puzzle-bg-color: aliceblue;
 
 $point-size: 60%;
 
 $tablet: 900px;
 
 $font-main: 'Roboto', sans-serif;
+
+main-btn {
+    border-radius: 4px;
+    background-color: transparent;
+    border: none;
+    box-shadow: 0 0 3px 2px lighten(blue, 30%);
+    padding: 10px;
+    margin: 10px;
+    color: aliceblue;
+    transition: all .3s;
+    &:hover {
+        box-shadow: 0 0 3px 2px lighten(blue, 40%);
+    }
+}
+
 

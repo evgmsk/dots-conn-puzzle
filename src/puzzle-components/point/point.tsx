@@ -30,23 +30,20 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
     
     const sectorsData = getSectorsData(props)
     useEffect(() => {
-        // console.log('point', props, sectorsData)
+        console.log('point', props, sectorsData)
     }, [])
     const {crossLine, joinPoint, indKey} = props
-    joinPoint?.forEach((color, i) => {
-        sectorsData[i] = {...sectorsData[i], joinPoint: color}
-    })
-    const crossLineClass = !crossLine
-        ? ''
-        : ' cross-line'
+    const joinClass = joinPoint ? ` join-${joinPoint.length}` : ''
+    const crossLineClass = !crossLine ? '' : ' cross-line'
+    const wrapperCl = `point-wrapper${joinPoint ? ' join' : ''}${crossLineClass}`
+
     return <>
-        <div className="point-wrapper">
+        <div className={wrapperCl}>
             {
                 sectorsData.map((sec, i) => {
                     const {dir, fill} = sec as IDotSectorProps
                     const fillCl = !!fill ? ` fill-${fill}` : ''
-                    const jointCl = joinPoint ? ` join-${joinPoint}` : ''
-                    const sectorName = `puzzle-point_${dir}${fillCl}${crossLineClass}`
+                    const sectorName = `puzzle-point_sector-${dir}${fillCl}${joinClass}`
                     return !!fill 
                         ? <div className={sectorName} key={i + indKey!}> </div>
                         : null

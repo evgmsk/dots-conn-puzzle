@@ -25,7 +25,7 @@ const Timer: React.FC<ITimer> = (props: ITimer) => {
 
     return (
         <div className="puzzle-resolver_top-panel_timer-wrapper">
-            <p>{minutes.toString().padStart(2, '0')}:{seconds.toString().padStart(2, '0')}</p>
+            <p>{minutes.toString().padStart(2, '0')}&nbsp;:&nbsp;{seconds.toString().padStart(2, '0')}</p>
         </div>
     );
 }

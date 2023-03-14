@@ -12,17 +12,20 @@ export const PuzzleSelector: React.FC<IPuzzleSelectorProps> = (props: IPuzzleSel
     
     const {puzzles, setPuzzle} = props
 
-    return <>{
+    return <div className='puzzles-container'>
+        {
             puzzles.map((p, i) => {
                 return p.name 
-                ? <button 
+                ? <button
+                    className='puzzle-btn'
                     type="button"
                     key={p.name}
                     onClick={() => setPuzzle(puzzles[i])}
                 >
-                    {p.name.slice(0, 15)}
+                    {p.name.slice(0, 16)}
                 </button>
                 : null
             })
-    }</>
+        }
+    </div>
 }

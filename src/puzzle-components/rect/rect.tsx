@@ -78,9 +78,9 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
             const key = `${n}-${k}`
             const point = points[key] || {} as ITakenPointProps
             const className = !point
-                ? `${cellClass} empty-cell`
-                : `${cellClass}`
-            const {connections, utmost} = point
+                ? `${cellClass} c-${key} empty-cell`
+                : `${cellClass} c-${key}`
+            const {connections, utmost, crossLine, joinPoint} = point
             return <div
                         className = {className}
                         key={key}
@@ -94,6 +94,8 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                             ? <Point
                                 connections={connections}
                                 utmost={utmost}
+                                crossLine={crossLine}
+                                joinPoint={joinPoint}
                                 indKey={'p' + key}
                              />
                             : null}

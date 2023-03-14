@@ -25,7 +25,6 @@ describe('test rect-creator methods', () => {
             },
             '1-1': {
                 utmost: true,
-                crossLine: ['green', 'red'],
                 connections: {
                     [LineDirections.top]: {neighbor: '1-0', color: 'green'},
                     [LineDirections.right]: {neighbor: '2-1', color: 'red'},
@@ -144,7 +143,7 @@ describe('test rect-creator methods', () => {
             LineDirections.right])
         expect(rectCR0.checkCircleLine('0-0', 'blue')).toBe(false)
         expect(!!rectCR0.checkLineContinuity('0-0', 'green')).toBe(true)
-        // expect(!!rectCR2.checkLineContinuity('0-1', 'blue')).toBe(true)
+        expect(rectCR0.prepareUtmostPointForResolver(rectCR0.getPoint('1-1')).crossLine!.length).toBe(2)
         // expect(!!rectCR2.takenPoints['4-2']).toBe(true)
         // rectCR2.deletePoint('4-2')
         // expect(rectCR2.takenPoints['4-2']).toBe(undefined)

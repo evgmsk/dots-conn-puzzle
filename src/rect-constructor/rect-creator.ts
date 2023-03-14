@@ -69,6 +69,10 @@ export class RectCreator extends PuzzleEvaluator {
         return 'valid'
     }
 
+    lineContinuationIsImpossible = (nextPoint: string, prevPoint: string, color: string) => {
+        return !this.getColors(prevPoint).includes(color)
+    }
+
     separatePointsByLines = () => {
         const lines = {} as ILines
         console.warn('sep1', this.takenPoints, lines)
@@ -79,7 +83,9 @@ export class RectCreator extends PuzzleEvaluator {
                 || (this.getLineNeighbors(connections).length === 1
                     && !this.rect[key].neighbors.filter(n => !this.getPoint(n)).length)) {
                 pointProps.utmost = true
-                // const startPoint = this.prepareUtmostPointForResolver(pointProps)
+                const {crossLine, joinPoint} = this.prepareUtmostPointForResolver(pointProps)
+                pointProps.joinPoint = joinPoint
+                pointProps.crossLine = crossLine
                 if (!pointProps.crossLine) {
                     this.addToStartPoints(key, pointProps)
                 }
@@ -109,8 +115,9 @@ export class RectCreator extends PuzzleEvaluator {
         const {width, height, _lines : lines} = this
         const date = new Date()
         const colors = Object.keys(lines).length
-        const name = `puzzle${width}x${height}_colors${colors}_date${date}`
+        const name = `puzzle_${width}x${height}_colors-${colors}_diff-${difficulty}`
         const puzzle = {
+            date,
             name,
             difficulty,
             lines,
@@ -250,8 +257,8 @@ export class RectCreator extends PuzzleEvaluator {
 
     checkLinesContinuity = () => {
         let valid = true
-        for (const color in this._lines) {
-            const points = this._lines[color]
+        for (const color in this.utmostPoints) {
+            const points = this.utmostPoints[color]
             for (const point in points) {
                 valid = !!this.checkLineContinuity(point, color)
                 if (!valid) {

@@ -1,0 +1,13 @@
+@import "../assets/scss/constant";
+
+.puzzles-container {
+    max-width: 600px;
+    width: 80vw;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: flex-start;
+    .puzzle-btn {
+        @extend main-btn;
+    }
+}

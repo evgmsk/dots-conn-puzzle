@@ -19,8 +19,8 @@ export interface IConfirm {
 }
 
 export const PuzzleCreator: React.FC = () => {
-    const [width, setWidth] = useState(Width)
-    const [height, setHeight] = useState(Height)
+    const [width, setWidth] = useState(6)
+    const [height, setHeight] = useState(8)
     const [color, setColor] = useState(LineColors[0])
     const [confirm, setConfirm] = useState({} as IConfirm)
     const [points, setPoints] = useState({} as ITakenPoints)
@@ -30,6 +30,7 @@ export const PuzzleCreator: React.FC = () => {
         RC.setWidth(width)
         RC.setHeight(height)
         // isDev() && console.log(points)
+        return RC.clearAll()
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
@@ -198,12 +199,14 @@ export const PuzzleCreator: React.FC = () => {
 
     const changeWidth = (width: string) => {
         const newWidth = parseInt(width)
+        if (newWidth > 20) {return}
         setWidth(newWidth)
         RC.setWidth(newWidth)
     }
 
     const changeHeight = (height: string) => {
         const newHeight = parseInt(height)
+        if (newHeight > 25) {return}
         setHeight(newHeight)
         RC.setHeight(newHeight)
     }

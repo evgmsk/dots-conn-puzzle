@@ -1,3 +1,0 @@
-
-
-import './resolver-clock.scss'

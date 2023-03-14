@@ -2,31 +2,23 @@
 
 .dots-conn-puzzle {
     // border: solid 2px black;
-    &_menu {
-        height: auto;
-        display: flex;
-        margin: 20px;
-        flex-direction: column;
-    }
     
     &_creator {
-        width: 80vw;
+        width: 90vw;
+        max-width: 600px;
         height: auto;
         display: flex;
         flex-direction: column;
         align-items: center;
-        justify-content: space-around;
-        // flex-direction: row;
-        margin: 20px;
-        input {
-            margin: 10px;
-        }
+        justify-content: flex-start;
+        margin-bottom: 20px;
     }
     
     &_body {
-        border-radius: 5px;
+        background-color: aliceblue;
+        border-radius: 10px;
         border: solid 1px gray;
-        $width: 50vw;
+        $width: 80vw;
         width: $width;
         $max-width: 400px;
         max-width: $max-width;
@@ -38,7 +30,17 @@
                     display: grid;
                     grid-template-columns: repeat(#{$i}, 1fr);
                     grid-template-rows: repeat(#{$j}, 1fr);
+                    .c-0-#{$j - 1} {
+                        border-bottom-left-radius: 10px;
+                    }
+                    .c-#{$i - 1}-#{$j - 1} {
+                        border-bottom-right-radius: 10px;
+                    }
+                    .c-#{$i - 1}-0 {
+                        border-top-right-radius: 10px;
+                    }
                 }
+
             }
         }
         .puzzle-cell {
@@ -47,6 +49,9 @@
             display: flex;
             justify-content: center;
             align-items: center;
+            &.c-0-0 {
+                border-top-left-radius: 10px;
+            }
             &::after {
                 content: '';
                 position: absolute;
