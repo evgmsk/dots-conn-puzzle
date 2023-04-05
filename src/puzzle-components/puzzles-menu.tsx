@@ -19,7 +19,7 @@ export const PuzzleSelector: React.FC<IPuzzleSelectorProps> = (props: IPuzzleSel
                 ? <button
                     className='puzzle-btn'
                     type="button"
-                    key={p.name}
+                    key={i + p.name}
                     onClick={() => setPuzzle(puzzles[i])}
                 >
                     {p.name.slice(0, 16)}

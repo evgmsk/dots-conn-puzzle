@@ -12,11 +12,11 @@ export const isDev = () => development
 
 export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
     // console.warn(props)
-    const {connections, utmost, crossLine, joinPoint} = props
+    const {connections, endpoint, crossLine, joinPoint} = props
     const singleColor = (!crossLine && !joinPoint) || joinPoint?.length === 1
     const neighborDirs = Object.keys(connections)
         .filter(key => connections[key].neighbor) as LineDirections[]
-    const simpleLine = singleColor && !utmost
+    const simpleLine = singleColor && !endpoint
         && neighborDirs.length === 2
     return defaultSectors().map((sector, i) => {
         const {neighbor, color} = connections[sector.dir]
@@ -26,7 +26,7 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
         return {
             dir: sector.dir,
             line: neighbor ? color : '',
-            fill: utmost
+            fill: endpoint
                 ? joinPoint ? joinPoint[i] : color
                 : '',
             turn,

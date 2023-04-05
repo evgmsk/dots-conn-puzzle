@@ -3,7 +3,7 @@ import React from "react"
 
 import './rect.scss'
 
-import { IPuzzleProps, ITakenPointProps } from "../../constant/interfaces"
+import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/interfaces"
 import { Point } from "../point/point"
 // import { copyObj } from "../../helper-fns/helper-fn"
 
@@ -23,6 +23,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         dimension: {width, height},
         points,
         mouseDown,
+        highlightedEndpoints,
         handlers: {
             handleMouseDown,
             handleMouseUp,
@@ -77,10 +78,15 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         return new Array(width).fill('1').map((j, n) => {
             const key = `${n}-${k}`
             const point = points[key] || {} as ITakenPointProps
+            const color = !(point.crossLine || point.joinPoint)
+                ? point.connections && point.connections[LineDirections.top].color
+                : ''
+            const colorCl = color ? ` ${color}` : ''
             const className = !point
                 ? `${cellClass} c-${key} empty-cell`
-                : `${cellClass} c-${key}`
-            const {connections, utmost, crossLine, joinPoint} = point
+                : `${cellClass} c-${key} ${colorCl}`
+            const {connections, endpoint, crossLine, joinPoint} = point
+            const highlighted = highlightedEndpoints?.includes(key)
             return <div
                         className = {className}
                         key={key}
@@ -93,9 +99,10 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                         {point.connections
                             ? <Point
                                 connections={connections}
-                                utmost={utmost}
+                                endpoint={endpoint}
                                 crossLine={crossLine}
                                 joinPoint={joinPoint}
+                                highlighted={highlighted}
                                 indKey={'p' + key}
                              />
                             : null}
@@ -108,6 +115,6 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 onMouseMove={handlePointerMove}
                 onTouchMove={handlePointerMove}
             >
-        {rect}
-    </div>
+                {rect}
+            </div>
 }

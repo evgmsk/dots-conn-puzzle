@@ -8,6 +8,7 @@ export interface ICustomPuzzle {
     color: string
     width: number
     height: number
+    level?: number
     handlers: IHandlers
 }
 
@@ -17,6 +18,7 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
         color,
         width,
         height,
+        level,
         handlers: {
             changeWidth,
             changeHeight,
@@ -33,8 +35,12 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
     }
 
     return (
-        <div className="dots-conn-puzzle_menu">
+        <div className="dots-puzzle_menu">
             <div className='dots-puzzle_menu__dimensions'>
+                {level
+                    ? <div className='dots-puzzle_menu__level'>L:&nbsp;{level}</div>
+                    : null
+                }
                 <div className='dots-puzzle_menu__size-range'>
                     <label>Width:</label>
                     {/*<input */}

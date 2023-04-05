@@ -1,6 +1,6 @@
 // export enum LineError {
 //     broken = 'broken',
-//     utmost = 'one utmost',
+//     endpoint = 'one endpoint',
 //     extra = 'extra points',
 //     no = 'no error'
 // }
@@ -11,6 +11,7 @@ export interface IRectProps {
     mouseColor?: string
     mouseDown?: string
     creator?: boolean
+    highlightedEndpoints?: string[]
 }
 
 export type PuzzleMode = 'create' | 'resolve' | 'generate'
@@ -47,6 +48,11 @@ export interface IColorBTN {
     color: string
 }
 
+
+export interface ISLines {
+    [color: string]: string[][]
+}
+
 export interface IRectDimension {
     width: number
     height: number
@@ -80,16 +86,16 @@ export interface ILines {
     [color: string]: ITakenPoints
 }
 
+export interface LineAndIndex {index: number, line: string[]}
+
 export interface IPuzzle {
     name: string
     date: Date | string
-    startPoints?: ITakenPoints
-    dotsSegregatedByColor?: ILines
-    lines: ILines
+    lines: ISLines
     width: number
     height: number
     difficulty: number
-    points?: ITakenPoints
+    points: ITakenPoints
 }
 
 export interface IStartPoints {
@@ -97,22 +103,23 @@ export interface IStartPoints {
 }
 
 export interface ITakenPointProps {
-    utmost: boolean
+    endpoint: boolean
     connections: IDotConnections
     indKey?: string
     crossLine?: string[]
     joinPoint?: string[]
+    highlighted?: boolean
 }
 
 export interface ITakenPoints {
     [key: string]: ITakenPointProps
 }
 
-export interface IUtmostPoints {
-    [color: string]: IUtmostPointsValue[]
+export interface IEndpoints {
+    [color: string]: IEndpointsValue[]
 }
 
-export interface IUtmostPointsValue {
+export interface IEndpointsValue {
     pairKey: string
     coords1: number[]
     coords2: number[]

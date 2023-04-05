@@ -9,11 +9,20 @@
         //padding: 1px 6px;
     }
     button {
+        border-radius: 5px;
         background-color: transparent;
         border: none;
         color: aliceblue;
         font-size: 1.2rem;
         font-family: Roboto, sans-serif;
+        span {
+            display: block;
+            width: 75px;
+        }
+        &.btn-highlighted {
+            //box-shadow: 0 0 1px 1px lighten(blue, 30%);
+            animation: next 1.2s infinite ease-out;
+        }
     }
     .puzzle-resolver_top-panel_timer-wrapper {
         display: flex;
@@ -23,5 +32,20 @@
             font-size: 1.4rem;
             font-family: Roboto, sans-serif;
         }
+    }
+}
+
+@keyframes next {
+    0% {
+        color: lighten(blue, 40%);
+        //box-shadow: 0 0 2px 2px lighten(blue, 40%);
+    }
+    50% {
+        color: aliceblue;
+        //box-shadow: 0 0 2px 2px lighten(blue, 30%);
+    }
+    100% {
+        color: lighten(blue, 40%);
+        //box-shadow: 0 0 2px 2px lighten(blue, 40%);
     }
 }

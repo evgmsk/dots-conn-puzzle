@@ -1,5 +1,5 @@
 import { memo, useEffect} from "react"
-import { IDotSectorProps, ITakenPointProps } from "../../constant/interfaces"
+import { ITakenPointProps, IDotSectorProps } from "../../constant/interfaces"
 
 import './point.scss'
 import {getSectorsData} from "../../helper-fns/helper-fn";
@@ -30,12 +30,16 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
     
     const sectorsData = getSectorsData(props)
     useEffect(() => {
-        console.log('point', props, sectorsData)
+        if (props.highlighted) {
+            console.log('point highlighted', props, sectorsData)
+        }
+
     }, [])
-    const {crossLine, joinPoint, indKey} = props
+    const {crossLine, joinPoint, indKey, highlighted} = props
     const joinClass = joinPoint ? ` join-${joinPoint.length}` : ''
     const crossLineClass = !crossLine ? '' : ' cross-line'
-    const wrapperCl = `point-wrapper${joinPoint ? ' join' : ''}${crossLineClass}`
+    const highlightedCl = `${highlighted ? ' highlighted' : ''}`
+    const wrapperCl = `point-wrapper${joinPoint ? ' join' : ''}${crossLineClass}${highlightedCl}`
 
     return <>
         <div className={wrapperCl}>

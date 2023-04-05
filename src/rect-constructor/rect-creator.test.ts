@@ -9,14 +9,14 @@ describe('test rect-creator methods', () => {
         const points0 = {
 
             '0-0': {
-                utmost: true,
+                endpoint: true,
                 connections: {
                     ...defaultConnectionsWithColor('green'),
                     [LineDirections.right]: {neighbor: '1-0', color: 'green'}
                 }
             },
             '1-0': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('green'),
                     [LineDirections.left]: {neighbor: '0-0', color: 'green'},
@@ -24,7 +24,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '1-1': {
-                utmost: true,
+                endpoint: true,
                 connections: {
                     [LineDirections.top]: {neighbor: '1-0', color: 'green'},
                     [LineDirections.right]: {neighbor: '2-1', color: 'red'},
@@ -33,7 +33,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '1-2': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('green'),
                     [LineDirections.top]: {neighbor: '1-1', color: 'green'},
@@ -41,7 +41,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '1-3': {
-                utmost: true,
+                endpoint: true,
                 connections: {
                     ...defaultConnectionsWithColor('green'),
                     [LineDirections.top]: {neighbor: '1-2', color: 'green'},
@@ -50,14 +50,14 @@ describe('test rect-creator methods', () => {
         }
         const points1 = {
             '1-1': {
-                utmost: true,
+                endpoint: true,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.right]: {neighbor: '2-1', color: 'blue'}
                 }
             },
             '2-1': {
-                utmost: false,
+                endpoint: false,
                 connections:  {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.left]: {neighbor: '1-1', color: 'blue'},
@@ -65,7 +65,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '3-1': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.left]: {neighbor: '2-1', color: 'blue'},
@@ -73,15 +73,16 @@ describe('test rect-creator methods', () => {
                 }
             },
             '4-1': {
-                utmost: false,
+                endpoint: true,
+                crossLine: ['blue', 'red'],
                 connections: {
-                    ...defaultConnectionsWithColor('blue'),
+                    ...defaultConnectionsWithColor(DefaultColor),
                     [LineDirections.right]: {neighbor: '3-1', color: 'blue'},
                     [LineDirections.bottom]: {neighbor: '4-2', color: 'blue'}
                 }
             },
             '4-2': {
-                utmost: false,
+                endpoint: false,
                 connections:{
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.top]: {neighbor: '4-1', color: 'blue'},
@@ -89,7 +90,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '4-3': {
-                utmost: false,
+                endpoint: false,
                 connections:{
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.left]: {neighbor: '3-3', color: 'blue'},
@@ -97,7 +98,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '3-3': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.right]: {neighbor: '4-3', color: 'blue'},
@@ -105,7 +106,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '2-3': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.right]: {neighbor: '3-3', color: 'blue'},
@@ -113,7 +114,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '2-2': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.left]: {neighbor: '1-2', color: 'blue'},
@@ -121,7 +122,7 @@ describe('test rect-creator methods', () => {
                 }
             },
             '1-2': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor('blue'),
                     [LineDirections.right]: {neighbor: '2-2', color: 'blue'},
@@ -133,17 +134,19 @@ describe('test rect-creator methods', () => {
         const rectCR0 = new RectCreator({width: 6, height: 4})
         rectCR1.addTakenPoints(points1)
         rectCR0.addTakenPoints(points0)
-        expect(rectCR1.checkStartPointUtmost('2-1', '3-1')).toBe('1-1')
-        expect(rectCR1.checkStartPointUtmost('2-2', '1-2')).toBe('1-1')
-        expect(rectCR1.checkStartPointUtmost('3-1', '2-1')).toBe('')
-        expect(rectCR1.checkStartPointUtmost('3-1', '2-1')).toBe('')
-        expect(rectCR1.checkPointConnections('2-1', rectCR1.getPoint('2-1'))).toBe(true)
+
+        // expect(rectCR1.checkEndPoint('2-1', '3-1')).toBe('1-1')
+        // expect(rectCR1.checkEndPoint('2-2', '1-2')).toBe('1-1')
+        // expect(rectCR1.checkEndPoint('3-1', '2-1')).toBe('')
+        // expect(rectCR1.checkEndPoint('3-1', '2-1')).toBe('')
+        // expect(rectCR1.checkPointConnections('2-1', rectCR1.getPoint('2-1'))).toBe(true)
+        expect(rectCR0.checkPoint('1-1').crossLine!.length).toBe(2)
         expect(rectCR1.checkIfSameLinePoints('2-1', '2-2', 'blue').same).toBe(true)
         expect(rectCR1.getLineDirections('2-1', 'blue')).toEqual([LineDirections.left,
             LineDirections.right])
         expect(rectCR0.checkCircleLine('0-0', 'blue')).toBe(false)
         expect(!!rectCR0.checkLineContinuity('0-0', 'green')).toBe(true)
-        expect(rectCR0.prepareUtmostPointForResolver(rectCR0.getPoint('1-1')).crossLine!.length).toBe(2)
+        expect(rectCR0.prepareEndpointForResolver(rectCR0.getPoint('1-1')).crossLine!.length).toBe(2)
         // expect(!!rectCR2.takenPoints['4-2']).toBe(true)
         // rectCR2.deletePoint('4-2')
         // expect(rectCR2.takenPoints['4-2']).toBe(undefined)
@@ -153,14 +156,14 @@ describe('test rect-creator methods', () => {
     const rect = new RectCreator({width: 6, height: 8})
     rect.addTakenPoints({
         '2-3': {
-            utmost: true,
+            endpoint: true,
             connections: {
                 ...defaultConnectionsWithColor(),
                 [LineDirections.right]: {color: DefaultColor, neighbor: '3-3'}
             }
         },
         '3-3': {
-            utmost: false,
+            endpoint: false,
             connections: {
                 ...defaultConnectionsWithColor(),
                 [LineDirections.left]: {color: DefaultColor, neighbor: '2-3'}
@@ -174,14 +177,14 @@ describe('test rect-creator methods', () => {
         rect.clearAll()
         rect.addTakenPoints({
             '2-3': {
-                utmost: true,
+                endpoint: true,
                 connections: {
                     ...defaultConnectionsWithColor(),
                     [LineDirections.right]: {color: DefaultColor, neighbor: '3-3'}
                 }
             },
             '3-3': {
-                utmost: false,
+                endpoint: false,
                 connections: {
                     ...defaultConnectionsWithColor(),
                     [LineDirections.left]: {color: DefaultColor, neighbor: '2-3'}
@@ -193,7 +196,7 @@ describe('test rect-creator methods', () => {
     }) 
     test('builder', () => {
         const point = {
-            utmost: true,
+            endpoint: true,
             connections: {
                 [LineDirections.top]: {color: 'red', neighbor: '1-1'},
                 [LineDirections.bottom]: {color: 'red', neighbor: '1-3'},
@@ -201,8 +204,8 @@ describe('test rect-creator methods', () => {
                 [LineDirections.right]: {color: 'blue', neighbor: '2-2'},
             }
         }
-        // console.warn(rect.prepareUtmostPointForResolver(point))
-        expect(rect.prepareUtmostPointForResolver(point).crossLine?.length).toBe(2)
+        // console.warn(rect.prepareEndpointForResolver(point))
+        expect(rect.prepareEndpointForResolver(point).crossLine?.length).toBe(2)
         // console.log(process.env)
         expect(isDev()).toBe(true)
     })

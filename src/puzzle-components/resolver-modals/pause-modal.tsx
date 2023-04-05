@@ -1,3 +1,0 @@
-
-
-import './pause-modal.scss'

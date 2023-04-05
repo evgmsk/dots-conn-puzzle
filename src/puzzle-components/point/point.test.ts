@@ -5,7 +5,7 @@ import {defaultSectors, getSectorsData} from "../../helper-fns/helper-fn";
 
 test('sectors data', () => {
     const props1 = { 
-        utmost: true, 
+        endpoint: true,
         connections: {
             ...defaultConnectionsWithColor('blue'),
             [LineDirections.top]: {color: 'blue', neighbor: '1-1'},
@@ -13,7 +13,7 @@ test('sectors data', () => {
         }
     } as ITakenPointProps
     const props2 =  { 
-        utmost: false,
+        endpoint: false,
         joinPoint: ['blue', 'red'],
         connections: {
             ...defaultConnectionsWithColor('blue'),
@@ -22,7 +22,7 @@ test('sectors data', () => {
         }
     }  as ITakenPointProps
     const props3 =  { 
-        utmost: true, 
+        endpoint: true,
         connections: {
             ...defaultConnectionsWithColor('blue'),
             [LineDirections.bottom]: {color: 'blue', neighbor: '1-3'}

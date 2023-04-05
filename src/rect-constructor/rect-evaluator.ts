@@ -1,26 +1,87 @@
 
 import {
-    IUtmostPoints,
-    IUtmostPointsValue,
-    IStartPoints,
-    ITakenPointProps,
+    IEndpoints,
+    IEndpointsValue,
 } from '../constant/interfaces'
 import {PuzzleCommons} from "./rect-commons";
+import {DefaultColor, Height, Width} from "../constant/constants";
+import {copyObj} from "../helper-fns/helper-fn";
 
 
 export class PuzzleEvaluator extends PuzzleCommons {
     linesInterfering = {} as {[key: string]: {[key: string]: number}}
-    utmostPoints = {} as IUtmostPoints
-    lineStartPoints = {} as IStartPoints
     lineError = ''
+    lineEndpoints = {} as IEndpoints
 
-    addLineIntervals(points: IUtmostPoints) {
-        for (const color in points) {
-            this.utmostPoints[color] = points[color]
+    checkPoint = (point: string) => {
+        const {endpoint, connections} = this.getPoint(point)
+        const {crossLine, joinPoint} = endpoint
+            ? this.prepareEndpointForResolver({endpoint, connections})
+            : {crossLine: undefined, joinPoint: undefined}
+        const colors = this.getColors(connections)
+        const neighbors = this.getLineNeighbors(connections)
+        if ((!(crossLine || joinPoint) && colors.length !== 1)
+            || (endpoint && !(crossLine || joinPoint) && neighbors.length !== 1)
+            || colors.includes(DefaultColor)
+            || (!joinPoint && colors.length > 2)
+        ) {
+            this.lineError = `${colors[0]} line broken`
+            return {}
+        }
+        return {endpoint, crossLine, colors, connections, joinPoint, neighbors}
+    }
+
+    separateDotsByLines = () => {
+        console.log('separating starting', copyObj(this.lines))
+        const passed = {} as {[key: string]: boolean}
+        for (const point in this.takenPoints) {
+            if (passed[point]) { continue }
+            const {
+                endpoint,
+                crossLine,
+                colors,
+                connections,
+                joinPoint,
+                neighbors
+            } = this.checkPoint(point)
+            console.log('check point', connections, endpoint, crossLine, joinPoint)
+            if (!connections) return
+            for (const color of colors) {
+                const lineNeighbors = colors.length > 1
+                    ? this.getLineNeighbors(connections, color)
+                    : neighbors
+                const line = crossLine || !endpoint
+                    ? this.getLineFromMiddlePoint(lineNeighbors, point, color)
+                    : this.getLineFromEndpoint(point, color)
+                if (!line.start) return
+                line.line.forEach(p => {
+                    passed[p] = true
+                })
+                this.addPairEndpoints(line.start, line.end, line.color)
+                this.addLine(line.line, line.color)
+                console.log('line', color, this.takenPoints, line)
+            }
+        }
+        return true
+    }
+
+    addLine = (line: string[], color: string) => {
+        if (!this.lines[color]) {
+            this.lines[color] = []
+        }
+        this.lines[color].push(line)
+    }
+
+    addPairEndpoints = (start: string, end: string, color: string) => {
+        const lineIntervals = this.getLineIntervals([start, end])
+        if (this.lineEndpoints[color]) {
+            this.lineEndpoints[color].push(lineIntervals)
+        } else {
+            this.lineEndpoints[color] = [lineIntervals]
         }
     }
 
-    getLineIntervals = (points: string[]): IUtmostPointsValue => {
+    getLineIntervals = (points: string[]): IEndpointsValue => {
         const firstPointCoords = points[0].split('-').map(i => parseInt(i))
         const secondPointCoords = points[1].split('-').map(i => parseInt(i))
         return {
@@ -34,72 +95,17 @@ export class PuzzleEvaluator extends PuzzleCommons {
         }
     }
 
-    getLinesUtmostPoints = () => {
-        for (const line in this.lineStartPoints) {
-            const utmostPoints = this.getLineUtmostPoints(this.lineStartPoints[line], line)
-            console.warn('utmost point', utmostPoints, line, this.lineStartPoints)
-            if (!utmostPoints.length) {
-                return false
-            }
-            this.utmostPoints[line] = this.utmostPoints[line].length
-                ? this.utmostPoints[line].concat(utmostPoints)
-                : utmostPoints
-        }
-        return true
-    }
-
-    getLineUtmostPoints = (startPoints: string[], color: string) => {
-        if (startPoints.length < 2) {
-            this.lineError = `there is one utmost point in the ${color} line`
-            return []
-        }
-        const utmostPoints = [] as IUtmostPointsValue[]
-        const checkedPoint = {} as {[key: string]: number}
-        for (const point of startPoints) {
-            if (checkedPoint[point]) {
-                continue
-            }
-            const linePoints = this.getLinePoints(point, color)
-            const lastLinePoint = linePoints[linePoints.length - 1]
-            if (linePoints.length < 3
-                || !startPoints.includes(lastLinePoint)) {
-                this.lineError = `line ${color} is broken`
-                return []
-            }
-            linePoints.forEach((p, i) => {
-                if (!i || i === linePoints.length - 1) {
-                    checkedPoint[p] = 1
-                } else {
-                    checkedPoint[p] = 2
-                }
-            })
-            utmostPoints.push(this.getLineIntervals([linePoints[0], lastLinePoint]))
-        }
-        if (Object.keys(checkedPoint).length !== Object.keys(this._lines[color]).length) {
-            this.lineError = `${color} lines are corrupted`
-            return []
-        }
-        for (const point in checkedPoint) {
-            if (!this._lines[color][point]) {
-                this.lineError = `${color} lines are corrupted`
-                return []
-            }
-        }
-        this.addLineIntervals({[color]: utmostPoints})
-        return utmostPoints
-    }
-
     evaluatePuzzle = () => {
         let puzzleInterfering = 0
-        for (const line in this._lines) {
-            const restColors = Object.keys(this._lines).filter(col => col !== line)
+        for (const line in this.lines) {
+            const restColors = Object.keys(this.lines).filter(col => col !== line)
             for (const color of restColors) {
                 if (this.linesInterfering[color] && this.linesInterfering[color][line]) {
                     continue
                 }
                 // eslint-disable-next-line no-loop-func
-                this.utmostPoints[line].forEach(utPair => {
-                    this.utmostPoints[color].forEach(uP => {
+                this.lineEndpoints[line].forEach(utPair => {
+                    this.lineEndpoints[color].forEach(uP => {
                         const interfering = this.twoLinesInterfering(uP, utPair)
                         this.linesInterfering[line] = this.linesInterfering[line] || {}
                         this.linesInterfering[color] = this.linesInterfering[color] || {}
@@ -110,20 +116,48 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 })
             }
         }
-        return Math.round(puzzleInterfering)
+        return Math.round(puzzleInterfering
+            * Math.sqrt(this.width * this.height / Height / Width / 10)
+        )
     }
+    //
+    // evaluatePuzzle = () => {
+    //     let puzzleInterfering = 0
+    //     for (const line in this._lines) {
+    //         const restColors = Object.keys(this._lines).filter(col => col !== line)
+    //         for (const color of restColors) {
+    //             if (this.linesInterfering[color] && this.linesInterfering[color][line]) {
+    //                 continue
+    //             }
+    //             // eslint-disable-next-line no-loop-func
+    //             this.lineEndpoints[line].forEach(utPair => {
+    //                 this.lineEndpoints[color].forEach(uP => {
+    //                     const interfering = this.twoLinesInterfering(uP, utPair)
+    //                     this.linesInterfering[line] = this.linesInterfering[line] || {}
+    //                     this.linesInterfering[color] = this.linesInterfering[color] || {}
+    //                     this.linesInterfering[color][line] = interfering
+    //                     this.linesInterfering[line][color] = interfering
+    //                     puzzleInterfering += interfering
+    //                 })
+    //             })
+    //         }
+    //     }
+    //     return Math.round(puzzleInterfering
+    //         * Math.sqrt(this.width * this.height / Height / Width / 100)
+    //     )
+    // }
 
-    addToStartPoints = (key: string, pointProps: ITakenPointProps) => {
-        const colors = this.getColors(pointProps.connections)
-        for (const color of colors) {
-            if (!this.lineStartPoints[color]) {
-                this.lineStartPoints[color] = []
-            }
-            this.lineStartPoints[color].push(key)
-        }
-    }
+    // addToStartPoints = (key: string, pointProps: ITakenPointProps) => {
+    //     const colors = this.getColors(pointProps.connections)
+    //     for (const color of colors) {
+    //         if (!this.lineStartPoints[color]) {
+    //             this.lineStartPoints[color] = []
+    //         }
+    //         this.lineStartPoints[color].push(key)
+    //     }
+    // }
 
-    cosOfLines = (line1: IUtmostPointsValue, line2: IUtmostPointsValue) => {
+    cosOfLines = (line1: IEndpointsValue, line2: IEndpointsValue) => {
 
         const linesMultiply = (line1.intervals.x * line2.intervals.x) +
             (line1.intervals.y   * line2.intervals.y)
@@ -134,7 +168,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return linesMultiply / line1Abs / line2Abs
     }
 
-    twoLinesInterfering = (line1: IUtmostPointsValue, line2: IUtmostPointsValue) => {
+    twoLinesInterfering = (line1: IEndpointsValue, line2: IEndpointsValue) => {
         const { coords1: [l1x1, l1y1], coords2: [l1x2, l1y2] } = line1
         const { coords1: [l2x1, l2y1], coords2: [l2x2, l2y2] } = line2
         const line1X = [l1x1, l1x2].sort()

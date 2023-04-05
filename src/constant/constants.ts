@@ -26,4 +26,13 @@ export const Height = 6
 
 export const LocalStorageName = 'dot_puzzles'
 
+export const Congratulations = [
+    'Great!', 'Fantastic!', 'Awesome!', 'Incredible!', 'Good!', 'Perfect!'
+]
+
+export const ResolveModalQuestions = {
+    next: 'Open next puzzle?',
+    new: 'Create own puzzle'
+}
+
 

@@ -1,14 +1,22 @@
 @import "../../assets/scss/constant";
 
-.dots-conn-puzzle_menu {
+.dots-puzzle_menu {
     height: auto;
     display: flex;
     margin: 0 0 10px;
     flex-direction: column;
-}
-.dots-puzzle_menu {
+    &__level {
+        color: aliceblue;
+        text-align: center;
+        margin-right: 10px;
+        height: 1.6rem;
+        line-height: 1.6rem;
+    }
+
     &__dimensions {
         display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
     &__footer {
         display: flex;

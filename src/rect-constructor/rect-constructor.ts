@@ -1,36 +1,36 @@
 import { MinLinesNumber, LineColors, Height, Width } from '../constant/constants'
-import {IUtmostPoints, IUtmostPointsValue, ITakenPoints} from '../constant/interfaces'
+import {IEndpoints, IEndpointsValue, ITakenPoints} from '../constant/interfaces'
 import { LinedRectBase } from './rect-base'
 
 
 export class LinedRect extends LinedRectBase {
-    lineEndPoints = {} as IUtmostPoints
+    lineEndPoints = {} as IEndpoints
     linesInterfering = {} as {[key: string]: {[key: string]: number}}
-    _startPoints = {} as IUtmostPoints
+    _startPoints = {} as IEndpoints
 
     get startPoints() {
         return this.lineEndPoints
     }
 
-    addStartPoints(points: IUtmostPoints) {
+    addStartPoints(points: IEndpoints) {
         for (const color in points) {
             this._startPoints[color] = points[color]
         }
     }
 
-    convertUtmostPointsToStart = (points: ITakenPoints, color: string) => {
-        const pointKeys = Object.keys(points)
-        if (pointKeys.length === 2) {
-           // this.addLineIntervals({[color]: [this.getLineIntervals(pointKeys)]})
-        } else if (pointKeys.length > 2) {
-
-        }
-        for (const point in points) {
-            const coordinates = ''
-            const {utmost, crossLine, joinPoint} = points[point]
-
-        }
-    }
+    // convertUtmostPointsToStart = (points: ITakenPoints, color: string) => {
+    //     const pointKeys = Object.keys(points)
+    //     if (pointKeys.length === 2) {
+    //        // this.addLineIntervals({[color]: [this.getLineIntervals(pointKeys)]})
+    //     } else if (pointKeys.length > 2) {
+    //
+    //     }
+    //     for (const point in points) {
+    //         const coordinates = ''
+    //         const {utmost, crossLine, joinPoint} = points[point]
+    //
+    //     }
+    // }
 
     createRandomUtmostPoints = (linesNumber = 3) => {
         const linesToDimension = linesNumber
@@ -70,7 +70,7 @@ export class LinedRect extends LinedRectBase {
     //         points: {},
     //         intervals: {x: [], y: []},
     //         difficulty: 0,
-    //     } as IUtmostPointsValue
+    //     } as IEndpointsValue
     //     let firstPoint = null as unknown as string
     //     while (true) {
     //         const [x, y] = this.getPoint(firstPoint)
@@ -111,7 +111,7 @@ export class LinedRect extends LinedRectBase {
     //     // console.warn('interfering', this.linesInterfering, colors)
     // }
 
-    getXYLinesIntersection = (points1: IUtmostPointsValue, points2: IUtmostPointsValue) => {
+    getXYLinesIntersection = (points1: IEndpointsValue, points2: IEndpointsValue) => {
         // const {x: x1I, y: y1I} = points1.intervals!
         // const {x: x2I, y: y2I} = points2.intervals!
         // if (x1I[1] < x2I[0]
@@ -207,11 +207,11 @@ export class LinedRect extends LinedRectBase {
         }, 0)
     }
 
-    // getPointInterfering = (utmostPoints: IstartPointsValue, point: number[]) => {
-    //     if (utmostPoints.intervals.x[0] > point[0]
-    //         || utmostPoints.intervals.x[1] < point[0]
-    //         || utmostPoints.intervals.y[0] > point[1]
-    //         || utmostPoints.intervals.y[1] < point[1]) {
+    // getPointInterfering = (lineEndpoints: IstartPointsValue, point: number[]) => {
+    //     if (lineEndpoints.intervals.x[0] > point[0]
+    //         || lineEndpoints.intervals.x[1] < point[0]
+    //         || lineEndpoints.intervals.y[0] > point[1]
+    //         || lineEndpoints.intervals.y[1] < point[1]) {
     //             return 0
     //         }
     //         return 1

@@ -2,7 +2,7 @@ import React from "react";
 
 
 
-import './congratulation-modal.scss'
+import './adds-modal.scss'
 
 
 export interface ICongratulation {
@@ -10,7 +10,7 @@ export interface ICongratulation {
     [key: string]: any
 }
 
-export const CongratulationModal: React.FC<ICongratulation> = (props) => {
+export const AddsModal: React.FC<ICongratulation> = (props) => {
     const {message} = props
     return (
         <div className="congrats-modal">
