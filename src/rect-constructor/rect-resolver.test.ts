@@ -9,8 +9,8 @@ import {IPuzzle} from "../constant/interfaces";
 
 describe('test rect-resolver methods', () => {
     const puzzleData: IPuzzle = {
-        'date': "Mon Mar 13 2023 15:14:10 GMT+0400 (Georgia Standard Time)",
-        "name": "puzzle4x4_colors4",
+        'createdAt': "Mon Mar 13 2023 15:14:10 GMT+0400 (Georgia Standard Time)",
+        "creator": "puzzle4x4_colors4",
         "difficulty": 17,
         "lines": {'yellow': [['0-0', '1-0', '2-0']]},
         "points": {

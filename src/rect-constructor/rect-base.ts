@@ -17,10 +17,15 @@ export class LinedRectBase implements ILinedRect {
     rect = {} as IRectCell
     _takenPoints = {} as ITakenPoints
     lines = {} as ISLines
+    pointsUpdateCB = (p: ITakenPoints) => {}
     constructor(size: IRectDimension) {
         this._width = size.width
         this._height = size.height
         this.createRect()
+    }
+
+    setPointsUpdateCB = (cb: (p: ITakenPoints) => {}) => {
+        this.pointsUpdateCB = cb
     }
 
     get takenPoints() {
@@ -37,6 +42,7 @@ export class LinedRectBase implements ILinedRect {
             pts[key] = points[key]
         }
         this._takenPoints = pts
+        this.pointsUpdateCB(this._takenPoints)
         if (!isDev()) return
         // console.warn('add points', points, this.takenPoints)
     }
@@ -45,10 +51,12 @@ export class LinedRectBase implements ILinedRect {
         const pts = this.takenPoints
         delete pts[key]
         this._takenPoints = pts
+        this.pointsUpdateCB(this._takenPoints)
     }
 
     clearPoints = () => {
         this._takenPoints = {} as ITakenPoints
+        this.pointsUpdateCB(this._takenPoints)
     }
 
     get width() {
@@ -63,12 +71,14 @@ export class LinedRectBase implements ILinedRect {
         this._width = width
         this._takenPoints = {} as ITakenPoints
         this.createRect()
+        this.pointsUpdateCB(this._takenPoints)
     }
 
     setHeight(height: number) {
         this._height = height
         this._takenPoints = {} as ITakenPoints
         this.createRect()
+        this.pointsUpdateCB(this._takenPoints)
     }
 
     createRect = () => {
@@ -128,12 +138,16 @@ export class LinedRectBase implements ILinedRect {
         return neighbors
     }
 
-    getLineNeighbors = (props: string | IDotConnections, color?: string) => {
+    getLineNeighbors = (
+        props: string | IDotConnections,
+        color?: string,
+        points = this._takenPoints
+    ) => {
         const connections = typeof props === 'string'
-            ? this.getPoint(props)?.connections
+            ? points[props]?.connections
             : props
         if (!connections || !connections[LineDirections.top]) {
-            console.error('invalid props get line neighbors', props, this.takenPoints)
+            console.error('invalid props get line neighbors', props, points, connections)
             return []
         }
         const neighbors = []
@@ -151,25 +165,24 @@ export class LinedRectBase implements ILinedRect {
         stopFn: Function, // function to determine condition to stop loop (target point reached)
         color?: string,
         index?: number, // required to select neighbor (prevPoint) in case of more than one valid neighbors of start point
-        stepCB?: Function, // function to call with params of a current line point
+        points = this._takenPoints, // function to call with params of a current line point
         ): string => {
             let current = from
             let prevPoint = passed
-            let lineNeighbors = this.getLineNeighbors(current, color)
+            let lineNeighbors = this.getLineNeighbors(current, color, points)
             let nextPoint = lineNeighbors.filter(n => n !== passed)[0]
             if (!lineNeighbors.length || (!prevPoint && lineNeighbors.length !== 1)) {
                 isDev() && console.error('invalid props because of two ways or no ways', color,
-                    current, prevPoint, lineNeighbors, nextPoint, index, this.takenPoints)
+                    current, prevPoint, lineNeighbors, nextPoint, index)
                 return ''
             }
             while(!stopFn(current, index)) {
-                stepCB &&  stepCB(current)
                 prevPoint = current
                 current = nextPoint
                 if (!current) {
                     return ''
                 }
-                lineNeighbors = this.getLineNeighbors(nextPoint, color)
+                lineNeighbors = this.getLineNeighbors(nextPoint, color, points)
                 // eslint-disable-next-line no-loop-func
                 nextPoint = lineNeighbors.filter(n => n !== prevPoint)[0]
             }
@@ -193,25 +206,30 @@ export class LinedRectBase implements ILinedRect {
         return directions
     }
 
-    getLinePartPoints = (color: string, current: string, prev= ''): string[] => {
-        const {connections, endpoint, crossLine} = this.getPoint(current) || {}
+    getLinePartPoints = (
+        color: string,
+        current: string,
+        prev= '',
+        points = this._takenPoints
+    ): string[] => {
+        const {connections, endpoint, crossLine} = points[current] || {}
         if (!connections || (!prev && (crossLine || !endpoint))) {
-            console.error('invalid start line point', color, current, crossLine, this.takenPoints)
+            console.error('invalid start line point', color, current, crossLine, points)
             return []
         }
         const linePoints = prev ? [prev] : [current]
-        const neighbors = this.getLineNeighbors(current, color)
+        const neighbors = this.getLineNeighbors(current, color, points)
         if (!prev && neighbors.length !== 1) {
-            isDev() && console.error('broken line')
+            isDev() && console.error('broken line', neighbors, linePoints, prev, current)
             return []
         }
         const stopFn = (key: string) => {
             linePoints.push(key)
-            return connections && this.getLineNeighbors(key, color).length < 2
+            return connections && this.getLineNeighbors(key, color, points).length < 2
         }
-        !prev && this.goToLinePoint(neighbors[0], current, stopFn, color)
-        prev && this.goToLinePoint(current, prev, stopFn, color)
-        console.log('line', linePoints)
+        !prev && this.goToLinePoint(neighbors[0], current, stopFn, color, 0, points)
+        prev && this.goToLinePoint(current, prev, stopFn, color, 0, points)
+        // console.log('line', linePoints)
         return linePoints
     }
 
@@ -220,8 +238,7 @@ export class LinedRectBase implements ILinedRect {
         const resLine2 = this.checkIfSameLinePoints(prev, next, color)
         return resLine1.same
             || resLine2.same
-            || (resLine1.endpoint
-                && resLine2.endpoint === resLine1.endpoint)
+            || (resLine1.endpoint && resLine2.endpoint === resLine1.endpoint)
     }
 
     checkIfSameLinePoints = (targetPoint: string, passedPoint: string, color: string) => {

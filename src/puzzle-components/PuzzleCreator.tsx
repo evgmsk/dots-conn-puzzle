@@ -1,15 +1,16 @@
 import React, { useEffect, useState } from 'react'
 
-import { Puzzle } from './rect/rect'
+import { Puzzle } from './rect/Rect'
 import {ICollision, ITakenPointProps, ITakenPoints, LineDirections} from '../constant/interfaces'
 
-import { CustomPuzzleMenu } from './menu/custom-puzzle-menu'
+import { CreationPuzzleMenu } from './menu/CreationPuzzleMenu'
 
 import { Height, LineColors, Width } from '../constant/constants'
 import { pC } from '../rect-constructor/rect-creator'
-import { CreatorConfirmationModal } from './creator-modals/creator-confirmation-modal'
-import { manager } from '../puzzles-storage/puzzles-manager'
+import { CreationConfirmModal } from './creator-modals/CreationConfirmModal'
+// import { manager } from '../puzzles-storage/puzzles-manager'
 import {isDev} from "../helper-fns/helper-fn";
+import {handleSavePuzzle} from "../puzzles-storage/puzzles-manager";
 
 
 export interface IConfirm {
@@ -26,6 +27,12 @@ export const PuzzleCreator: React.FC = () => {
     const [points, setPoints] = useState({} as ITakenPoints)
     const [mouseDown, setMouseDown] = useState('')
     const [level, setLevel] = useState(0)
+    // const {handleSavePuzzle} = usePuzzlesManager()
+    const setPCB = (p: ITakenPoints) => {
+        setPoints(p)
+    }
+
+    pC.setPointsUpdateCB(setPCB as (p: ITakenPoints) => {})
 
     useEffect(() => {
         pC.setWidth(width)
@@ -43,12 +50,12 @@ export const PuzzleCreator: React.FC = () => {
             joinPoint: data
         }
         cb(...args.slice(0, -1), interfere)
-        setPoints(pC.takenPoints)
+        // setPoints(pC.takenPoints)
     }
     
-    const savePuzzle = () => {
+    const savePuzzleHandler = () => {
         console.log('save', pC.puzzle)
-        if (pC.puzzle) return manager.savePuzzle(pC.puzzle)
+        if (pC.puzzle) return handleSavePuzzle(pC.puzzle)
         // const valid = pC.checkPuzzle()
         // if (valid !== 'valid') {
         //     // TODO resolve errors
@@ -57,7 +64,6 @@ export const PuzzleCreator: React.FC = () => {
         // }
         // const puzzle = pC.buildPuzzle()
         console.log('save', pC.puzzle)
-        // puzzle && manager.savePuzzle(puzzle)
     }
 
     const undo = () => {
@@ -67,7 +73,7 @@ export const PuzzleCreator: React.FC = () => {
 
     const clearAll = () => {
         pC.clearAll()
-        setPoints(pC.takenPoints)
+        // setPoints(pC.takenPoints)
     }
 
     const redo = () => {
@@ -229,12 +235,12 @@ export const PuzzleCreator: React.FC = () => {
         changeWidth,
         changeHeight,
         redo,
-        savePuzzle
+        savePuzzle: savePuzzleHandler
     }
 
     return (
         <div className='dots-conn-puzzle_creator'>
-            <CustomPuzzleMenu
+            <CreationPuzzleMenu
                 handlers={customPuzzleMenuHandlers}
                 color={color}
                 width={width}
@@ -248,7 +254,7 @@ export const PuzzleCreator: React.FC = () => {
                 handlers={customPuzzleHandlers}
                 mouseColor={color}
             />
-            <CreatorConfirmationModal
+            <CreationConfirmModal
                 handler={confirmationHandler}
                 question={confirm.question}
             />

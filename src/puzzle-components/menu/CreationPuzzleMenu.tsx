@@ -1,6 +1,6 @@
 import { LineColors } from '../../constant/constants'
 import {IHandlers} from '../../constant/interfaces'
-import { ColorBTN } from '../color-btn/color-btn'
+import { ColorBtn } from '../color-btn/ColorBtn'
 
 import './custom-puzzle-menu.scss'
 
@@ -12,7 +12,7 @@ export interface ICustomPuzzle {
     handlers: IHandlers
 }
 
-export const CustomPuzzleMenu: React.FC<ICustomPuzzle> = 
+export const CreationPuzzleMenu: React.FC<ICustomPuzzle> =
     (props: ICustomPuzzle) => {
     const {
         color,
@@ -70,9 +70,9 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
                 {/* <button 
                     className='dots-puzzle_menu-btn' 
                     type="button"
-                    onClick={() => savePuzzle()}
+                    onClick={() => handleSavePuzzle()}
                 >
-                    savePuzzle
+                    handleSavePuzzle
                 </button> */}
                
                 
@@ -80,7 +80,7 @@ export const CustomPuzzleMenu: React.FC<ICustomPuzzle> =
             <div className='dots-puzzle_menu__colors-wrapper'>
                 {
                     LineColors.slice(1).map(c => {
-                        return <ColorBTN 
+                        return <ColorBtn
                                     handlers={{selectColor}} 
                                     color={c} 
                                     selected={color === c}

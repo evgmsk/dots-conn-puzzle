@@ -24,7 +24,13 @@ export const DefaultConnections = {
 export const Width = 6
 export const Height = 6 
 
-export const LocalStorageName = 'dot_puzzles'
+export const LSName = 'dot_puzzles_name'
+export const LSToken = 'dot_puzzles_token'
+export const LSLevel = 'dot_puzzles_level'
+export const LSAdmin = 'dot_puzzles_admin'
+export const LSPuzzles = 'dot_puzzles'
+
+export const Admin = 'admin'
 
 export const Congratulations = [
     'Great!', 'Fantastic!', 'Awesome!', 'Incredible!', 'Good!', 'Perfect!'
@@ -35,4 +41,5 @@ export const ResolveModalQuestions = {
     new: 'Create own puzzle'
 }
 
-
+export const BaseDevUrl = 'http://localhost:5000'
+export const BaseProdUrl = ''

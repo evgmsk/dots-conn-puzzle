@@ -4,7 +4,7 @@ import React from "react"
 import './rect.scss'
 
 import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/interfaces"
-import { Point } from "../point/point"
+import { Point } from "../point/Point"
 // import { copyObj } from "../../helper-fns/helper-fn"
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {

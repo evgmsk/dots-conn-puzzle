@@ -1,10 +1,10 @@
 import {useEffect, useState} from "react"
 
-import Timer from './timer'
+import Timer from './Timer'
 import {IHandlers} from "../../constant/interfaces";
 
 import './resolver-top-panel.scss'
-import {ResolverModal} from "../resolver-modals/resolver-modal";
+import {ResolverModal} from "../resolver-modals/ResolverModal";
 
 export interface ITopPanel {
     handlers: IHandlers

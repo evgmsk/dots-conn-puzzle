@@ -5,8 +5,6 @@ import {
 } from '../constant/interfaces'
 import {PuzzleCommons} from "./rect-commons";
 import {DefaultColor, Height, Width} from "../constant/constants";
-import {copyObj} from "../helper-fns/helper-fn";
-
 
 export class PuzzleEvaluator extends PuzzleCommons {
     linesInterfering = {} as {[key: string]: {[key: string]: number}}
@@ -31,35 +29,34 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return {endpoint, crossLine, colors, connections, joinPoint, neighbors}
     }
 
-    separateDotsByLines = () => {
-        console.log('separating starting', copyObj(this.lines))
+    preparePuzzleEvaluation = () => {
+        console.log('prepare')
         const passed = {} as {[key: string]: boolean}
         for (const point in this.takenPoints) {
             if (passed[point]) { continue }
             const {
-                endpoint,
-                crossLine,
                 colors,
                 connections,
-                joinPoint,
                 neighbors
             } = this.checkPoint(point)
-            console.log('check point', connections, endpoint, crossLine, joinPoint)
-            if (!connections) return
+            if (!connections) {
+                return console.error('connect', colors, point)
+            }
             for (const color of colors) {
                 const lineNeighbors = colors.length > 1
                     ? this.getLineNeighbors(connections, color)
                     : neighbors
-                const line = crossLine || !endpoint
+                const line = lineNeighbors.length > 1
                     ? this.getLineFromMiddlePoint(lineNeighbors, point, color)
                     : this.getLineFromEndpoint(point, color)
-                if (!line.start) return
+                if (!line.start) {
+                    return console.error(line)
+                }
                 line.line.forEach(p => {
                     passed[p] = true
                 })
                 this.addPairEndpoints(line.start, line.end, line.color)
                 this.addLine(line.line, line.color)
-                console.log('line', color, this.takenPoints, line)
             }
         }
         return true
@@ -117,7 +114,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
             }
         }
         return Math.round(puzzleInterfering
-            * Math.sqrt(this.width * this.height / Height / Width / 10)
+            * Math.sqrt(this.width * this.height / Height / Width)
         )
     }
     //

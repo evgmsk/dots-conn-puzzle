@@ -9,20 +9,24 @@ export interface IPuzzleSelectorProps {
 
 
 export const PuzzleSelector: React.FC<IPuzzleSelectorProps> = (props: IPuzzleSelectorProps) => {
-    
     const {puzzles, setPuzzle} = props
-
+    console.log(puzzles)
+    if (!Array.isArray(puzzles)) {
+        return <>'Oops something wrong! We'll fix it in a few minutes'</>
+    }
     return <div className='puzzles-container'>
         {
             puzzles.map((p, i) => {
-                return p.name 
+                const creator = p.creator
+                console.log(puzzles, p, creator)
+                return creator
                 ? <button
                     className='puzzle-btn'
                     type="button"
-                    key={i + p.name}
+                    key={i + creator}
                     onClick={() => setPuzzle(puzzles[i])}
                 >
-                    {p.name.slice(0, 16)}
+                    {creator.slice(0, 16)}
                 </button>
                 : null
             })

@@ -1,4 +1,10 @@
-import {DefaultColor, DefaultConnections, DefaultSectors} from "../constant/constants";
+import {
+    DefaultColor,
+    DefaultConnections,
+    DefaultSectors,
+    LSPuzzles,
+    LSToken
+} from "../constant/constants";
 import {
     IDotSectorProps,
     ITakenPointProps,
@@ -41,6 +47,19 @@ export const getCommonColor = (colors1: string[], colors2: string[]) => {
         }
     }
     return ''
+}
+
+export const tokenizedHeadersPost = (token = localStorage.getItem(LSToken)) => ({
+    Authentication: `bearer-${token}`,
+    "Content-Type": "application/json",
+})
+
+export const tokenizedHeadersGet = (token = localStorage.getItem(LSToken)) => ({
+    Authentication: `bearer-${token}`,
+})
+
+export function getPuzzlesFromStorage() {
+    return JSON.parse(localStorage.getItem(LSPuzzles) || '[]')
 }
 
 export const sectorIndex = (dir: LineDirections) => {
@@ -96,3 +115,4 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
     }
     return copy
 }
+

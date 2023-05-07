@@ -5,7 +5,7 @@ export interface IColorBtnsProps extends IColorBTN {
     handlers: IHandlers
 }
 
-export const ColorBTN: React.FC<IColorBtnsProps> = (props: IColorBtnsProps) => {
+export const ColorBtn: React.FC<IColorBtnsProps> = (props: IColorBtnsProps) => {
     const {selected, color, handlers: {selectColor}} = props
     const btnClass = `btn_color btn-${color}${selected ? ' selected' : ''}`
     return <button 

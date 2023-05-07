@@ -20,11 +20,12 @@ export class PuzzleResolver extends PuzzleCommons {
 
     constructor(props: IPuzzle) {
         super(props);
+        console.log('puzzle props', props)
         this.getStartPoints(props.points as ITakenPoints)
-        this.puzzleName = props.name
-        this.lines = props.lines
+        this.puzzleName = props.creator
+        this.lines = this.separateDotsByLines(props.points)
         this.totalPoints = props.points!
-        this.presetColors(props.lines)
+        this.presetColors(this.lines)
         isDev() && console.log('puzzle created', this.takenPoints)
     }
 
@@ -175,7 +176,7 @@ export class PuzzleResolver extends PuzzleCommons {
         this.highlightedEndpoints.length = 0
         this.interferedLines = {} as ILines
         if (endpoint && !crossLine && this.getLineNeighbors(connections).length) {
-            const {start, end} = this.getLineFromEndpoint(point, color, false)
+            const {start, end} = this.getLineFromEndpoint(point, color,false)
             if (!end) {return}
             const lastPointProps = this.getPoint(end)
             if (start === point && lastPointProps.endpoint && !lastPointProps.crossLine) {
@@ -293,7 +294,8 @@ export class PuzzleResolver extends PuzzleCommons {
             return
         }
         const neighbors = this.getLineNeighbors(point, color)
-        line = this.getLineFromMiddlePoint(neighbors, point, color, false).line as string[]
+        line = this.getLineFromMiddlePoint(neighbors, point, color,false)
+            .line as string[]
         if (!line || !line.length) {
             return
         }

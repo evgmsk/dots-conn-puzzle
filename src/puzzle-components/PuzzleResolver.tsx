@@ -1,31 +1,32 @@
 import React, { useEffect, useState } from 'react'
 
-import { Puzzle } from './rect/rect'
+import { Puzzle } from './rect/Rect'
 import {IPuzzle, ITakenPointProps, ITakenPoints} from '../constant/interfaces'
-import { PuzzleSelector } from './puzzles-menu'
-import {manager} from '../puzzles-storage/puzzles-manager'
+import { PuzzleSelector } from './PuzzlesMenu'
+// import {manager} from '../puzzles-storage/puzzles-manager'
 import {PuzzleResolver as PR} from '../rect-constructor/rect-resolver'
 // import {AddsModal} from "./resolver-modals/adds-modal";
 import {isDev} from "../helper-fns/helper-fn";
-import {ResolverTopPanel} from './resolver-components/resolver-top-panel'
-import {ResolverModal} from "./resolver-modals/resolver-modal";
+import {ResolverTopPanel} from './resolver-components/ResolverTopPanel'
+import {ResolverModal} from "./resolver-modals/ResolverModal";
 import {Congratulations} from "../constant/constants";
+import {puzzlesManager} from "../puzzles-storage/puzzles-manager";
 
 let resolver = {} as PR
 
 export const PuzzleWrapper: React.FC = () => {
-    const [puzzles, setPuzzles] = useState(manager.puzzles)
+    const [puzzles, setPuzzles] = useState(puzzlesManager.puzzles)
     const [puzzle, setPuzzle] = useState({} as IPuzzle)
+    const pCB = (p: IPuzzle[]) => {
+        setPuzzles(p)
+    }
+    puzzlesManager.setCB(pCB as (p: IPuzzle[]) => {})
 
     const nextPuzzle = (puzzle = {} as IPuzzle) => {
         setPuzzle(puzzle)
     }
-    
-    useEffect(() => {
-        setPuzzles(manager.puzzles)
-    }, [])
 
-    return puzzle.name 
+    return puzzle.creator
       ? <PuzzleResolver puzzle={puzzle} nextPuzzle={nextPuzzle}/>
       : <PuzzleSelector setPuzzle={setPuzzle} puzzles={puzzles} />
 }
@@ -49,6 +50,13 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
         setPoints(resolver.takenPoints)
         console.log('taken points & props', resolver.difficulty, resolver.takenPoints, props, resolver.lines)
     }, [props])
+
+    useEffect(() => {
+        if (resolved && resolver.puzzleName.includes('dots-puzzle')) {
+            const level = resolver.difficulty
+
+        }
+    }, [resolved])
 
     const handleMouseDown = (key: string) => {
         if (resolved) return

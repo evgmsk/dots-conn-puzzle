@@ -89,9 +89,9 @@ export interface ILines {
 export interface LineAndIndex {index: number, line: string[]}
 
 export interface IPuzzle {
-    name: string
-    date: Date | string
-    lines: ISLines
+    creator: string
+    createdAt: Date | string
+    lines?: ISLines
     width: number
     height: number
     difficulty: number

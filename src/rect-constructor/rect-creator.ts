@@ -1,4 +1,4 @@
-import {Height, Width} from "../constant/constants";
+import {Height, LSName, Width} from "../constant/constants";
 import {
     ICollision,
     IPuzzle,
@@ -43,6 +43,7 @@ export class RectCreator extends PuzzleEvaluator {
         this.lineError = ''
         this.linesInterfering = {}
         this.lineEndpoints = {} as IEndpoints
+        this.pointsUpdateCB(this._takenPoints)
     }
 
     updateSteps = () => {
@@ -70,24 +71,26 @@ export class RectCreator extends PuzzleEvaluator {
 
     buildPuzzle = (): IPuzzle | undefined => {
         console.log(Object.keys(this.lines).length)
+        const name = localStorage.getItem(LSName)
         if (!Object.keys(this.lines).length) {
             return
         }
         const difficulty = this.evaluatePuzzle()
         const {width, height, lines} = this
-        const date = new Date()
+        const createdAt = new Date()
         const colors = Object.keys(lines).length
-        const name = `puzzle_${width}x${height}_colors-${colors}_diff-${difficulty}`
+        const creator = `${name}_size-${width}x${height}_colors-${colors}_diff-${difficulty}`
+        console.log('new puzzle', name, creator)
         const puzzle = {
-            date,
-            name,
+            createdAt,
+            creator,
             difficulty,
-            lines,
             width,
             height,
             points: this.getTotalPoints()
         } as IPuzzle
         this.puzzle = puzzle
+
         return puzzle
     }
 
@@ -141,7 +144,7 @@ export class RectCreator extends PuzzleEvaluator {
             this.updateSteps()
             pointProps.endpoint = true
         }
-        if (pointProps.endpoint && pC.puzzleFulfilled() && this.separateDotsByLines()) {
+        if (pointProps.endpoint && pC.puzzleFulfilled() && this.preparePuzzleEvaluation()) {
             console.log(this.lines, this.lineEndpoints)
             this.buildPuzzle()
             console.log(this.puzzle)

@@ -1,0 +1,27 @@
+.confirm-modal {
+    position: absolute;
+    //width: 40vw;
+    //height: 40vh;
+    padding: 20px 25px;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background-color: rgba(10, 10, 200, .2);
+    font-size: 2rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    .btn-close {
+        position: absolute;
+        right: 10px;
+        top: 10px;
+    }
+    input {
+        margin: 20px 0;
+        min-height: 2rem;
+        font-size: 1.4rem;
+        padding: 10px 15px;
+        border-radius: 4px;
+    }
+}
