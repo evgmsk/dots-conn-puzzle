@@ -9,6 +9,7 @@
         border-radius: 100%;
         width: 100%;
         height: $minor-line-size / $main-line-size * 100%;
+        transform: scale(.9);
         @content;
     }
 }
@@ -87,12 +88,12 @@
         // box-sizing: border-box;
         border-radius: 0;
         
-        @each $col in $colors {
-            &.fill-#{$col} {
+        @each $name, $col in $colors {
+            &.fill-#{$name} {
                 background-color: #{$col}; 
                 @include sector-border($dir, $col);
                 border: 1px solid #{$col};
-                @if $col == lightgray {
+                @if $name == 'lightgrey' {
                     border-color: darken($col, 20%);
                 }
                 @for $j from 2 to 5 {
@@ -117,17 +118,16 @@
 
                 }
             }
-
         }
-
     }
 }
+
 @each $dir in $directions {
     .line-#{$dir} {
         position: absolute;
         z-index: 1;
-        @each $col in $colors {
-            &.line-#{$col} {
+        @each $name, $col in $colors {
+            &.line-#{$name} {
                 background-color: #{$col};
                 @if $dir == 'top' {
                     width: $minor-line-size;
@@ -144,8 +144,8 @@
                             left: -20%;
                         }
                         @include line-after {
-                            bottom: 43%;
-                            left: -100%;
+                            bottom: 41%;
+                            left: -95%;
                         }
                     }
                     &.turn-right {
@@ -156,7 +156,7 @@
                         }
                         @include line-after {
                             bottom: 40%;
-                            left: 100%;
+                            left: 95%;
                         }
                     }
                     &.turn-bottom {
@@ -176,11 +176,11 @@
                         border-top-right-radius: $line-radius;
                         @include line-before($col) {
                             bottom: 43%;
-                            left: -43%;
+                            left: -32%;
                         }
                         @include line-after {
-                            bottom: 10%;
-                            left: -100%;
+                            bottom: 12%;
+                            left: -95%;
                         }
                     }
                     &.turn-right {
@@ -190,8 +190,8 @@
                             left: 30%;
                         }
                         @include line-after {
-                            bottom: 10%;
-                            left: 100%;
+                            bottom: 12%;
+                            left: 95%;
                         }
                     }
                     &.turn-top {

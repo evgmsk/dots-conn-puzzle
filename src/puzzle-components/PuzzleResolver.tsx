@@ -3,60 +3,68 @@ import React, { useEffect, useState } from 'react'
 import { Puzzle } from './rect/Rect'
 import {IPuzzle, ITakenPointProps, ITakenPoints} from '../constant/interfaces'
 import { PuzzleSelector } from './PuzzlesMenu'
-// import {manager} from '../puzzles-storage/puzzles-manager'
+
 import {PuzzleResolver as PR} from '../rect-constructor/rect-resolver'
-// import {AddsModal} from "./resolver-modals/adds-modal";
+
 import {isDev} from "../helper-fns/helper-fn";
 import {ResolverTopPanel} from './resolver-components/ResolverTopPanel'
 import {ResolverModal} from "./resolver-modals/ResolverModal";
-import {Congratulations} from "../constant/constants";
+import {Congratulations, DefaultColor} from "../constant/constants";
 import {puzzlesManager} from "../puzzles-storage/puzzles-manager";
+import {shadowState} from './finger-shadow/finger-shadow-state'
+import {pC} from "../rect-constructor/rect-creator";
 
 let resolver = {} as PR
 
 export const PuzzleWrapper: React.FC = () => {
     const [puzzles, setPuzzles] = useState(puzzlesManager.puzzles)
-    const [puzzle, setPuzzle] = useState({} as IPuzzle)
-    const pCB = (p: IPuzzle[]) => {
-        setPuzzles(p)
-    }
-    puzzlesManager.setCB(pCB as (p: IPuzzle[]) => {})
+    const [puzzle, setPuzzle] = useState(false)
 
-    const nextPuzzle = (puzzle = {} as IPuzzle) => {
-        setPuzzle(puzzle)
+    const pCB = (p: IPuzzle) => {
+        console.log('new', p)
+        setPuzzle(!!p)
     }
 
-    return puzzle.creator
-      ? <PuzzleResolver puzzle={puzzle} nextPuzzle={nextPuzzle}/>
-      : <PuzzleSelector setPuzzle={setPuzzle} puzzles={puzzles} />
+    useEffect(() => {
+        const unsubPuzzles = puzzlesManager.$puzzles.subscribe(setPuzzles)
+        const unsubPuzzle = puzzlesManager.$unresolved.subscribe(pCB)
+        return () => {
+            unsubPuzzles()
+            unsubPuzzle()
+        }
+    }, [])
+
+    const handleChoosingPuzzle = (p: IPuzzle) => {
+        puzzlesManager.setUnresolved(p)
+    }
+
+    return puzzle
+      ? <PuzzleResolver verify={false} />
+      : <PuzzleSelector setPuzzle={handleChoosingPuzzle} puzzles={puzzles} />
 }
 
-export interface IPuzzleResolverProps {
-    puzzle: IPuzzle
-    nextPuzzle(): void
-}
-
-export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleResolverProps) => {
-    const {width, height} = props.puzzle
+export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) => {
+    const {width, height} = puzzlesManager.unresolvedPuzzle
     const [points, setPoints] = useState({} as ITakenPoints)
     const [color, setColor] = useState('')
     const [mouseDown, setMouseDown] = useState('')
     const [resolved, setResolved] = useState(false)
     const [possibleColors, setPossibleColors] = useState([] as string[])
+    // const [newP, setNewP] = useState()
+    function setP(p: ITakenPoints) {
+        setPoints(p)
+    }
 
     useEffect(() => {
-        resolver = new PR(props.puzzle)
-        resolver.puzzleFulfilled() && setResolved(resolver.checkIfPuzzleIsResolved())
+        resolver = new PR(puzzlesManager.unresolvedPuzzle)
+        resolver.puzzleFulfilled() && setResolved(resolver.checkIfPuzzleIsResolved().resolved)
         setPoints(resolver.takenPoints)
-        console.log('taken points & props', resolver.difficulty, resolver.takenPoints, props, resolver.lines)
-    }, [props])
+        console.log('taken points & props', resolver.difficulty, resolver.takenPoints, resolver.lines)
+        const unsubPoints = pC.$points.subscribe(setP)
+        return unsubPoints()
+    }, [puzzlesManager.unresolvedPuzzle])
 
-    useEffect(() => {
-        if (resolved && resolver.puzzleName.includes('dots-puzzle')) {
-            const level = resolver.difficulty
 
-        }
-    }, [resolved])
 
     const handleMouseDown = (key: string) => {
         if (resolved) return
@@ -65,10 +73,13 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
         if (!connections) { return }
         setPossibleColors(joinPoint || crossLine || [])
         const colors = resolver.getColors(connections)
-        const newColor = colors.length === 1 ? colors[0] : 'lightgray'
+        const newColor = colors.length === 1 ? colors[0] : DefaultColor
         resolver.resolveMouseDown(key, newColor)
         setPoints(resolver.takenPoints)
-        color !== newColor && setColor(newColor)
+        if (color !== newColor) {
+            shadowState.setColor(newColor)
+            setColor(newColor)
+        }
     }
 
     const revealLine = () => {
@@ -79,16 +90,16 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
         }
         for (const point of line) {
             if (resolver.totalPoints[point].crossLine) {
-                lineToShow[point] = resolver.updateCrossLineNeighbors(point, color)
+                lineToShow[point] = resolver.updateCrossLinePointToRevealLine(point, color)
             } else {
                 lineToShow[point] = resolver.totalPoints[point] as ITakenPointProps
             }
         }
         resolver.addTakenPoints(lineToShow)
-        console.log('reveal line', resolver.currentLines, lineToShow, resolver.takenPoints, props)
+        console.log('reveal line', lineToShow, resolver.takenPoints)
         setPoints(resolver.takenPoints)
         if (resolver.puzzleFulfilled()) {
-            setResolved(resolver.checkIfPuzzleIsResolved())
+            setResolved(resolver.checkIfPuzzleIsResolved().resolved)
         }
     }
 
@@ -116,8 +127,9 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
 
     const handleMouseEnter = (nextPoint: string, prevPoint: string) => {
         if (resolved) { return }
-        const newColor = checkLine(nextPoint, prevPoint)
+        const newColor = checkLine(nextPoint, prevPoint, )
         if (!newColor) { return }
+        isDev() && console.log('handle mouse enter', nextPoint, color, prevPoint)
         const {
             resolveMouseEnter,
             tryContinueLine,
@@ -143,12 +155,12 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
 
     const handleMouseUp = () => {
         if (!mouseDown || !color || !resolver.getPoint(mouseDown)) return
-        const point = mouseDown
+        resolver.resolveMouseUp(mouseDown, color)
         setMouseDown('')
-        resolver.resolveMouseUp(point, color)
         resolver.resolved && setResolved(resolver.resolved)
         isDev() && console.log('filled: ', resolver.puzzleFulfilled(),
-            'resolved: ', resolver.resolved, 'line: ', resolver.currentLines[color], color)
+            'resolved: ', resolver.resolved)
+
     }
 
     const handleMouseLeave = () => {
@@ -164,26 +176,39 @@ export const PuzzleResolver: React.FC<IPuzzleResolverProps> = (props: IPuzzleRes
 
     const handlers = {
         revealLine,
-        nextPuzzle: props.nextPuzzle,
+        nextPuzzle: (puzzlesManager.setUnresolved),
     }
 
     const puzzleClassName = `dots-conn-puzzle_${width}-${height}`
+    if (verify) {
+        return <Puzzle
+                    points={points}
+                    mouseDown={mouseDown}
+                    dimension={{width, height}}
+                    handlers={resolvePuzzleHandlers}
+                    mouseColor={color}
+                    highlightedEndpoints={resolver.highlightedEndpoints}
+                />
+    }
     return <div className={puzzleClassName}>
                 <ResolverTopPanel
-                    handlers={handlers}
-                    resolved={resolved}
-                    diff={resolver.difficulty || 0}
+                        handlers={handlers}
+                        resolved={resolved}
+                        diff={resolver.difficulty || 0}
                 />
-                {resolved ? <ResolverModal>
-                    <p>{Congratulations[Math.floor(Math.random() * Congratulations.length)]}</p>
-                </ResolverModal>  : null}
+                {resolved
+                    ? <ResolverModal>
+                        <p>{Congratulations[Math.floor(Math.random() * Congratulations.length)]}</p>
+                    </ResolverModal>
+                    : null
+                }
                 <Puzzle
-                        points={points}
-                        mouseDown={mouseDown}
-                        dimension={{width, height}}
-                        handlers={resolvePuzzleHandlers}
-                        mouseColor={color}
-                        highlightedEndpoints={resolver.highlightedEndpoints}
-                    />
+                    points={points}
+                    mouseDown={mouseDown}
+                    dimension={{width, height}}
+                    handlers={resolvePuzzleHandlers}
+                    mouseColor={color}
+                    highlightedEndpoints={resolver.highlightedEndpoints}
+                />
             </div>
 }

@@ -46,17 +46,17 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 const lineNeighbors = colors.length > 1
                     ? this.getLineNeighbors(connections, color)
                     : neighbors
-                const line = lineNeighbors.length > 1
-                    ? this.getLineFromMiddlePoint(lineNeighbors, point, color)
-                    : this.getLineFromEndpoint(point, color)
-                if (!line.start) {
+                const line = this.getFullLineFromAnyPoint(point, color, lineNeighbors)
+                if (!line.length) {
                     return console.error(line)
                 }
-                line.line.forEach(p => {
-                    passed[p] = true
-                })
-                this.addPairEndpoints(line.start, line.end, line.color)
-                this.addLine(line.line, line.color)
+                const start = line[0]
+                const end = line[line.length - 1]
+                this.convertLastToEndpoint(start)
+                this.convertLastToEndpoint(end)
+                line.forEach(p => { passed[p] = true })
+                this.addPairEndpoints(start, end, color)
+                this.addLine(line, color)
             }
         }
         return true
@@ -117,42 +117,6 @@ export class PuzzleEvaluator extends PuzzleCommons {
             * Math.sqrt(this.width * this.height / Height / Width)
         )
     }
-    //
-    // evaluatePuzzle = () => {
-    //     let puzzleInterfering = 0
-    //     for (const line in this._lines) {
-    //         const restColors = Object.keys(this._lines).filter(col => col !== line)
-    //         for (const color of restColors) {
-    //             if (this.linesInterfering[color] && this.linesInterfering[color][line]) {
-    //                 continue
-    //             }
-    //             // eslint-disable-next-line no-loop-func
-    //             this.lineEndpoints[line].forEach(utPair => {
-    //                 this.lineEndpoints[color].forEach(uP => {
-    //                     const interfering = this.twoLinesInterfering(uP, utPair)
-    //                     this.linesInterfering[line] = this.linesInterfering[line] || {}
-    //                     this.linesInterfering[color] = this.linesInterfering[color] || {}
-    //                     this.linesInterfering[color][line] = interfering
-    //                     this.linesInterfering[line][color] = interfering
-    //                     puzzleInterfering += interfering
-    //                 })
-    //             })
-    //         }
-    //     }
-    //     return Math.round(puzzleInterfering
-    //         * Math.sqrt(this.width * this.height / Height / Width / 100)
-    //     )
-    // }
-
-    // addToStartPoints = (key: string, pointProps: ITakenPointProps) => {
-    //     const colors = this.getColors(pointProps.connections)
-    //     for (const color of colors) {
-    //         if (!this.lineStartPoints[color]) {
-    //             this.lineStartPoints[color] = []
-    //         }
-    //         this.lineStartPoints[color].push(key)
-    //     }
-    // }
 
     cosOfLines = (line1: IEndpointsValue, line2: IEndpointsValue) => {
 

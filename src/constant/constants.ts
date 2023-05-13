@@ -2,7 +2,24 @@ import {IConnection, LineDirections} from "./interfaces";
 
 export const MinLinesNumber = 4
 export const LineColors = [
-    'lightgray', 'blue', 'green', 'red', 'orange', 'yellow', 'purple', 'aqua', 'brown', 
+    'lightgrey',
+    'red',
+    'orange',
+    'amber',
+    // 'brown',
+    'yellow',
+    'lime',
+    'green',
+    'darkgreen',
+    // 'cian',
+    'aqua',
+    'blue',
+    // 'darkblue',
+    'violet',
+    'purple',
+    // 'fuchsia',
+    'pink',
+    // 'rose',
 ]
 
 export const DefaultSectors = [

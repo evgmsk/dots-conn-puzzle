@@ -61,7 +61,7 @@ export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointPro
                 const turnCl = !turn ? '' : ` turn-${turn}`
                 const lineName = `line-${dir}${lineCl}${turnCl}`
                 return !!line 
-                    ? <div className={lineName} key={dir + indKey}> </div>
+                    ? <div className={lineName} key={dir + indKey} />
                     : null
             })
         }

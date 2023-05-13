@@ -1,4 +1,4 @@
-@import '../../assets/scss/constant.scss';
+@import '../../../assets/scss/constant';
 
 .colors-wrapper {
     display: flex;
@@ -11,13 +11,13 @@
     border-radius: 50%;
     border-color: transparent;
     position: relative;
-    @each $color in $colors {
-        &.btn-#{$color} {
+    @each $name, $color  in $colors {
+        &.btn-#{$name} {
             background-color: #{$color};
             // cursor: url('../../assets/images/#{$color}-cursor.png') 10 10, pointer;
-            @if $color == yellow {
-                background-color: darken($color, 5);
-            }
+            //@if $color == yellow {
+            //    background-color: darken($color, 5);
+            //}
             &.selected::after {
                 content: '';
                 width: .9rem;

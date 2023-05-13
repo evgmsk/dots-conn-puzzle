@@ -1,4 +1,28 @@
-$colors: lightgray, blue, green, red, orange, yellow, purple, aqua, brown;
+$colors: (
+        'red': #ff3200,
+        //'orange': #e04301,
+        'orange': #fd7500,
+        'amber': #ff9703,
+        'yellow': #ffee56,
+
+        'lime': #CCFF00,
+        'green': #39FF14,
+        'darkgreen': #016201,
+        //'cian': #0Fe0eC,
+        'aqua': #0FF0FC,
+        'blue': #204ee8,
+        //'darkblue': #250096,
+        'violet': #5600f4,
+        'purple': 	#f000ff,
+        //'fuchsia': #2d0245,
+        'pink': #db2777,
+        //'rose': #e11d48,
+        'lightgrey': #cccccc,
+);
+
+@function col($col) {
+    @return map-get($colors, $col);
+}
 
 $directions: 'top', 'right', 'bottom', 'left';
 
@@ -7,7 +31,7 @@ $minor-line-size: 30%;
 $line-radius: 200px;
 $puzzle-bg-color: aliceblue;
 
-$point-size: 60%;
+$point-size: 56%;
 
 $tablet: 900px;
 

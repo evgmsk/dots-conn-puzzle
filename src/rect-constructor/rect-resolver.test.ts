@@ -326,7 +326,7 @@ describe('test rect-resolver methods', () => {
     }
 
     const puzzle = new PuzzleResolver(puzzleData)
-    console.warn(puzzle.getPoint('1-0'))
+    // console.warn(puzzle.getPoint('1-0'))
     test('handle enter', () => {
         expect(Object.keys(puzzle.takenPoints).length).toBe(11)
         expect((puzzle.getPoint('1-0')).joinPoint!.length).toBe(2)

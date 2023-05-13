@@ -8,8 +8,8 @@ import WebSocketClient from './ws'
 import './App.scss';
 import {ConfirmAdmin} from "./ConfirmAdmin";
 import {LSAdmin, LSName, LSToken} from "./constant/constants";
-import {saveResultToStorage, puzzlesManager} from "./puzzles-storage/puzzles-manager";
-import {isDev} from "./helper-fns/helper-fn";
+import {puzzlesManager} from "./puzzles-storage/puzzles-manager";
+import {saveResultToStorage, isDev} from "./helper-fns/helper-fn";
 
 
 function App() {
@@ -52,11 +52,11 @@ function App() {
     }
     return (
         <div className="App">
-            <ModeSwitcher mode={puzzleMode} handlers={{selectMode}} />
                 {puzzleMode === 'create'
                     ? <PuzzleCreator />
                     : <PuzzleWrapper />}
             <WebSocketClient />
+            <ModeSwitcher mode={puzzleMode} handlers={{selectMode}} />
         </div>
     );
 }

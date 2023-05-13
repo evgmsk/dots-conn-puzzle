@@ -8,32 +8,16 @@ import {
     LSToken, LSPuzzles
 } from "../constant/constants";
 
-import {getPuzzlesFromStorage, isDev, tokenizedHeadersGet, tokenizedHeadersPost} from "../helper-fns/helper-fn";
+import {
+    getPuzzlesFromStorage,
+    isDev,
+    tokenizedHeadersGet,
+    tokenizedHeadersPost
+} from "../helper-fns/helper-fn";
 
 import {IPuzzle} from "../constant/interfaces";
+import {Observable} from "./observable";
 
-
-export const saveResultToStorage = (data: any, lsName = LSP) => {
-    console.log(data, lsName)
-    if (typeof data === 'object' || lsName === LSP) {
-        return localStorage.setItem(lsName, JSON.stringify(data))
-    } else {
-        localStorage.setItem(lsName, data)
-    }
-}
-
-export const handleSavePuzzle = async (puzzle: IPuzzle, puzzles = [] as IPuzzle[]) => {
-    const _puzzles = puzzles.concat(puzzle)
-    localStorage.setItem(LSPuzzles, JSON.stringify(_puzzles))
-    const options = {
-        method: 'POST',
-        headers: tokenizedHeadersPost(),
-        body: JSON.stringify({data: puzzle})
-    }
-    const url = 'puzzles/new'
-    await makeFetch(url, options)
-    // return JSON.stringify(puzzle)
-}
 
 export async function makeFetch(urlSuffix: string, opts: {[k: string]: any} = {method: 'GET'}) {
     opts.headers = {...opts.headers, ...tokenizedHeadersGet()}
@@ -52,7 +36,6 @@ export async function makeFetch(urlSuffix: string, opts: {[k: string]: any} = {m
         console.log('error', e)
         return { error: e }
     }
-
 }
 
 export class PuzzlesManager {
@@ -66,27 +49,40 @@ export class PuzzlesManager {
     options = {method: 'GET'} as {[k:string]: any}
     timeout = 1000
     attempts = 0
-    cb = (p: IPuzzle[]) => {}
+    unresolvedPuzzle = {} as IPuzzle
+    $puzzles = new Observable<IPuzzle[]>(this.puzzles)
+    $unresolved = new Observable<IPuzzle>(this.unresolvedPuzzle)
+    $loading = new Observable<boolean>(this.loading)
+    $error = new Observable<{message: string}>(this.error)
+
     constructor() {
         if (this.puzzles.length < 2) {
             console.log('get puzzles', this.puzzles.length)
-            this.updatePuzzles()
+            this.updatePuzzles().then(() => console.log('updated'))
         }
         if (!this.token) {
-            this.getToken().then(t => {
+            this.getToken().then(() => {
                 console.log('token received')
             })
         }
     }
 
-    setCB = (cb: (p: IPuzzle[]) => {} | Function) => {
-        this.cb = cb
+    handleSavePuzzle = async (puzzle = this.unresolvedPuzzle, puzzles = [] as IPuzzle[]) => {
+        const _puzzles = puzzles.concat(puzzle)
+        localStorage.setItem(LSPuzzles, JSON.stringify(_puzzles))
+        const options = {
+            method: 'POST',
+            headers: tokenizedHeadersPost(),
+            body: JSON.stringify({data: puzzle})
+        }
+        const url = 'puzzles/new'
+        await makeFetch(url, options)
     }
 
-    getPuzzles = () => {
-         this.updatePuzzles().then(res => {
-             console.log('puzzles updated')
-         })
+    setUnresolved = (puzzle = null as unknown as IPuzzle) => {
+        this.unresolvedPuzzle = puzzle
+        console.log(this.$unresolved.subscribers)
+        this.$unresolved.emit(this.unresolvedPuzzle)
     }
 
     getToken = async () => {
@@ -139,7 +135,7 @@ export class PuzzlesManager {
             localStorage.setItem(lsKey, JSON.stringify(puzzles))
             this.puzzles = puzzles
         }
-        this.cb(this.puzzles)
+        this.$puzzles.emit(this.puzzles)
     }
 
     saveError = (message: string) => {
@@ -168,21 +164,6 @@ export class PuzzlesManager {
 
         this.setIsLoading(false)
     }
-
-    // handleSavePuzzle = async (puzzle: IPuzzle, puzzles = [] as IPuzzle[]) => {
-    //     console.log(puzzle)
-    //     const _puzzles = puzzles.concat(puzzle)
-    //     localStorage.setItem(LSName, JSON.stringify(_puzzles))
-    //     const options = {
-    //         method: 'POST',
-    //         headers: tokenizedHeadersPost(),
-    //         body: JSON.stringify({data: puzzle})
-    //     }
-    //     const url = 'puzzles/new'
-    //     const {resData, error} = await makeFetch(url, options)
-    //     console.log(error, resData)
-    //     return JSON.stringify(puzzle)
-    // }
 }
 
 export const puzzlesManager = new PuzzlesManager()

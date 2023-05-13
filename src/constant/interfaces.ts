@@ -5,6 +5,14 @@
 //     no = 'no error'
 // }
 
+export interface IFingerShadow {
+    dir: string
+    color: string
+    pos: IPos
+}
+
+export interface IPos {x: number, y: number}
+
 export interface IRectProps {
     dimension: IRectDimension
     points: ITakenPoints
@@ -19,11 +27,6 @@ export type PuzzleMode = 'create' | 'resolve' | 'generate'
 export interface IPuzzleProps extends IRectProps {
     handlers: IHandlers
 }
-
-// export interface IPuzzles {
-//     puzzles: IRectProps[]
-//     handlers?: IHandlers
-// }
 
 export interface IHandlers {
     [key: string]: Function
@@ -86,8 +89,6 @@ export interface ILines {
     [color: string]: ITakenPoints
 }
 
-export interface LineAndIndex {index: number, line: string[]}
-
 export interface IPuzzle {
     creator: string
     createdAt: Date | string
@@ -109,6 +110,7 @@ export interface ITakenPointProps {
     crossLine?: string[]
     joinPoint?: string[]
     highlighted?: boolean
+    startPoint?: boolean
 }
 
 export interface ITakenPoints {
@@ -143,8 +145,19 @@ export interface ILinedRect {
     _takenPoints: ITakenPoints
 }
 
+export interface CurrentLine {
+    [startPoint: string]: {
+        points: string[]
+        resolved?: boolean
+    }
+}
+
+export interface CurrentLines {
+    [color: string]: CurrentLine
+}
+
 export interface ICollision {
     sameColor?: boolean
     joinPoint?: boolean
-    sameLine?: boolean
+    sameLine?: string[]
 }

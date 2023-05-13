@@ -3,17 +3,15 @@
 .mode-switcher {
     display: flex;
     justify-content: center;
-    margin: 15px 0 5px;
     .mode-switcher-btn {
         @extend main-btn;
         padding: 10px 15px;
         font-size: 1.2rem;
-        box-shadow: 0 0 3px 3px lightblue;
+        box-shadow: 0 0 3px 3px #add0e6;
     }
-    &.mode-create {
+    &.mode-resolve {
         .mode-switcher-btn {
-            padding: 5px 8px;
-            font-size: 1.1rem;
+            margin-top: 2rem;
         }
     }
 

@@ -1,5 +1,5 @@
 import { DefaultColor } from "../constant/constants";
-import {ISLines, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
+import {IDotConnections, ISLines, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
 import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../helper-fns/helper-fn";
 import { LinedRectBase } from "./rect-base";
 
@@ -56,9 +56,9 @@ export class PuzzleCommons extends LinedRectBase {
         prevPoint: string,
         color: string,
         sameColor = false) => {
-            const {connections, endpoint ,joinPoint ,crossLine} = this.getPoint(nextPoint)
+            const {connections, endpoint, joinPoint, crossLine} = this.getPoint(nextPoint)
             const dir = this.determineDirection(nextPoint, prevPoint)
-            console.log('create join')
+            isDev() && console.log('create join', nextPoint)
             const updatedPointProps = { 
                 endpoint: !sameColor || endpoint,
                 connections: {
@@ -108,81 +108,42 @@ export class PuzzleCommons extends LinedRectBase {
         return ''
     }
 
-    isLast = (key: string, point: ITakenPointProps, prev: string, endPoint: string, color: string) => {
+    isTargetOrLastPoint = (
+        key: string,
+        point: ITakenPointProps,
+        prev: string,
+        target: string,
+        color: string
+    ) => {
         const neighbors = this.getLineNeighbors(point.connections, color)
-        const neighbor = neighbors[0] === prev ? neighbors[1] : neighbors[0]
+        const last = neighbors.length  === 1 || key === target
+        isDev() && last && console.log('last point', point, last, color)
+        return last ? key : ''
+    }
+
+    isEndpoint = (key: string, point: ITakenPointProps, color: string) => {
         const last = (point.endpoint && !point.crossLine)
-            || !neighbor
-            || neighbor === endPoint
-        isDev() && console.log('last point', point, prev, endPoint, neighbors, neighbor,
-            neighbor === endPoint, last, color)
-        return last ? (neighbor || key) : ''
+        isDev() && last && console.log('endpoint point', point, last, color)
+        return last ? key : ''
     }
 
-    removeLineToEndpoint = (start: string, prev: string, color: string) => {
-        console.warn('remove part line to endpoint', start, prev)
-        let passed = prev
-        const toFn = (key: string) => {
-            const {endpoint} = this.getPoint(key)
-            !endpoint && this.deletePoint(key)
-            if (endpoint) {
-                this.updateLastPoint(key, passed, color)
-            }
-            passed = key
-            return endpoint
-        }
-        this.goToLinePoint(start, prev, toFn, color)
-    }
-    
-    removeLineCirclePart(prevP: string, next: string, color: string) {
-        const {connections, endpoint} = this.getPoint(prevP)
-        console.warn('remove circle', prevP, next, connections, endpoint)
-        if (endpoint) return
-        const lineNeighbors = this.getLineNeighbors(connections, color)
-        if (lineNeighbors.length > 1) {
-            const nextPointExtraNeighbor = this.getLineNeighbors(next)
-                .filter(n => n !== prevP)[0]
-            if (!nextPointExtraNeighbor) return
-            console.warn('next extra')
-            const nextDir = this.determineDirection(next, nextPointExtraNeighbor)
-            const nextPoint = this.getPoint(next)
-            this.addTakenPoints({
-                [next]: {
-                    ...nextPoint,
-                    connections: {
-                        ...nextPoint.connections,
-                        [nextDir]: {color}
-                    }
-                }
-            })
-            return this.removeLineFork(nextPointExtraNeighbor, next, color)
-        }
-        let prev = ''
-        const toFn = (key: string) => {
-            const point = this.getPoint(key)
-            if (!point?.connections) { return true }
-            const last = this.isLast(key, point, prev, next, color)
-            prev = key
-            this.deletePoint(key)
-            if (last) {
-                this.updateLastPoint(last, prev, color)
-            }
-            return last
-        }
-        this.goToLinePoint(prevP, next, toFn, color)
-    }
-
-    removeForks = (start: string, color: string, lineStart?: string) => {
+    removeForks = (start: string, color: string, lineStart?: string, lessThen = 2) => {
         const {endpoint, connections, crossLine, joinPoint} = this.getPoint(start)
         const lineNeighbors = this.getLineNeighbors(start)
-        if (lineNeighbors.length < 2) {
+        isDev() && console.log('remove fork', start, color, lineNeighbors, lineStart, lessThen)
+        if (lineNeighbors.length < lessThen) {
             return
         }
         let dirToClean, linePartToRemove = [] as string[]
         const firstLinePart = this.getLinePartPoints(color, lineNeighbors[0], start)
-        const secondLinePart = this.getLinePartPoints(color, lineNeighbors[1], start)
+        const secondLinePart = lineNeighbors[1]
+            ? this.getLinePartPoints(color, lineNeighbors[1], start)
+            : []
+        if (lessThen === 1 && !lineNeighbors[1]) {
+            linePartToRemove = firstLinePart.slice(1)
+            dirToClean = this.determineDirection(start, lineNeighbors[0])
 
-        if (lineStart) {
+        } else if (lineStart && lineNeighbors[1]) {
             if (lineStart === firstLinePart[firstLinePart.length - 1]) {
                 dirToClean = this.determineDirection(start, lineNeighbors[1])
                 linePartToRemove = secondLinePart.slice(1)
@@ -190,7 +151,7 @@ export class PuzzleCommons extends LinedRectBase {
                 dirToClean = this.determineDirection(start, lineNeighbors[0])
                 linePartToRemove = firstLinePart.slice(1)
             }
-        } else {
+        } else if (lineNeighbors[1]) {
             if (this.getPoint(firstLinePart[firstLinePart.length - 1]).endpoint) {
                 dirToClean = this.determineDirection(start, lineNeighbors[1])
                 linePartToRemove = secondLinePart.slice(1)
@@ -199,7 +160,7 @@ export class PuzzleCommons extends LinedRectBase {
                 linePartToRemove = firstLinePart.slice(1)
             }
         }
-        console.log('rem fork', start, color, lineNeighbors, lineStart, firstLinePart, secondLinePart)
+        isDev() && console.log('rem fork', dirToClean, start, color, lineNeighbors, lineStart, firstLinePart, secondLinePart)
         if (!linePartToRemove.length || !dirToClean) return
         this.removeLinePart(linePartToRemove, color)
         this.addTakenPoints({
@@ -218,64 +179,56 @@ export class PuzzleCommons extends LinedRectBase {
     separateDotsByLines = (points: ITakenPoints): ISLines => {
         const passed = {} as {[key: string]: boolean}
         const lines = {} as ISLines
+        isDev() && console.log('sep by lines', points)
         for (const point in points) {
             if (passed[point]) { continue }
             const {connections} = points[point]
             if (!connections) return {}
             const colors = this.getColors(connections)
             for (const color of colors) {
-
                 lines[color] = lines[color] || []
-                const lineNeighbors = this.getLineNeighbors(connections, color, points)
-                const line = lineNeighbors.length > 1
-                    ? this.getLineFromMiddlePoint(lineNeighbors, point, color, false, points)
-                    : this.getLineFromEndpoint(point, color, false, points)
-                if (!line.start) return {}
-                line.line.forEach(p => {
+                const neighbors = this.getLineNeighbors(point,  color, points)
+                const line = this.getFullLineFromAnyPoint(point, color, neighbors, points)
+                if (!line.length) return {}
+                line.forEach(p => {
                     passed[p] = true
                 })
-                lines[color].push(line.line)
+                lines[color].push(line)
             }
         }
-        console.log('lines', lines)
         return lines
     }
 
-    checkPoint = (point: string) => {
-        const {endpoint, connections} = this.getPoint(point)
-        const {crossLine, joinPoint} = endpoint
-            ? this.prepareEndpointForResolver({endpoint, connections})
-            : {crossLine: undefined, joinPoint: undefined}
-        const colors = this.getColors(connections)
-        const neighbors = this.getLineNeighbors(connections)
-        if ((!(crossLine || joinPoint) && colors.length !== 1)
-            || (endpoint && !(crossLine || joinPoint) && neighbors.length !== 1)
-            || colors.includes(DefaultColor)
-            || (!joinPoint && colors.length > 2)
-        ) {
-            return {}
-        }
-        return {endpoint, crossLine, colors, connections, joinPoint, neighbors}
-    }
-
-
-    addLine = (line: string[], color: string) => {
-        if (!this.lines[color]) {
-            this.lines[color] = []
-        }
-        this.lines[color].push(line)
-    }
-
-    removeLinePart = (line: string[], color: string) => {
+    removeLinePart = (line: string[], color: string, startPoint?: string) => {
+        console.log('remove line part', line, startPoint, color)
+        if (!line.length) return
         for (let i = 0; i < line.length; i++) {
             const point = line[i]
             const pointProps = this.getPoint(point)
-            if (!pointProps.endpoint) {
+            const {endpoint, connections, crossLine} = pointProps || {}
+            if (!pointProps) { return }
+            const lineNeighbors = this.getLineNeighbors(line[i], color)
+            if ((!i || i === line.length - 1)
+                && (lineNeighbors.length > 1 || pointProps.endpoint)) {
+                const prev = !i ? line[i + 1] :  line[i - 1]
+                const dir = this.determineDirection(line[i], prev)
+                const Props = {
+                    ...pointProps,
+                    connections: {
+                        ...connections,
+                        [dir]: {color: crossLine ? DefaultColor : color}
+                    }
+                }
+                this.addTakenPoints({[point]: Props})
+            } else if (!endpoint && point !== startPoint) {
                 this.deletePoint(point)
-            } else if (pointProps.crossLine) {
+            } else if (crossLine && !startPoint) {
                 this.updateCrossLineRemovingFork(color, point, pointProps)
-            } else if (i && pointProps.endpoint) {
-                this.updateLastPoint(line[i], line[i - 1])
+            } else if ( i && point === startPoint) {
+                this.updateLastPoint(line[i], line[i - 1], color)
+            } else if (endpoint) {
+                console.log('update last', startPoint, i, line[i], line[i - 1], i && point === startPoint)
+                this.updateEndPoint(line[i], line[i - 1], color)
             }
         }
     }
@@ -288,7 +241,7 @@ export class PuzzleCommons extends LinedRectBase {
             const next = this.getLineNeighbors(key, color).filter(n => n !== prev)[0]
             !endpoint && this.deletePoint(key)
             const col = crossLine ? DefaultColor : color
-            endpoint && this.updateLastPoint(key, passed, col)
+            endpoint && this.updateEndPoint(key, passed, col)
             return !next
         }
         this.goToLinePoint(next, prev, stopFn, color)
@@ -299,12 +252,10 @@ export class PuzzleCommons extends LinedRectBase {
         let passed = prev
         const toFn = (key: string) => {
             const point = this.getPoint(key)
-            const last = this.isLast(key, point, passed, 'none', color)
-            !point.endpoint && this.deletePoint(key)
+            const last = this.isEndpoint(key, point, color)
+            !last && !point.crossLine && this.deletePoint(key)
             point.crossLine && this.updateCrossLineRemovingFork(color, key, point)
-            if (last && point.endpoint) {
-                this.updateLastPoint(last, passed, color)
-            }
+            last && this.updateEndPoint(last, passed, color)
             passed = key
             return last
         }
@@ -332,7 +283,7 @@ export class PuzzleCommons extends LinedRectBase {
         color: string,
         removeFork = true
     ) => {
-        const {connections, endpoint, joinPoint, crossLine} = this.getPoint(prevPoint)
+        const {connections, endpoint, joinPoint, crossLine, startPoint} = this.getPoint(prevPoint)
             || {} as ITakenPointProps
         if (!connections) return
         const dir = this.determineDirection(prevPoint, nextPoint)
@@ -350,7 +301,8 @@ export class PuzzleCommons extends LinedRectBase {
                             [dir]: {color: connections[dir].color}
                         },
                         crossLine,
-                        joinPoint
+                        joinPoint,
+                        startPoint
                     }
                 })
                 this.removeExtraLine(nei, prevPoint, color)
@@ -361,6 +313,7 @@ export class PuzzleCommons extends LinedRectBase {
                 crossLine,
                 joinPoint,
                 endpoint,
+                startPoint,
                 connections: {
                     ...this.getPoint(prevPoint).connections,
                     [dir]: {
@@ -376,41 +329,47 @@ export class PuzzleCommons extends LinedRectBase {
 
     puzzleFulfilled = () => Object.keys(this.takenPoints).length === this.width * this.height
 
-    updateLastPoint = (last: string, prev: string, color?: string) => {
+    updateLastPoint = (last: string, prev: string, color: string) => {
+        const {endpoint, connections, crossLine, joinPoint} = this.getPoint(last) || {}
+        if (!connections) {
+            return console.error('invalid last', last, prev, color, this.takenPoints)
+        }
+        if (endpoint && !crossLine) {
+            return this.updateEndPoint(last, prev, color)
+        }
+        const dir = this.determineDirection(last, prev)
+        const pointProps: ITakenPointProps = {
+            endpoint,
+            crossLine,
+            joinPoint,
+            connections: {
+                ...connections,
+                [dir]: {color}
+            } as IDotConnections
+        }
+        this.addTakenPoints({[last]: pointProps})
+    }
+
+    updateEndPoint = (last: string, prev: string, color: string) => {
         const {endpoint, connections, crossLine, joinPoint} = this.getPoint(last) || {}
         if (!connections) {
             return console.error('invalid last', last, prev, color, this.takenPoints)
         }
         const dir = this.determineDirection(last, prev)
-        const sectorColor = color || connections[dir].color
-        const directions = this.getLineDirections(connections, sectorColor)
-        const extraDir = directions.filter(d => d !== dir)[0]
-        const extraNeighbor = connections[extraDir]?.neighbor
-        isDev() && console.warn('update last', last, prev, color, this.getPoint(last),
-            'dir', dir, directions, 'line color', sectorColor, crossLine, extraDir)
-        const pointProps = !extraDir
-            ? {
-                endpoint,
-                crossLine,
-                joinPoint,
-                connections: {
-                    ...connections,
-                    [dir]: {color: crossLine ? DefaultColor : sectorColor}
-                }
+        const pointProps = {
+            endpoint,
+            crossLine,
+            joinPoint,
+            connections: {
+                ...connections,
+                [dir]: {color}
             }
-            : {
-                endpoint,
-                crossLine,
-                joinPoint,
-                connections: {
-                    ...connections,
-                    [dir]: {color: DefaultColor},
-                    [extraDir]: {color: DefaultColor}
-                }
-            }
+        }
         this.addTakenPoints({[last]: pointProps})
-        extraNeighbor && this.removeLineFork(extraNeighbor, last, sectorColor)
+        // extraNeighbor && this.removeLineFork(extraNeighbor, last, sectorColor)
     }
+
+
 
     convertLastToEndpoint = (point: string) => {
         const {endpoint, connections, crossLine, joinPoint} = this.getPoint(point)
@@ -424,47 +383,6 @@ export class PuzzleCommons extends LinedRectBase {
                 }
             })
         }
-    }
-
-    getLineFromMiddlePoint = (
-        neighbors: string[],
-        prev: string,
-        color: string,
-        creation = true,
-        points = this._takenPoints,
-    ) => {
-        const firstPart = this.getLinePartPoints(color, neighbors[0], prev, points)
-        const secondPart = this.getLinePartPoints(color, neighbors[1], prev, points).slice(1)
-        const start = firstPart[firstPart.length - 1]
-        const end = secondPart[secondPart.length - 1]
-        const line = firstPart.reverse().concat(secondPart)
-        if (creation) {
-            if (!firstPart.length || !secondPart.length) {
-                console.error('line broken', color, prev, this.takenPoints, line)
-                return {}
-            }
-            this.convertLastToEndpoint(start)
-            this.convertLastToEndpoint(end)
-        }
-        return {start, end, color, line}
-    }
-
-    getLineFromEndpoint = (
-        point: string,
-        color: string,
-        creation = true,
-        points = this._takenPoints,
-    ) => {
-        const line = this.getLinePartPoints(color, point, '', points)
-        const start = line[0]
-        const end = line[line.length - 1]
-        if (line.length < 3) {
-            isDev() && console.error('line broken', color, points, line)
-            return {}
-        }
-        creation && this.convertLastToEndpoint(end)
-
-        return {start, end, color, line}
     }
 
     removeInterferedLine = (start: string) => {

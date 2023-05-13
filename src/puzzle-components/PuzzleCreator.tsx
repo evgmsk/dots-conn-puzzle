@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from './rect/Rect'
-import {ICollision, ITakenPointProps, ITakenPoints, LineDirections} from '../constant/interfaces'
+import {PuzzleResolver} from './PuzzleResolver'
+import {ICollision, IPuzzle, ITakenPointProps, ITakenPoints} from '../constant/interfaces'
 
-import { CreationPuzzleMenu } from './menu/CreationPuzzleMenu'
+import { CreationPuzzleMenu, ManagerMenu } from './menu/CreationPuzzleMenu'
 
 import { Height, LineColors, Width } from '../constant/constants'
 import { pC } from '../rect-constructor/rect-creator'
 import { CreationConfirmModal } from './creator-modals/CreationConfirmModal'
-// import { manager } from '../puzzles-storage/puzzles-manager'
 import {isDev} from "../helper-fns/helper-fn";
-import {handleSavePuzzle} from "../puzzles-storage/puzzles-manager";
+import {puzzlesManager} from "../puzzles-storage/puzzles-manager";
 
 
 export interface IConfirm {
@@ -26,36 +26,34 @@ export const PuzzleCreator: React.FC = () => {
     const [confirm, setConfirm] = useState({} as IConfirm)
     const [points, setPoints] = useState({} as ITakenPoints)
     const [mouseDown, setMouseDown] = useState('')
-    const [level, setLevel] = useState(0)
-    // const {handleSavePuzzle} = usePuzzlesManager()
-    const setPCB = (p: ITakenPoints) => {
-        setPoints(p)
-    }
-
-    pC.setPointsUpdateCB(setPCB as (p: ITakenPoints) => {})
+    const [resolverView, setResolverView] = useState(false)
 
     useEffect(() => {
         pC.setWidth(width)
         pC.setHeight(height)
         // isDev() && console.log(points)
-        return pC.clearAll()
+        const unsubPoints = pC.$points.subscribe(setPoints)
+        return () => {
+            unsubPoints()
+            clearAll()
+        }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
     const confirmationHandler = (data: boolean) => {
         const {args, cb} = confirm
-        setConfirm({} as IConfirm)
         const interfere: ICollision = {
             ...args[confirm.args.length - 1],
             joinPoint: data
         }
+        console.log(data, cb, args)
         cb(...args.slice(0, -1), interfere)
-        // setPoints(pC.takenPoints)
+        setConfirm({} as IConfirm)
     }
     
     const savePuzzleHandler = () => {
         console.log('save', pC.puzzle)
-        if (pC.puzzle) return handleSavePuzzle(pC.puzzle)
+        if (pC.puzzle) return puzzlesManager.handleSavePuzzle(pC.puzzle)
         // const valid = pC.checkPuzzle()
         // if (valid !== 'valid') {
         //     // TODO resolve errors
@@ -73,7 +71,7 @@ export const PuzzleCreator: React.FC = () => {
 
     const clearAll = () => {
         pC.clearAll()
-        // setPoints(pC.takenPoints)
+        puzzlesManager.setUnresolved({} as IPuzzle)
     }
 
     const redo = () => {
@@ -84,33 +82,29 @@ export const PuzzleCreator: React.FC = () => {
     const selectColor = (color: string) => {
         console.warn('selected color', color)
         setColor(color)
-        
     }
 
     const handleMouseUp = (key: string) => {
         setMouseDown('')
         const upPoint = pC.getPoint(key)
-        if (!upPoint 
-            || upPoint.endpoint
+        isDev() && console.log('handle up', upPoint, confirm.question)
+        if (!upPoint
             || confirm.question
-            || pC.getLineNeighbors(key, color).length !== 1
         ) {
             return
         }
         pC.resolveMouseUp(key, color)
         setPoints(pC.takenPoints)
-        pC.puzzle.difficulty && setLevel(pC.puzzle.difficulty)
-        console.log('valid', level, pC.puzzle)
     }
 
     const handleMouseDown = (key: string) => {
         setMouseDown(key)
         if (confirm.question) return
         const {endpoint, connections} = pC.getPoint(key) || {}
-        console.warn('down', key, color, pC.takenPoints, connections, endpoint)
+        isDev() && console.warn('down', key, color, pC.takenPoints, connections, endpoint)
         if (connections) {
             const sameColor = pC.getColors(key).includes(color)
-            console.warn('exist', sameColor, endpoint, key)
+            isDev() && console.warn('exist', sameColor, endpoint, key)
             if (endpoint && !sameColor) {
                 setConfirm({
                     question: 'Do you want to change the color',
@@ -128,41 +122,33 @@ export const PuzzleCreator: React.FC = () => {
     }
 
     const changeColor = (key: string, newColor: string, interfere: ICollision) => {
-        if (interfere && !interfere.joinPoint) return
-        const oldColor = pC.getPoint(key).connections[LineDirections.top].color
+        const colors = pC.getColors(key)
+        if ((interfere && !interfere.joinPoint) || colors.length > 1) return
+        const oldColor = colors[0]
         pC.changeLineColor(key, newColor, oldColor)
         console.warn('change color', key, newColor, oldColor)
     }
 
     const handleMouseEnter = (nextPoint: string, prev: string) => {
-        const {
-            lineContinuationIsImpossible,
-            tryContinueLine,
-            getPoint,
-            rect,
-            resolveMouseEnter,
-            getLinePartPoints,
-            getLineNeighbors
-        } = pC
         let prevPoint = prev
-        const forkCreating = getLineNeighbors(prevPoint).length > 1
-            && !getLineNeighbors(prevPoint).includes(nextPoint)
-            && !getPoint(prevPoint).endpoint
+        const forkCreating = pC.getLineNeighbors(prevPoint).length > 1
+            && !pC.getLineNeighbors(prevPoint).includes(nextPoint)
+            && !pC.getPoint(prevPoint).endpoint
         if (!mouseDown
             || prevPoint !== mouseDown
             || confirm.question
-            || lineContinuationIsImpossible(nextPoint, prevPoint, color)
+            || pC.lineContinuationIsImpossible(nextPoint, prevPoint, color)
             || forkCreating) {
             isDev() && console.error('line broken', nextPoint, prevPoint, mouseDown, confirm, color, pC.takenPoints)
             setMouseDown('')
             return
         }
         console.log('enter', nextPoint, prev, mouseDown)
-        if (!rect[nextPoint].neighbors.includes(prevPoint)) {
-            prevPoint = tryContinueLine(nextPoint, prevPoint, color)
+        if (!pC.rect[nextPoint].neighbors.includes(prevPoint)) {
+            prevPoint = pC.tryContinueLine(nextPoint, prevPoint, color)
             isDev() && console.warn('new prevP', prevPoint)
-            const line =  getLinePartPoints(color, prevPoint, nextPoint)
-            if (!prevPoint || (prevPoint && !getPoint(line[line.length - 1]).endpoint)) {
+            const line =  pC.getLinePartPoints(color, prevPoint, nextPoint)
+            if (!prevPoint || (prevPoint && !pC.getPoint(line[line.length - 1]).endpoint)) {
                 isDev() && console.error('line without endpoint', nextPoint, prev, pC.takenPoints,
                     'prevP: ', prevPoint)
                 setMouseDown('')
@@ -170,12 +156,12 @@ export const PuzzleCreator: React.FC = () => {
             }
         }
         setMouseDown(nextPoint)
-        const existed = getPoint(nextPoint)
+        const existed = pC.getPoint(nextPoint)
 
         if (existed) {
             resolveMouseEnterIfNextPointExist(existed, nextPoint, prevPoint)
         } else { 
-            resolveMouseEnter(nextPoint, prevPoint, color)
+            pC.resolveMouseEnter(nextPoint, prevPoint, color)
         }
         setPoints(pC.takenPoints)
     }
@@ -194,12 +180,13 @@ export const PuzzleCreator: React.FC = () => {
                 args: [nextPoint, prevPoint, color, {sameColor}]
             })
         } else if (sameColor) {
-            const sameLine = pC.sameEndpointOrSameLine(nextPoint, prevPoint, color)
+            const sameLine = pC.checkIfPointsBelongToSameLine(nextPoint, prevPoint, color)
             const joinPoint = endpoint && !sameLine
             let interfere = {joinPoint, sameLine, sameColor} as ICollision
             pC.resolveMouseEnter(nextPoint, prevPoint, color, interfere)
         }
     }
+
 
     const handleMouseLeave = () => {
         setMouseDown('')
@@ -230,12 +217,16 @@ export const PuzzleCreator: React.FC = () => {
 
     const customPuzzleMenuHandlers = {
         selectColor,
-        clearAll,
-        undo,
         changeWidth,
         changeHeight,
+    }
+
+    const ManagerHandlers = {
         redo,
-        savePuzzle: savePuzzleHandler
+        sharePuzzle: savePuzzleHandler,
+        clearAll,
+        undo,
+        setResolverView
     }
 
     return (
@@ -245,15 +236,20 @@ export const PuzzleCreator: React.FC = () => {
                 color={color}
                 width={width}
                 height={height}
-                level={level}
+                level={pC.puzzle?.difficulty}
             />
-            <Puzzle
-                mouseDown={mouseDown}
-                points={points}
-                dimension={{width, height}}
-                handlers={customPuzzleHandlers}
-                mouseColor={color}
-            />
+            {
+                resolverView && puzzlesManager.unresolvedPuzzle?.points
+                    ? <PuzzleResolver verify={true} />
+                    : <Puzzle
+                        mouseDown={mouseDown}
+                        points={points}
+                        dimension={{width, height}}
+                        handlers={customPuzzleHandlers}
+                        mouseColor={color}
+                    />
+            }
+            <ManagerMenu handlers={ManagerHandlers} view={resolverView}/>
             <CreationConfirmModal
                 handler={confirmationHandler}
                 question={confirm.question}

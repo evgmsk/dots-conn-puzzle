@@ -1,4 +1,4 @@
-import { IColorBTN, IHandlers } from "../../constant/interfaces"
+import { IColorBTN, IHandlers } from "../../../constant/interfaces"
 import './color-btn.scss'
 
 export interface IColorBtnsProps extends IColorBTN {
@@ -7,10 +7,13 @@ export interface IColorBtnsProps extends IColorBTN {
 
 export const ColorBtn: React.FC<IColorBtnsProps> = (props: IColorBtnsProps) => {
     const {selected, color, handlers: {selectColor}} = props
-    const btnClass = `btn_color btn-${color}${selected ? ' selected' : ''}`
+    const btnClass = `btn-${color} btn_color${selected ? ' selected' : ''}`
+
+
     return <button 
                 type="button" 
                 className={btnClass}
                 onClick={() => selectColor(color)}
-            ></button>
+            >
+    </button>
 }

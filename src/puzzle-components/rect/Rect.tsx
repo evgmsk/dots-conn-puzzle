@@ -1,24 +1,27 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React from "react"
+import React, {useState} from "react"
 
 import './rect.scss'
 
 import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/interfaces"
 import { Point } from "../point/Point"
-// import { copyObj } from "../../helper-fns/helper-fn"
+import { shadowState } from '../finger-shadow/finger-shadow-state'
+import { FingerShadow } from '../finger-shadow/FingerShadow'
+
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
     const containerSizes = document.querySelector(selector)?.getBoundingClientRect()
     if (!containerSizes) return ''
-    const {x, y, width} = containerSizes;
+    const {x, y, width, height} = containerSizes;
     const cellSize = width / size
-    const iIndex = Math.floor(Math.abs(x - X) / cellSize)
-    const jIndex = Math.floor(Math.abs(y - Y) / cellSize)
+    const iIndex = Math.floor(Math.abs(x - X)%width / cellSize)
+    const jIndex = Math.floor(Math.abs(y - Y)%height / cellSize)
+     // if (iIndex < 0 || Y < 0 || X < 0) {return  ''}
     return `${iIndex}-${jIndex}`
 }
 
 export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
-
+    // const [pos, setPos] = useState({start: {} as IPos, current: {} as IPos})
     const {
         dimension: {width, height},
         points,
@@ -41,6 +44,11 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         const key = (e.target as HTMLElement).getAttribute('id')
         console.warn('down', key)
         if (!key) return
+        const {clientX, clientY } =
+            e.type === 'touchmove'
+                ? (e as React.TouchEvent).changedTouches['0']
+                : e as React.MouseEvent
+        shadowState.setMouseDown(key, {x: clientX, y: clientY})
         handleMouseDown(key, mouseDown)
     }
 
@@ -54,9 +62,9 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 ? (e as React.TouchEvent).changedTouches['0']
                 : e as React.MouseEvent
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
-        // console.warn('move', targetKey, enteredCell, checkPoint(enteredCell), checkLine(targetKey, enteredCell))
+        shadowState.detectDirection({x: clientX, y: clientY})
         if (targetKey !== mouseDown) {
-            console.warn('enter in square', targetKey, mouseDown)
+            console.warn('enter in square', targetKey, mouseDown, width)
             entered = targetKey
             handleMouseEnter(targetKey, mouseDown)
         }
@@ -68,6 +76,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     }
 
     const mouseLeave = () => {
+        console.warn('mouse leave')
         if (!mouseDown) return
         handleMouseLeave()
     }
@@ -111,10 +120,12 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     })
     return <div
                 className={rectClassName}
-                onMouseLeave={mouseLeave}
                 onMouseMove={handlePointerMove}
-                onTouchMove={handlePointerMove}
+                onMouseLeave={mouseLeave}
+
+                // onTouchMove={handlePointerMove}
             >
                 {rect}
+                {mouseDown ? <FingerShadow /> : null}
             </div>
 }

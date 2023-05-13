@@ -1,7 +1,7 @@
 import {
     DefaultColor,
     DefaultConnections,
-    DefaultSectors,
+    DefaultSectors, LSPuzzles as LSP,
     LSPuzzles,
     LSToken
 } from "../constant/constants";
@@ -9,7 +9,7 @@ import {
     IDotSectorProps,
     ITakenPointProps,
     LineDirections,
-    ISector
+    ISector, IDotConnections
 } from "../constant/interfaces";
 
 const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
@@ -47,6 +47,15 @@ export const getCommonColor = (colors1: string[], colors2: string[]) => {
         }
     }
     return ''
+}
+
+export const haveSameColorConnection = (connections: IDotConnections, colors: string[]) => {
+    for (const dir in connections) {
+        if (connections[dir].neighbor && colors.includes(connections[dir].color)) {
+            return true
+        }
+    }
+    return false
 }
 
 export const tokenizedHeadersPost = (token = localStorage.getItem(LSToken)) => ({
@@ -114,5 +123,13 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
         }
     }
     return copy
+}
+
+export const saveResultToStorage = (data: any, lsName = LSP) => {
+    if (typeof data === 'object' || lsName === LSP) {
+        return localStorage.setItem(lsName, JSON.stringify(data))
+    } else {
+        localStorage.setItem(lsName, data)
+    }
 }
 
