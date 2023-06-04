@@ -4,7 +4,6 @@ $colors: (
         'orange': #fd7500,
         'amber': #ff9703,
         'yellow': #ffee56,
-
         'lime': #CCFF00,
         'green': #39FF14,
         'darkgreen': #016201,
@@ -16,7 +15,7 @@ $colors: (
         'purple': 	#f000ff,
         //'fuchsia': #2d0245,
         'pink': #db2777,
-        //'rose': #e11d48,
+        'rose': #e11d48,
         'lightgrey': #cccccc,
 );
 
@@ -30,10 +29,13 @@ $main-line-size: 65%;
 $minor-line-size: 30%;
 $line-radius: 200px;
 $puzzle-bg-color: aliceblue;
+$puzzle-max-width: 400px;
 
 $point-size: 56%;
 
 $tablet: 900px;
+
+$device: 650px;
 
 $font-main: 'Roboto', sans-serif;
 
@@ -51,4 +53,14 @@ main-btn {
     }
 }
 
-
+modal {
+    position: absolute;
+    width: 80%;
+    height: 40%;
+    border-radius: 5px;
+    top: 40%;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 3rem;
+    z-index: 300000;
+}

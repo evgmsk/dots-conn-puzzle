@@ -1,0 +1,16 @@
+@import "../../../assets/scss/constant";
+
+
+.finger-shadow {
+    position: absolute;
+    border-radius: 100%;
+    z-index: 90000;
+    top: 0;
+    left: 0;
+    opacity: .3;
+}
+@each $name, $col in $colors {
+    .finger-shadow_#{$name} {
+        background-color: $col;
+    }
+}

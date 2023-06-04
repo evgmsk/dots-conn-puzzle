@@ -1,5 +1,7 @@
-.App {
-  padding: 30px 0;
+@import "assets/scss/constant";
+
+.app {
+  padding: 20px 0 10px;
   background-color: #252324;
   border-radius: 10px;
   display: flex;
@@ -8,13 +10,58 @@
   align-items: center;
   box-sizing: border-box;
   min-height: 100vh;
-  //max-height: 100vh;
+  max-height: 100vh;
+  @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+    transform: rotate(90deg);
+    min-height: 100vw;
+    max-height: 100vw;
+  }
+  &.app-create {
+
+  }
+  &.app-resolve {
+    justify-content: center;
+  }
+}
+
+.close-modal-btn {
+  position: absolute;
+  right: 10px;
+  top: 10px;
+  width: 2rem;
+  height: 2rem;
+  background-color: transparent;
+  border-radius: 50%;
+  border: unset;
+  padding: unset;
+  color: white;
+;
+
+}
+
+.animated-component {
+  opacity: 0;
+  transition: opacity .4s;
+  &.show-up {
+    opacity: 1;
+  }
 }
 
 .dots-conn-puzzle {
   // border: solid 2px black;
+  &_resolver {
+    transition: opacity .8s;
+    opacity: 0;
+    &.show-up {
+      opacity: 1;
+    }
+    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+      max-width: 100vh;
+    }
+  }
 
   &_creator {
+    transition: opacity .8s;
     width: 90vw;
     max-width: 600px;
     height: auto;
@@ -22,7 +69,15 @@
     flex-direction: column;
     align-items: center;
     justify-content: flex-start;
-    margin-bottom: 5px;
+    //opacity: 0;
+    //&.show-up {
+    //  opacity: 1;
+    //}
+    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+      width: 90vh;
+    }
+    //max-height: 70vh;
+    //margin-bottom: 5px;
   }
 
   &_body {
@@ -30,14 +85,14 @@
     border-radius: 10px;
     border: solid 1px gray;
     $width: 80vw;
+    max-height: 70vh;
     width: $width;
-    $max-width: 400px;
-    max-width: $max-width;
+    max-width: $puzzle-max-width;
     @for $i from 3 to 30 {
       @for $j from 3 to 40 {
         &.size-#{$i}-#{$j} {
           height:  $width / $i * $j;
-          max-height: $max-width / $i * $j;
+          max-height:  $puzzle-max-width / $i * $j;
           display: grid;
           grid-template-columns: repeat(#{$i}, 1fr);
           grid-template-rows: repeat(#{$j}, 1fr);
@@ -51,7 +106,6 @@
             border-top-right-radius: 10px;
           }
         }
-
       }
     }
   }

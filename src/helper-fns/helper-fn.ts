@@ -1,9 +1,10 @@
 import {
+    BaseDevUrl, BaseProdUrl,
     DefaultColor,
     DefaultConnections,
-    DefaultSectors, LSPuzzles as LSP,
+    DefaultSectors, LineColors,
     LSPuzzles,
-    LSToken
+    LSToken, LSUserPuzzles
 } from "../constant/constants";
 import {
     IDotSectorProps,
@@ -11,6 +12,7 @@ import {
     LineDirections,
     ISector, IDotConnections
 } from "../constant/interfaces";
+import {authService} from "../app-services/auth-service";
 
 const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
 
@@ -58,17 +60,17 @@ export const haveSameColorConnection = (connections: IDotConnections, colors: st
     return false
 }
 
-export const tokenizedHeadersPost = (token = localStorage.getItem(LSToken)) => ({
-    Authentication: `bearer-${token}`,
-    "Content-Type": "application/json",
-})
-
-export const tokenizedHeadersGet = (token = localStorage.getItem(LSToken)) => ({
-    Authentication: `bearer-${token}`,
-})
-
 export function getPuzzlesFromStorage() {
     return JSON.parse(localStorage.getItem(LSPuzzles) || '[]')
+}
+
+export const getPColor = (n: number) => {
+    const ind = n % LineColors.length
+    return LineColors[ind]
+}
+
+export function getUserPuzzlesFromStorage() {
+    return JSON.parse(localStorage.getItem(LSUserPuzzles) || '[]')
 }
 
 export const sectorIndex = (dir: LineDirections) => {
@@ -125,11 +127,6 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
     return copy
 }
 
-export const saveResultToStorage = (data: any, lsName = LSP) => {
-    if (typeof data === 'object' || lsName === LSP) {
-        return localStorage.setItem(lsName, JSON.stringify(data))
-    } else {
-        localStorage.setItem(lsName, data)
-    }
+export const getUTCDate = (date = new Date()) => {
+    return new Date()
 }
-

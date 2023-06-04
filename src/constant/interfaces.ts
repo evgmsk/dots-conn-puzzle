@@ -5,6 +5,13 @@
 //     no = 'no error'
 // }
 
+export interface IUser {
+    name: string,
+    level: number,
+    role: 'admin' | 'user'
+    [k: string]: any
+}
+
 export interface IFingerShadow {
     dir: string
     color: string
@@ -22,7 +29,7 @@ export interface IRectProps {
     highlightedEndpoints?: string[]
 }
 
-export type PuzzleMode = 'create' | 'resolve' | 'generate'
+export type GameMode = 'create' | 'resolve' | 'generate'
 
 export interface IPuzzleProps extends IRectProps {
     handlers: IHandlers
@@ -30,11 +37,6 @@ export interface IPuzzleProps extends IRectProps {
 
 export interface IHandlers {
     [key: string]: Function
-}
-
-export interface ISwitcherProps {
-    handlers: IHandlers
-    mode: PuzzleMode
 }
 
 export interface IDotSectorProps {
@@ -74,9 +76,9 @@ export interface IDotConnections {
     [dir: string | LineDirections]: IConnection
 }
 
-export interface IPointValue {
-    xy: number[]
-}
+// export interface IPointValue {
+//     xy: number[]
+// }
 
 export enum LineDirections {
     bottom = 'bottom',
@@ -99,9 +101,9 @@ export interface IPuzzle {
     points: ITakenPoints
 }
 
-export interface IStartPoints {
-    [color: string]: string[]
-}
+// export interface IStartPoints {
+//     [color: string]: string[]
+// }
 
 export interface ITakenPointProps {
     endpoint: boolean
@@ -130,9 +132,9 @@ export interface IEndpointsValue {
     resolved?: boolean
 }
 
-export interface IPoint {
-   [key: string]: IPointValue
-}
+// export interface IPoint {
+//    [key: string]: IPointValue
+// }
 
 export interface IRectCell {
     [key: string]: {neighbors: string[], point: number[]}
@@ -145,16 +147,16 @@ export interface ILinedRect {
     _takenPoints: ITakenPoints
 }
 
-export interface CurrentLine {
-    [startPoint: string]: {
-        points: string[]
-        resolved?: boolean
-    }
-}
+// export interface CurrentLine {
+//     [startPoint: string]: {
+//         points: string[]
+//         resolved?: boolean
+//     }
+// }
 
-export interface CurrentLines {
-    [color: string]: CurrentLine
-}
+// export interface CurrentLines {
+//     [color: string]: CurrentLine
+// }
 
 export interface ICollision {
     sameColor?: boolean

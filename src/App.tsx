@@ -1,62 +1,64 @@
-import React, {useEffect, useState} from 'react';
+/* eslint-disable react-hooks/exhaustive-deps */
+import React, { useEffect, useState } from 'react';
 
-import { PuzzleWrapper } from './puzzle-components/PuzzleResolver';
-import { PuzzleCreator } from './puzzle-components/PuzzleCreator';
-import { PuzzleMode } from './constant/interfaces';
-import { ModeSwitcher } from './puzzle-components/menu/ModeSwitcher';
+import { PuzzleWrapper } from './puzzle-components/resolver-components/PuzzleResolver';
+import { PuzzleCreator } from './puzzle-components/creator-components/PuzzleCreator';
 import WebSocketClient from './ws'
+import { ConfirmAdmin } from "./confirm-admin/ConfirmAdmin";
+
+import { isDev } from "./helper-fns/helper-fn";
+import { modeService } from "./app-services/mode-service";
+import { authService } from "./app-services/auth-service";
+
 import './App.scss';
-import {ConfirmAdmin} from "./ConfirmAdmin";
-import {LSAdmin, LSName, LSToken} from "./constant/constants";
-import {puzzlesManager} from "./puzzles-storage/puzzles-manager";
-import {saveResultToStorage, isDev} from "./helper-fns/helper-fn";
 
 
 function App() {
-    const [puzzleMode, setPuzzleMode] = useState('resolve' as PuzzleMode)
+    const [gameMode, setGameMode] = useState(modeService.mode)
     const [admin, setAdmin] = useState(window.location.href.includes('admin'))
-    const [confirmedAdmin, setConfirmedAdmin] = useState(!!localStorage.getItem(LSAdmin))
-    const selectMode = (mode: PuzzleMode) => {
-        setPuzzleMode(mode)
-    }
+    const [user, setUser] = useState(authService.user)
+
+    useEffect(() => {
+        const unsubUser = authService.$user.subscribe(setUser)
+        const unsubMode = modeService.$mode.subscribe(setGameMode)
+        return () => {
+            unsubMode()
+            unsubUser()
+        }
+    }, [])
+
     const toOrigin = () => {
-        const path = !window.location.origin.includes('admin')
+        window.location.href = !window.location.origin.includes('admin')
             ? window.location.origin
             : window.location.href.replace('admin', '')
-        window.location.href = path
     }
+
     const confirmAdminHandler = (token: string) => {
-        console.log('confirm', token)
         setAdmin(!!token)
-        setConfirmedAdmin(!!token)
         if (!token) {
             toOrigin()
-        } else {
-            localStorage.setItem(LSAdmin, token)
-            localStorage.setItem(LSToken, token)
         }
-
     }
+
     useEffect(() => {
-        if (!admin && confirmedAdmin) {
-            saveResultToStorage('', LSAdmin)
-            saveResultToStorage('', LSToken)
-            setConfirmedAdmin(false)
-            puzzlesManager.getToken().then(r => {
+        if (!admin && authService.user.role === 'admin') {
+            authService.getToken().then(() => {
                 isDev() && console.log('token updated')
             })
         }
     },[window.location.origin.includes('admin')])
-    if (admin && !confirmedAdmin) {
+
+    if (admin && user.role !== 'admin') {
         return <ConfirmAdmin cb={confirmAdminHandler} />
     }
+    console.log(gameMode)
+    const appClass = `app app-${gameMode}`
     return (
-        <div className="App">
-                {puzzleMode === 'create'
+        <div className={appClass}>
+                {gameMode === 'create'
                     ? <PuzzleCreator />
                     : <PuzzleWrapper />}
             <WebSocketClient />
-            <ModeSwitcher mode={puzzleMode} handlers={{selectMode}} />
         </div>
     );
 }

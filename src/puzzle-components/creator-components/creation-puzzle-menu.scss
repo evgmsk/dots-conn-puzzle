@@ -1,0 +1,46 @@
+@import "../../assets/scss/constant";
+
+.dots-puzzle_menu {
+    display: flex;
+    flex-direction: column;
+    max-width: $puzzle-max-width;
+    //width: 100%;
+
+    &__dimensions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    &__footer {
+        display: flex;
+        justify-content: space-between;
+        max-width: 400px;
+        width: 100%;
+        padding-right: 10px;
+        box-sizing: border-box;
+    }
+    &__btn {
+        @extend main-btn;
+        padding: 5px 7px;
+        margin: 15px 0;
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 50%;
+        box-shadow: 0 0 3px 3px lightblue;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        svg {
+            display: block;
+            color: ivory;
+            width: 1.6rem;
+            height: 1.6rem;
+        }
+    }
+    &__colors-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 10px 0;
+    }
+}

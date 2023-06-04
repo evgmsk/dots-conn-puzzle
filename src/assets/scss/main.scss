@@ -11,3 +11,8 @@ html, body {
         font-size: 16px;
     }
 }
+
+.show-up {
+    transition: opacity .8s;
+    opacity: 1;
+}

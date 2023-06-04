@@ -10,6 +10,7 @@
         width: 100%;
         height: $minor-line-size / $main-line-size * 100%;
         transform: scale(.9);
+        transition: all .3s;
         @content;
     }
 }
@@ -24,6 +25,7 @@
     border-radius: 50%;
     background-color: $col;
     z-index: $ind;
+    transition: all .3s;
 }
 
 @mixin line-before($col) {
@@ -31,6 +33,7 @@
         content: '';
         position: absolute;
         border-radius: 100%;
+        transition: all .3s;
         z-index: 10;
         background-color: $col;
         width: 100%;
@@ -68,6 +71,7 @@
     grid-template-rows: repeat(2, 1fr);
     border-radius: 100%;
     z-index: 10000;
+    transition: all .3s;
     &.join {
         display: block;
         width: $point-size * 1.1;
@@ -75,7 +79,7 @@
     }
     &.highlighted {
         transform: scale(1.1);
-        animation: highlight .8s ease-in infinite;
+        animation: highlight .6s ease-in infinite;
     }
 }
 
@@ -85,12 +89,16 @@
         position: relative;
         width: 100%;
         height: 100%;
-        // box-sizing: border-box;
         border-radius: 0;
-        
+        opacity: 0;
+        transition: all .3s;
         @each $name, $col in $colors {
             &.fill-#{$name} {
-                background-color: #{$col}; 
+                &.animated {
+                    opacity: 1;
+                }
+                transition: all .3s;
+                background-color: #{$col};
                 @include sector-border($dir, $col);
                 border: 1px solid #{$col};
                 @if $name == 'lightgrey' {
@@ -98,6 +106,7 @@
                 }
                 @for $j from 2 to 5 {
                     &.join-#{$j} {
+                        transition: all .3s;
                         $size: 100%;
                         @if $dir == 'top' {
                             @include circle($col, $size)
@@ -125,9 +134,15 @@
 @each $dir in $directions {
     .line-#{$dir} {
         position: absolute;
+        transition: all .3s;
         z-index: 1;
+        opacity: 0;
+        &.animated {
+            opacity: 1;
+        }
         @each $name, $col in $colors {
             &.line-#{$name} {
+                transition: all .3s;
                 background-color: #{$col};
                 @if $dir == 'top' {
                     width: $minor-line-size;

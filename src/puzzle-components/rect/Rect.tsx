@@ -1,12 +1,12 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useState} from "react"
+import React from "react"
 
 import './rect.scss'
 
 import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/interfaces"
 import { Point } from "../point/Point"
-import { shadowState } from '../finger-shadow/finger-shadow-state'
-import { FingerShadow } from '../finger-shadow/FingerShadow'
+import { shadowState } from '../../app-services/finger-shadow-state'
+import { FingerShadow } from './finger-shadow/FingerShadow'
 
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
@@ -122,8 +122,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 className={rectClassName}
                 onMouseMove={handlePointerMove}
                 onMouseLeave={mouseLeave}
-
-                // onTouchMove={handlePointerMove}
+                onTouchMove={handlePointerMove}
             >
                 {rect}
                 {mouseDown ? <FingerShadow /> : null}

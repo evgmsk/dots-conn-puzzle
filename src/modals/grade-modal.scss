@@ -1,0 +1,8 @@
+@import "../assets/scss/constant";
+
+.grade-modal {
+    @extend modal;
+    &.show-up {
+        opacity: .7;
+    }
+}

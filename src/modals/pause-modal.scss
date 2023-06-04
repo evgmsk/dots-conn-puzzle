@@ -1,0 +1,13 @@
+@import "../assets/scss/constant";
+
+.pause-modal {
+    @extend modal;
+    p {
+        margin: 20px auto;
+        color: aliceblue;
+        font-size: 2rem;
+        text-align: center;
+        line-height: 1;
+        background-color: darken(#7c829d, 30%);
+    }
+}
