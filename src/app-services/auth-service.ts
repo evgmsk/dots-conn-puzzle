@@ -17,17 +17,15 @@ export class AuthService {
     getAdminToken = async (password: string) => {
         const options = {
             method: "POST",
-            headers: {
-                "Content-Type": "application/json",
-                // 'Content-Type': 'application/x-www-form-urlencoded',
-            },
             body: JSON.stringify({password})
         }
         await this.makeFetch(this.adminTokenUrl, options).then(res => {
             const {resData, error} = res
             console.log(resData)
-            this.setToken(resData?.token)
-            this.setUser(resData?.user)
+            if (resData.user) {
+                this.setToken(resData.token)
+                this.setUser(resData.user)
+            }
             if (error) {
                 this.tokenError.message = error.message
                 this.$tokenError.emit(this.tokenError)
@@ -36,7 +34,12 @@ export class AuthService {
     }
 
     async makeFetch(urlSuffix: string, opts: {[k: string]: any} = {method: 'GET'}) {
-        opts.headers = {...opts.headers, ...this.tokenizedHeaders()}
+        opts.headers = {
+            ...opts.headers,
+            ...(opts.method === 'GET'
+                ? this.tokenizedHeaders()
+                : this.tokenizedHeadersPost())
+        }
         const baseUrl = isDev() ? BaseDevUrl : BaseProdUrl
         const url = `${baseUrl}/${urlSuffix}`
         try {
@@ -54,6 +57,16 @@ export class AuthService {
         }
     }
 
+    updateUser = (user: IUser) => {
+        this._user = user
+        this.makeFetch('user', {
+            method: 'PUT',
+            body: JSON.stringify(this._user)
+        })
+            .then(d => console.log(d))
+            .catch(e => console.log(e.message))
+    }
+
     tokenizedHeaders = () => ({
         Authentication: `bearer-${this._token}`,
     })
@@ -66,7 +79,7 @@ export class AuthService {
     getToken = async () => {
         await this.makeFetch(this.guestTokenUrl).then(res => {
             const {resData, error} = res
-            console.log(resData)
+            isDev() && console.log(resData)
             this.setToken(resData?.token)
             this.setUser(resData?.user)
             if (error) {
@@ -84,7 +97,7 @@ export class AuthService {
     setUser = (user: IUser) => {
         this._user = user
         localStorage.setItem(LSUser, JSON.stringify(this._user))
-        console.log('new user', user)
+        isDev() && console.log('new user', user)
         this.$user.emit(this._user)
     }
 

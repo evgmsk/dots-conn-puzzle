@@ -8,7 +8,10 @@
 export interface IUser {
     name: string,
     level: number,
-    role: 'admin' | 'user'
+    role: 'admin' | 'user',
+    followed: string[],
+    blocked: string[],
+    resolved?: string[],
     [k: string]: any
 }
 
@@ -29,7 +32,7 @@ export interface IRectProps {
     highlightedEndpoints?: string[]
 }
 
-export type GameMode = 'create' | 'resolve' | 'generate'
+// export type GameMode = 'create' | 'resolve' | 'generate'
 
 export interface IPuzzleProps extends IRectProps {
     handlers: IHandlers
@@ -52,7 +55,6 @@ export interface IColorBTN {
     selected: boolean
     color: string
 }
-
 
 export interface ISLines {
     [color: string]: string[][]
@@ -92,8 +94,10 @@ export interface ILines {
 }
 
 export interface IPuzzle {
-    creator: string
-    createdAt: Date | string
+    _id?: number | string
+    name: string
+    createdAt?: number
+    createdBy: string | number
     lines?: ISLines
     width: number
     height: number

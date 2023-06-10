@@ -74,14 +74,15 @@ export class LinedRectBase implements ILinedRect {
             this._width = width
             if (this.height < width || this.height > width * 1.5) {
                 this._height = Math.round(width * 1.2)
+
             }
         } else if (height) {
             this._height = height
             if (height > this.width * 1.5 || height < this.width) {
                 this._width = Math.round(height / 1.2)
+
             }
         }
-        console.log(width, height, this._width, this._height, this.height < (width || 1) * 1.2)
         this._takenPoints = {} as ITakenPoints
         this.createRect()
         this.$points.emit(this.takenPoints)
@@ -90,7 +91,6 @@ export class LinedRectBase implements ILinedRect {
     }
 
     setWidth(width: number) {
-
         this.setDimension({width})
     }
 
@@ -217,7 +217,7 @@ export class LinedRectBase implements ILinedRect {
         }
         const linePart1 = this.getLinePartPoints(color, _neighbors[0], point, points)
         const linePart2 = this.getLinePartPoints(color, _neighbors[1], point, points)
-        console.log(linePart1, linePart2, _neighbors, color, point)
+        // console.log(linePart1, linePart2, _neighbors, color, point)
         return linePart1.reverse().concat(linePart2.slice(1))
     }
 
@@ -272,7 +272,7 @@ export class LinedRectBase implements ILinedRect {
     ) => {
         const nextNeighbors = this.getLineNeighbors(next, color, points)
         const line = this.getFullLineFromAnyPoint(next, color, nextNeighbors, points)
-        isDev() && console.log('line', line, this.takenPoints, next, prev, color)
+        // isDev() && console.log('line', line, this.takenPoints, next, prev, color)
         return this.checkIfPointBelongsToLine(line, prev, next)
     }
 

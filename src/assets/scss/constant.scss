@@ -23,6 +23,8 @@ $colors: (
     @return map-get($colors, $col);
 }
 
+$bg-main: #252324;
+
 $directions: 'top', 'right', 'bottom', 'left';
 
 $main-line-size: 65%;
@@ -39,21 +41,42 @@ $device: 650px;
 
 $font-main: 'Roboto', sans-serif;
 
-main-btn {
+#menu-btn {
+    margin: 15px 0;
+    width: 2.2rem;
+    height: 2.2rem;
+    border-radius: 50%;
+    box-shadow: 0 0 3px 3px lightblue;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: $bg-main;
+    transition: box-shadow .3s;
+    &:hover {
+        box-shadow: 0 0 3px 3px lighten(blue, 30%);
+    }
+    svg {
+        display: block;
+        color: ivory;
+        width: 1.6rem;
+        height: 1.6rem;
+    }
+}
+
+#main-btn {
     border-radius: 4px;
     background-color: transparent;
     border: none;
-    box-shadow: 0 0 3px 2px lighten(blue, 30%);
     padding: 10px;
     margin: 10px;
     color: aliceblue;
     transition: all .3s;
     &:hover {
-        box-shadow: 0 0 3px 2px lighten(blue, 40%);
+        box-shadow: 0 0 3px 2px lighten(blue, 80%);
     }
 }
 
-modal {
+#modal {
     position: absolute;
     width: 80%;
     height: 40%;

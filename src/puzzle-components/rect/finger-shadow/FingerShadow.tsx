@@ -15,9 +15,11 @@ export const FingerShadow: React.FC = () => {
     }, [])
     const shadowClass = `finger-shadow finger-shadow_${color} moving-${dir}`
     const cell = document.querySelector('.puzzle-cell')
+    const rect = document.querySelector('.dots-conn-puzzle_body')
+    const {x: xRect = 0, y: yRect = 0}  = rect?.getBoundingClientRect() || {}
     const {width} = cell ? cell.getBoundingClientRect() : {width: 50}
     const size = width * 1.3
-    const [x, y] = [state.pos.x - size / 2, state.pos.y - size / 2]
+    const [x, y] = [state.pos.x - size / 2 - xRect, state.pos.y - size / 2 - yRect]
     const style = {
         top: `${y}px`,
         left: `${x}px`,

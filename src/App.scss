@@ -1,13 +1,12 @@
 @import "assets/scss/constant";
 
 .app {
-  padding: 20px 0 10px;
+  padding: 30px 0 10px;
   background-color: #252324;
   border-radius: 10px;
   display: flex;
-  justify-content: flex-start;
-  flex-direction: column;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: center;
   box-sizing: border-box;
   min-height: 100vh;
   max-height: 100vh;
@@ -15,12 +14,6 @@
     transform: rotate(90deg);
     min-height: 100vw;
     max-height: 100vw;
-  }
-  &.app-create {
-
-  }
-  &.app-resolve {
-    justify-content: center;
   }
 }
 
@@ -35,11 +28,29 @@
   border: unset;
   padding: unset;
   color: white;
-;
+}
 
+.loading-spinner_puzzles {
+  display: inline-block;
+  position: relative;
+  width: 2rem;
+  height: 2rem;
+  &:after {
+    content: " ";
+    display: block;
+    border-radius: 50%;
+    width: 0;
+    height: 0;
+    margin: 8px;
+    box-sizing: border-box;
+    border: 1.8rem solid lightblue;
+    border-color: lightblue transparent lightblue transparent;
+    animation: spinner 1.2s infinite;
+  }
 }
 
 .animated-component {
+  position: relative;
   opacity: 0;
   transition: opacity .4s;
   &.show-up {
@@ -62,25 +73,14 @@
 
   &_creator {
     transition: opacity .8s;
-    width: 90vw;
-    max-width: 600px;
     height: auto;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    //opacity: 0;
-    //&.show-up {
-    //  opacity: 1;
-    //}
     @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
       width: 90vh;
     }
-    //max-height: 70vh;
-    //margin-bottom: 5px;
   }
 
   &_body {
+    position: relative;
     background-color: aliceblue;
     border-radius: 10px;
     border: solid 1px gray;
@@ -108,5 +108,19 @@
         }
       }
     }
+  }
+}
+
+@keyframes spinner {
+  0% {
+    transform: rotate(0);
+    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+  }
+  50% {
+    transform: rotate(900deg);
+    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+  }
+  100% {
+    transform: rotate(1800deg);
   }
 }

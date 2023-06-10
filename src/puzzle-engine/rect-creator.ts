@@ -19,7 +19,7 @@ export class RectCreator extends PuzzleEvaluator {
 
     constructor(props: IRectDimension) {
         super(props);
-        isDev() && console.log(props)
+        // isDev() && console.log(props)
     }
 
     undo = () => {
@@ -62,19 +62,17 @@ export class RectCreator extends PuzzleEvaluator {
     }
 
     buildPuzzle = (): IPuzzle | undefined => {
-        const name = authService.user.name
         if (!Object.keys(this.lines).length) {
             return
         }
         const difficulty = this.evaluatePuzzle()
         const {width, height} = this
-        const createdAt = new Date()
-        const creator = `${name}_size-${width}x${height}_diff-${difficulty}`
-        isDev() && console.log('new puzzle', name, creator)
+        const name = `${authService.user.name}_size-${width}x${height}_diff-${difficulty}`
+        isDev() && console.log('new puzzle', name)
         const puzzle = {
-            createdAt,
-            creator,
+            name,
             difficulty,
+            createdBy: authService.user._id,
             width,
             height,
             points: this.getTotalPoints()
@@ -115,22 +113,39 @@ export class RectCreator extends PuzzleEvaluator {
             }
             updatedPoints[point] = {...pointProps, connections}
         }
-        isDev() && console.log('ch color', newColor, oldColor, line, key, updatedPoints)
+        // isDev() && console.log('ch color', newColor, oldColor, line, key, updatedPoints)
         this.addTakenPoints(updatedPoints)
     }
 
     resolveMouseUp = (point: string, color: string) => {
-        isDev() && console.log('up', point, color)
+
         const pointProps = this.getPoint(point)
-        // const freeCells = this.rect[point].neighbors.filter(n => !this.getPoint(n)).length
-        // if (!pointProps.endpoint && !freeCells) {
-        //     this.convertLastToEndpoint(point)
-        //     this.updateSteps()
-        //     pointProps.endpoint = true
-        // }
-        if (pointProps.endpoint && pC.puzzleFulfilled() && this.preparePuzzleEvaluation()) {
-            this.buildPuzzle()
-            console.log(this.puzzle)
+        if (pointProps.endpoint) {
+            return
+        }
+        const noFeeCell = {sameColor: 0, freeCell: this.rect[point].neighbors.length}
+        for (const nei of this.rect[point].neighbors) {
+            const neiProps = this.getPoint(nei)
+            if (!neiProps) {
+                break
+            }
+            const sameColor = this.getColors(neiProps.connections).includes(color)
+            if (!sameColor) {
+                noFeeCell.freeCell -= 1
+            } else if (!neiProps.endpoint) {
+                noFeeCell.sameColor += 1
+                if (noFeeCell.sameColor > 1) {
+                    break
+                }
+                noFeeCell.freeCell -= 1
+            } else {
+                break
+            }
+        }
+        if (noFeeCell.sameColor === 1 && noFeeCell.freeCell === 0) {
+            this.convertLastToEndpoint(point)
+            this.updateSteps()
+            pointProps.endpoint = true
         }
     }
 
@@ -257,6 +272,21 @@ export class RectCreator extends PuzzleEvaluator {
             this.removeLineFork(nei, next, color)
         }
         this.addNextPoint(next, prev, color)
+    }
+
+    removeLineFork = (next: string, prev: string, color: string) => {
+        // console.warn('remove forked line', next, prev)
+        let passed = prev
+        const toFn = (key: string) => {
+            const point = this.getPoint(key)
+            const last = this.isEndpoint(key, point, color)
+            !last && !point.crossLine && this.deletePoint(key)
+            point.crossLine && this.updateCrossLineRemovingFork(color, key, point)
+            last && this.updateEndPoint(last, passed, color)
+            passed = key
+            return last
+        }
+        this.goToLinePoint(next, prev, toFn, color)
     }
 }
 

@@ -51,7 +51,7 @@ export class PuzzleCommons extends LinedRectBase {
                 }
             }
         }
-        console.log('continue line', nextPoint, prevPoint, point)
+        // console.log('continue line', nextPoint, prevPoint, point)
         this.addTakenPoints(point)
     }
 
@@ -66,7 +66,7 @@ export class PuzzleCommons extends LinedRectBase {
                 return
             }
             const dir = this.determineDirection(nextPoint, prevPoint)
-            isDev() && console.log('create join', nextPoint)
+            // isDev() && console.log('create join', nextPoint)
             const updatedPointProps = { 
                 endpoint: !sameColor || endpoint,
                 connections: {
@@ -138,7 +138,7 @@ export class PuzzleCommons extends LinedRectBase {
     separateDotsByLines = (points: ITakenPoints): ISLines => {
         const passed = {} as {[key: string]: boolean}
         const lines = {} as ISLines
-        isDev() && console.log('sep by lines', points)
+        // isDev() && console.log('sep by lines', points)
         for (const point in points) {
             if (passed[point]) { continue }
             const {connections} = points[point]
@@ -159,7 +159,7 @@ export class PuzzleCommons extends LinedRectBase {
     }
 
     removeLinePart = (line: string[], color: string, fn = this.updateCrossLineRemovingFork) => {
-        console.log('remove line part', line, color)
+        // console.log('remove line part', line, color)
         if (!line.length) return
         for (let i = 0; i < line.length; i++) {
             const point = line[i]
@@ -193,21 +193,6 @@ export class PuzzleCommons extends LinedRectBase {
         this.removeLinePart(line, color)
     }
 
-    removeLineFork = (next: string, prev: string, color: string) => {
-        console.warn('remove forked line', next, prev)
-        let passed = prev
-        const toFn = (key: string) => {
-            const point = this.getPoint(key)
-            const last = this.isEndpoint(key, point, color)
-            !last && !point.crossLine && this.deletePoint(key)
-            point.crossLine && this.updateCrossLineRemovingFork(color, key, point)
-            last && this.updateEndPoint(last, passed, color)
-            passed = key
-            return last
-        }
-        this.goToLinePoint(next, prev, toFn, color)
-    }
-
     updateCrossLineRemovingFork = (color: string, key: string, point: ITakenPointProps) => {
         const {crossLine, connections, endpoint, joinPoint} = point
         if (!point.connections) {
@@ -235,7 +220,7 @@ export class PuzzleCommons extends LinedRectBase {
         const dir = this.determineDirection(prevPoint, nextPoint)
         if (endpoint && !crossLine && !creator) {
             const neighbors = this.getLineNeighbors(connections, color)
-            console.warn('rem endpoint fork', nextPoint, prevPoint, color, neighbors, crossLine)
+            // console.warn('rem endpoint fork', nextPoint, prevPoint, color, neighbors, crossLine)
             for (const nei of neighbors) {
                 if (nei === connections[dir].neighbor) {
                     continue
@@ -271,7 +256,7 @@ export class PuzzleCommons extends LinedRectBase {
                 }
             }
         } as ITakenPoints
-        isDev() && console.log('update line start', dir, updatedPoint, this.getPoint(prevPoint).connections, nextPoint, prevPoint, endpoint)
+        // isDev() && console.log('update line start', dir, updatedPoint, this.getPoint(prevPoint).connections, nextPoint, prevPoint, endpoint)
         this.addTakenPoints(updatedPoint)
     }
 
@@ -337,7 +322,7 @@ export class PuzzleCommons extends LinedRectBase {
         const lineColor = this.getColors(start)[0]
         this.deletePoint(start)
         let prevPoint = [start, start, start, start]
-        console.log('remove interfere', start, startConnections)
+        // console.log('remove interfere', start, startConnections)
         const stopFn = (pointKey: string, index = 0) => {
             const {connections, endpoint, crossLine, joinPoint} = this.getPoint(pointKey)
             const lineNeighbors = this.getLineNeighbors(connections)

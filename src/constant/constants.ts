@@ -1,5 +1,8 @@
 import {IConnection, LineDirections} from "./interfaces";
 
+export const StartDate = 1685221672630
+export const OneDay = 24 * 3600000
+
 export const MinLinesNumber = 4
 export const LineColors = [
     'lightgrey',

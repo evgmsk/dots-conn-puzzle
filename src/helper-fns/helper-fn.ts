@@ -128,5 +128,12 @@ export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
 }
 
 export const getUTCDate = (date = new Date()) => {
-    return new Date()
+    return Date.UTC(
+        date.getUTCFullYear(),
+        date.getUTCMonth(),
+        date.getUTCDate(),
+        date.getUTCHours(),
+        date.getUTCMinutes(),
+        date.getUTCSeconds()
+    )
 }

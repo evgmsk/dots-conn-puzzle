@@ -2,7 +2,7 @@
 
 .dots-puzzle_menu {
     .open-dropdown-btn{
-        @extend main-btn;
+        @extend #main-btn;
         margin-left: 10px;
         border-radius: 0 5rem 5rem 0;
         width: 2.5rem;
@@ -44,7 +44,7 @@
         }
     }
     .menu-dropdown {
-        background: #252324;
+        background: $bg-main;
         border-radius: 5px 5px 0 0;
         position: absolute;
         left: -2px;

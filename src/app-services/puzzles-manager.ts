@@ -1,8 +1,8 @@
-import { LSPuzzles } from "../constant/constants";
+import {Admin, LSPuzzles, LSUserPuzzles, OneDay, StartDate} from "../constant/constants";
 
 import {
     getPuzzlesFromStorage,
-    getUserPuzzlesFromStorage,
+    getUserPuzzlesFromStorage, getUTCDate, isDev,
     // isDev,
 } from "../helper-fns/helper-fn";
 
@@ -19,40 +19,56 @@ export class PuzzlesManager {
     error = {} as {message: string}
     options = {method: 'GET'} as {[k:string]: any}
     unresolvedPuzzle = null as unknown as IPuzzle
-    createdBefore = new Date()
-    createdAfter =  new Date()
-    creator = authService.user.followed || [] as string[]
-    rating = 0
-    addsTimeout = 30
-    numberOfGrades = 0
-    square = {from: 9, to: undefined}
-    diffFrom = authService.user.level
-    diffTo = 0
+    queryOptions = {
+        createdAt: {
+            date: StartDate,
+            after: true},
+        rating: {value: 0, over: true},
+        numberOfGrades: {value: 0, over: true},
+        square: {value: 9, from: true},
+        difficulty: {
+            level: authService.user.role === Admin ? 0 :authService.user.level,
+            over: true},
+        followed: true
+    }
     graded = true
+    requestingSystem = false
+    lastRequest = Date.now()
+
+    $requestSystem = new Observable<boolean>(this.requestingSystem)
     $puzzles = new Observable<IPuzzle[]>(this.puzzles)
     $unresolved = new Observable<IPuzzle>(this.unresolvedPuzzle)
     $loading = new Observable<boolean>(this.loading)
     $error = new Observable<{message: string}>(this.error)
     $customPuzzles = new Observable<IPuzzle[]>(this.customPuzzles)
     $graded = new Observable(this.graded)
-    $creator = new Observable(this.creator)
+
+    // $creator = new Observable(this.creator)
 
     constructor() {
-        this.createdBefore.setDate(this.createdBefore.getDate() - 1)
-        if (this.puzzles.length < 10) {
-            console.log('get puzzles', this.puzzles.length)
-            this.updatePuzzles().then(() => console.log('updated'))
-        }
         if (!authService.token) {
             authService.getToken().then(() => {
                 console.log('token received')
             })
         }
+        this.checkIfPuzzlesUpToDate()
     }
 
-    addCreatorToFollow = (creator: string) => {
-        this.creator = creator
-        this.$creator.emit(this.creator)
+    checkIfPuzzlesUpToDate = () => {
+        // console.log('puzzles length', this.puzzles.length, this.customPuzzles.length)
+        if (this.puzzles.length <= 5) {
+            this.updatePuzzles(true).then(() => console.log('system updated'))
+        }
+        if (Date.now() - this.lastRequest > OneDay) {
+            this.queryOptions.createdAt.date = getUTCDate() - OneDay
+            this.updatePuzzles(false).then((a) => console.log('custom updated', a))
+            this.lastRequest = Date.now()
+        }
+    }
+
+    setRequestSystem = (sys: boolean) => {
+        this.requestingSystem = sys
+        this.$requestSystem.emit(this.requestingSystem)
     }
 
     setGraded = (grade: boolean) => {
@@ -64,34 +80,12 @@ export class PuzzlesManager {
         this.$graded.emit(this.graded)
     }
 
-    setDiffFrom = (diff: number) => {
-        this.diffFrom = diff
+    setDifficultyOption = (diff: number) => {
+        this.queryOptions.difficulty.level = diff
     }
 
-    setDiffTo = (diff: number) => {
-        this.diffTo = diff
-    }
-
-    setNumberOfGrades = (number: number) => {
-        this.numberOfGrades = number
-    }
-
-    setCreator = (creator: string) => {
-        this.creator = creator
-    }
-
-    setRating = (rating: number) => {
-        this.rating = rating
-    }
-
-    setBefore = (days: number) => {
-        this.createdBefore = new Date()
-        this.createdBefore.setDate(this.createdBefore.getDate() - days)
-    }
-
-    setAfter = (days: number) => {
-        this.createdAfter = new Date()
-        this.createdAfter.setDate(this.createdBefore.getDate() - days)
+    setDiffLowerLimit = (lim: boolean) => {
+        this.queryOptions.difficulty.over = lim
     }
 
     handleSavePuzzle = async (puzzle = this.unresolvedPuzzle, puzzles = [] as IPuzzle[]) => {
@@ -108,7 +102,7 @@ export class PuzzlesManager {
 
     setUnresolved = (puzzle = null as unknown as IPuzzle) => {
         this.unresolvedPuzzle = puzzle
-        // console.log(this.$unresolved.subscribers, puzzle)
+        // console.log(this.unresolvedPuzzle, puzzle)
         this.$unresolved.emit(this.unresolvedPuzzle)
     }
 
@@ -116,31 +110,63 @@ export class PuzzlesManager {
         this.options = opts
     }
 
+    getDiffQuery = (admin = authService.user.role === Admin) => {
+        const {level, over} = this.queryOptions.difficulty
+        return over ? `?difficulty=${level}` : `?difficulty=${[0, level]}`
+    }
+
+    getDateQuery = () => {
+        const {date, after} = this.queryOptions.createdAt
+        return after ? `&createdAt=${date}` : `&createdAt=${[StartDate, date]}`
+    }
+
+    getRatingQuery = () => {
+        const {value, over} = this.queryOptions.rating
+        return over ? `&rating=${value}` : `&rating=${[0, value]}`
+    }
+
+    getGradesQuery = () => {
+        const {value, over} = this.queryOptions.numberOfGrades
+        return over ? `&grade=${value}` : `&grade=${[0, value]}`
+    }
+
+    getUserQuery = () => {
+        const {followed} = this.queryOptions
+        const followedUsers = authService.user.followed
+        const blockedUsers = authService.user.blocked
+        if (followed && followedUsers?.length) {
+            return `&createdBy=${['$in', ...followedUsers]}`
+        }
+        if (!followed && blockedUsers?.length) {
+            return `&createdBy=${['$nin', ...blockedUsers]}`
+        }
+        return ''
+    }
+
     getUrlForSystemPuzzles = () => {
-        const admin = authService.user.name === 'admin'
+        const admin = authService.user.name === Admin
         const level = (authService.user.level || 0) + (this.puzzles.length ? 5 : 0)
         return !admin
-            ? `puzzles?system=true&difficulty=${level}_${level + (this.puzzles.length ? 5 : 10)}`
+            ? `puzzles?system=true&difficulty=${[level, level + (this.puzzles.length ? 5 : 10)]}`
             : `puzzles?system=true&difficulty=${0}`
     }
 
-    getUrl = (system = true, _url = 'puzzles') => {
+    getUrl = (system = this.requestingSystem, _url = 'puzzles') => {
         if (system) {
            return this.getUrlForSystemPuzzles()
         }
-        const diff = this.diffFrom ? `&difficulty=${this.diffFrom}_${this.diffTo || ''}` : ''
-        const square = this.square.to
-            ? `&square=${this.square.from}_${this.square.to}`
-            : (this.square.from === 9 ? '' : '&square=' + this.square.from)
-        const createdAt = this.createdAfter ? `&createdAt=${this.createdAfter}-${this.createdBefore}` : ''
-        const creator = this.createdAfter ? `&createdAt=${this.createdAfter}-${this.createdBefore}` : ''
-        const url = `${_url}${diff}${createdAt}${square}`
-        return url
+        const diff = this.getDiffQuery()
+        const date = this.getDateQuery()
+        const rating = this.getRatingQuery()
+        const grade = this.getGradesQuery()
+        const user = this.getUserQuery()
+        return `${_url}${diff}${rating}${user}`
     }
 
     setIsLoading = (loading: boolean) => {
         this.loading = loading
         this.$loading.emit(this.loading)
+        console.log('is loading', this.loading)
     }
 
     saveMainPuzzles = (data: IPuzzle[]) => {
@@ -156,7 +182,8 @@ export class PuzzlesManager {
     }
 
     saveCustomPuzzles = (puzzles: IPuzzle[]) => {
-        this.customPuzzles = this.customPuzzles.concat(puzzles).slice(-20)
+        this.customPuzzles = this.customPuzzles.concat(puzzles)
+        localStorage.setItem(LSUserPuzzles, JSON.stringify(this.customPuzzles.slice(-40)))
         this.$customPuzzles.emit(this.customPuzzles)
     }
 
@@ -165,10 +192,26 @@ export class PuzzlesManager {
         this.$error.emit(this.error)
     }
 
+    deletePuzzle = async () => {
+        if (authService.user.role !== Admin) return
+        const url = `puzzles/:${this.unresolvedPuzzle._id}`
+        await authService.makeFetch(url, {method: 'DELETE'})
+            .then(d => console.log(d))
+            .catch(e => console.log(e))
+    }
+
+    updatePuzzle = () => {
+        if (authService.user.role !== Admin) return
+        const url = `puzzles/:${this.unresolvedPuzzle._id}`
+        authService.makeFetch(url, {method: 'DELETE'})
+            .then(d => console.log(d))
+            .catch(e => console.log(e))
+    }
+
     updatePuzzles = async (
-        url = this.getUrl(),
-        options = this.options,
-        system = true
+        system = this.requestingSystem,
+        url = this.getUrl(system),
+        options = this.options
     ) => {
         if (authService.token) {
             this.setIsLoading(true)
@@ -179,13 +222,14 @@ export class PuzzlesManager {
                     system && this.saveMainPuzzles(resData)
                     !system && this.saveCustomPuzzles(resData)
                 }
+                // isDev() && console.log('data', resData, system, this.puzzles, this.customPuzzles)
             });
             this.setIsLoading(false)
             return
         }
         this.setIsLoading(true)
-        await authService.getToken().then(() => {})
-        await authService.makeFetch(url, options).then(res => {
+        await authService.getToken().then()
+        authService.makeFetch(url, options).then(res => {
             const {resData, error} = res
             if (resData) {
                 system && this.saveMainPuzzles(resData)

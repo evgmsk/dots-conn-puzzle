@@ -9,8 +9,22 @@ import {ShowUP} from "../puzzle-components/show-up/ShowUp";
 export const GradeModal = (props: {[key: string]: any}) => {
     const [closeBtn, setCloseBtn] = useState(true)
     const { message } = props
-    // const handleFollow = (user.) => {
-    // }
+
+    const handleFollow = () => {
+        const creator = puzzlesManager.unresolvedPuzzle.name
+        authService.updateUser({
+            ...authService.user,
+            followed: authService.user.followed.concat(creator)
+        })
+    }
+    const handleBlock = () => {
+        const creator = puzzlesManager.unresolvedPuzzle.name
+        authService.updateUser({
+            ...authService.user,
+            followed: authService.user.blocked.concat(creator)
+        })
+    }
+
     return (
         <ShowUP>
         <div className='grade-modal'>
@@ -28,15 +42,23 @@ export const GradeModal = (props: {[key: string]: any}) => {
                     </svg>
                 </button>
             </header>
-            <div >
+            <div className='grade-modal_body'>
 
             </div>
             <footer>
                 <button
+                    className='puzzle-btn'
                     type='button'
-                    // onClick={() => authService.setUser}
+                    onClick={handleFollow}
                 >
                     Follow
+                </button>
+                <button
+                    className='puzzle-btn'
+                    type='button'
+                    onClick={handleBlock}
+                >
+                    Block
                 </button>
             </footer>
         </div>

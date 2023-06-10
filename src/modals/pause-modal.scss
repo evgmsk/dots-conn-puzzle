@@ -1,7 +1,7 @@
 @import "../assets/scss/constant";
 
 .pause-modal {
-    @extend modal;
+    @extend #modal;
     p {
         margin: 20px auto;
         color: aliceblue;

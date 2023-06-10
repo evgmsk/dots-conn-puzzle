@@ -91,8 +91,8 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
 
     useEffect(() => {
         if (resolved) {
-            if (puzzlesManager.unresolvedPuzzle.creator.includes('guwest')
-                || puzzlesManager.unresolvedPuzzle.creator.includes('admin')) {
+            if (puzzlesManager.unresolvedPuzzle.name.includes('guwest')
+                || puzzlesManager.unresolvedPuzzle.name.includes('admin')) {
                 addsService.setAddsShown(false)
                 puzzlesManager.setUnresolved()
             } else {

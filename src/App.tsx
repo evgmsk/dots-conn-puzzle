@@ -3,7 +3,6 @@ import React, { useEffect, useState } from 'react';
 
 import { PuzzleWrapper } from './puzzle-components/resolver-components/PuzzleResolver';
 import { PuzzleCreator } from './puzzle-components/creator-components/PuzzleCreator';
-import WebSocketClient from './ws'
 import { ConfirmAdmin } from "./confirm-admin/ConfirmAdmin";
 
 import { isDev } from "./helper-fns/helper-fn";
@@ -11,11 +10,12 @@ import { modeService } from "./app-services/mode-service";
 import { authService } from "./app-services/auth-service";
 
 import './App.scss';
+import {Admin} from "./constant/constants";
 
 
 function App() {
     const [gameMode, setGameMode] = useState(modeService.mode)
-    const [admin, setAdmin] = useState(window.location.href.includes('admin'))
+    const [admin, setAdmin] = useState(window.location.href.includes(Admin))
     const [user, setUser] = useState(authService.user)
 
     useEffect(() => {
@@ -28,9 +28,9 @@ function App() {
     }, [])
 
     const toOrigin = () => {
-        window.location.href = !window.location.origin.includes('admin')
+        window.location.href = !window.location.origin.includes(Admin)
             ? window.location.origin
-            : window.location.href.replace('admin', '')
+            : window.location.href.replace(Admin, '')
     }
 
     const confirmAdminHandler = (token: string) => {
@@ -41,24 +41,24 @@ function App() {
     }
 
     useEffect(() => {
-        if (!admin && authService.user.role === 'admin') {
+        if (!admin && authService.user.role === Admin) {
             authService.getToken().then(() => {
                 isDev() && console.log('token updated')
             })
         }
-    },[window.location.origin.includes('admin')])
+    },[window.location.origin.includes(Admin)])
 
-    if (admin && user.role !== 'admin') {
+    if (admin && user.role !== Admin) {
         return <ConfirmAdmin cb={confirmAdminHandler} />
     }
     console.log(gameMode)
     const appClass = `app app-${gameMode}`
     return (
         <div className={appClass}>
-                {gameMode === 'create'
-                    ? <PuzzleCreator />
-                    : <PuzzleWrapper />}
-            <WebSocketClient />
+            {gameMode === 'create'
+                ? <PuzzleCreator />
+                : <PuzzleWrapper />
+            }
         </div>
     );
 }
