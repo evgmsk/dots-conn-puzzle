@@ -118,8 +118,7 @@
     box-sizing: border-box;
     transition: all .2s linear;
     max-height: 400px;
-    height: 50vw;
-    overflow: hidden;
+    //height: 60vw;
     .dots-puzzle_menu__btn {
         position: absolute;
         right: 0;
@@ -133,15 +132,17 @@
     &.filter-open {
         transform: translateY(325px);
     }
-    .puzzle-btn_wrapper {
+    .animated-component {
         display: flex;
         justify-content: center;
         align-items: center;
+        min-height: 4rem;
+        min-width: 4rem;
     }
     .puzzle-btn {
         @extend #main-btn;
-        width: 3.8rem;
-        height: 3.8rem;
+        width: 3.5rem;
+        height: 3.5rem;
         border-radius: 1rem;
         font-family: Roboto, sans-serif;
         font-size: 1.6rem;

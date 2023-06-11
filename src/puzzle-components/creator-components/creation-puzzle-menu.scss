@@ -31,11 +31,12 @@
         padding-right: 10px;
         box-sizing: border-box;
         svg {
-            stroke-width: 2;
+            stroke-width: 1;
         }
     }
     &__btn {
         @extend #menu-btn;
+        padding: 5px;
     }
     &__colors-wrapper {
         display: flex;

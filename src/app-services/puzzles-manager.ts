@@ -33,7 +33,7 @@ export class PuzzlesManager {
     }
     graded = true
     requestingSystem = false
-    lastRequest = Date.now()
+    lastRequest = Date.now() - OneDay
 
     $requestSystem = new Observable<boolean>(this.requestingSystem)
     $puzzles = new Observable<IPuzzle[]>(this.puzzles)
@@ -59,7 +59,7 @@ export class PuzzlesManager {
         if (this.puzzles.length <= 5) {
             this.updatePuzzles(true).then(() => console.log('system updated'))
         }
-        if (Date.now() - this.lastRequest > OneDay) {
+        if (Date.now() - this.lastRequest >= OneDay) {
             this.queryOptions.createdAt.date = getUTCDate() - OneDay
             this.updatePuzzles(false).then((a) => console.log('custom updated', a))
             this.lastRequest = Date.now()

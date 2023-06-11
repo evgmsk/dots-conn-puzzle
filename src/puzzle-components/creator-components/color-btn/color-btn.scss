@@ -5,10 +5,10 @@
 }
 
 .btn_color {
-    width: 1.8rem;
-    height: 1.8rem;
+    width: 1.6rem;
+    height: 1.6rem;
     margin: .2rem;
-    border-radius: 50%;
+    border-radius: 40px;
     border-color: transparent;
     position: relative;
     @each $name, $color  in $colors {

@@ -9,6 +9,7 @@ import { ShowUP } from "./show-up/ShowUp";
 import { PuzzleFilters } from "./PuzzleFilters";
 
 import './puzzles-menu.scss'
+import {ScrollBar} from "./scroll-bar/ScrollBar";
 
 export const PuzzleSelector: React.FC = React.memo(() => {
     const [systemPuzzles, setSystemPuzzles] = useState(puzzlesManager.puzzles as IPuzzle[])
@@ -53,8 +54,8 @@ export const PuzzleSelector: React.FC = React.memo(() => {
     }
     const userLev = authService.user.level !== undefined ? authService.user.level : 0
     const puzzles = (!requestingSystem ? customPuzzles : systemPuzzles)
-        .slice(startIndex, startIndex + puzzlesLimit)
-    console.log(startIndex)
+
+    console.log(startIndex, puzzlesLimit, puzzles.length, customPuzzles.length)
     return (
         <ShowUP>
             {
@@ -63,6 +64,15 @@ export const PuzzleSelector: React.FC = React.memo(() => {
                     : null
             }
         <div className={'puzzles-container' + (filterOpen ? ' filter-open' : '')}>
+            {
+                puzzles.length > puzzlesLimit
+                    ? <ScrollBar
+                        handlers={{d: () => {}}}
+                        current={startIndex}
+                        max={customPuzzles.length - 1}
+                    />
+                    : null
+            }
             {!requestingSystem
                 ? <button
                         type='button'
@@ -92,13 +102,14 @@ export const PuzzleSelector: React.FC = React.memo(() => {
             </button>
             {
                 !loading
-                    ? puzzles.sort((a: IPuzzle, b: IPuzzle) => a.difficulty - b.difficulty)
+                    ? puzzles
+                        .slice(startIndex, startIndex + puzzlesLimit)
+                        .sort((a: IPuzzle, b: IPuzzle) => a.difficulty - b.difficulty)
                         .map((p: IPuzzle, i: number) => {
                             const diff = p.difficulty
                             const curLev = userLev === diff ? ' cur-level' : ''
                             const btnCl = `puzzle-btn${curLev} col-${getPColor(diff)}`
-                            return <div
-                                        className='puzzle-btn_wrapper'
+                            return <ShowUP
                                         key={i + (p.createdAt || Math.floor(Math.random() * 10000000))}
                                     >
                                         <button
@@ -108,7 +119,7 @@ export const PuzzleSelector: React.FC = React.memo(() => {
                                                 >
                                             {diff}
                                         </button>
-                                    </div>
+                                    </ShowUP>
                         })
                     : <>
                         <div className='loading-spinner_puzzles' />
@@ -118,6 +129,7 @@ export const PuzzleSelector: React.FC = React.memo(() => {
                         <div className='loading-spinner_puzzles' />
                     </>
             }
+
         </div>
         </ShowUP>
     )
