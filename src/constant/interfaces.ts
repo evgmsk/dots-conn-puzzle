@@ -151,19 +151,24 @@ export interface ILinedRect {
     _takenPoints: ITakenPoints
 }
 
-// export interface CurrentLine {
-//     [startPoint: string]: {
-//         points: string[]
-//         resolved?: boolean
-//     }
-// }
-
-// export interface CurrentLines {
-//     [color: string]: CurrentLine
-// }
-
 export interface ICollision {
     sameColor?: boolean
     joinPoint?: boolean
     sameLine?: string[]
+}
+
+export interface IScrollBar {
+    container: HTMLElement
+    numberOfRows: number
+    currentScroll: number
+    orientation?: number
+}
+
+export interface IScroll {
+    container: HTMLElement | string
+    progressBar: HTMLElement | string
+    slider: HTMLElement | string
+    numberOfRows: number
+    currentScroll: number
+    orientation: number
 }

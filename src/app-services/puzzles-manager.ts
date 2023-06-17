@@ -27,8 +27,9 @@ export class PuzzlesManager {
         numberOfGrades: {value: 0, over: true},
         square: {value: 9, from: true},
         difficulty: {
-            level: authService.user.role === Admin ? 0 :authService.user.level,
-            over: true},
+            level: authService.user.role === Admin ? 0 :authService.user.level || 0,
+            over: true
+        },
         followed: true
     }
     graded = true

@@ -113,9 +113,9 @@ export const CreationPuzzleMenu: React.FC<ICustomPuzzle> =
     return (
         <div className="dots-puzzle_menu">
             <div className='dots-puzzle_menu__dimension'>
-                <SizeInput size={width} label='Width' handlers={{changeSize: changeWidth}} />
+                <SizeInput currentValue={width} label='Width' handlers={{changeSize: changeWidth}} />
                 <div className='dots-puzzle_menu__level'>Level:&nbsp;{level}</div>
-                <SizeInput size={height} label='Height' handlers={{changeSize: changeHeight}} />
+                <SizeInput currentValue={height} label='Height' handlers={{changeSize: changeHeight}} />
             </div>
             <div className='dots-puzzle_menu__colors-wrapper'>
                 {

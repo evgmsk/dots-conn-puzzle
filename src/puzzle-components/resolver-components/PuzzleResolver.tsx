@@ -32,10 +32,11 @@ export const PuzzleWrapper: React.FC = () => {
     }
 
     useEffect(() => {
+        const sub1 = puzzlesManager.$unresolved.subscribe(pCB)
+        const sub2 = addsService.$addsShown.subscribe(setAddsShown)
+        const sub3 = puzzlesManager.$graded.subscribe(setPuzzleGraded)
         return () => {
-            puzzlesManager.$unresolved.subscribe(pCB)
-            addsService.$addsShown.subscribe(setAddsShown)
-            puzzlesManager.$graded.subscribe(setPuzzleGraded)
+            sub1(); sub2(); sub3()
         }
     }, [])
     if (!puzzleGraded) {
@@ -78,14 +79,13 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             // eslint-disable-next-line react-hooks/exhaustive-deps
             timeout = setTimeout(setResolved, 300,true)
         }
-
         setPoints(resolver.takenPoints)
         console.log('taken points & props', resolver.difficulty, resolver.takenPoints, resolver.lines)
         setPuzClass('dots-conn-puzzle_resolver show-up')
+        const sub1 = modeService.$pause.subscribe(setPause)
+        const sub2 = resolver.$points.subscribe(setPoints)
         return () => {
-            modeService.$pause.subscribe(setPause)
-            resolver.$points.subscribe(setPoints)
-            clearTimeout(timeout)
+            sub2(); sub1(); clearTimeout(timeout)
         }
     }, [])
 

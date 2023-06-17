@@ -40,6 +40,7 @@ function App() {
         }
     }
 
+
     useEffect(() => {
         if (!admin && authService.user.role === Admin) {
             authService.getToken().then(() => {

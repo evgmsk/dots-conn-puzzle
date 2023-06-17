@@ -7,6 +7,7 @@ import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/int
 import { Point } from "../point/Point"
 import { shadowState } from '../../app-services/finger-shadow-state'
 import { FingerShadow } from './finger-shadow/FingerShadow'
+import {ShowUP} from "../show-up/ShowUp";
 
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
@@ -76,7 +77,6 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     }
 
     const mouseLeave = () => {
-        console.warn('mouse leave')
         if (!mouseDown) return
         handleMouseLeave()
     }
@@ -118,13 +118,15 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                     </div>
         })
     })
-    return <div
-                className={rectClassName}
-                onMouseMove={handlePointerMove}
-                onMouseLeave={mouseLeave}
-                onTouchMove={handlePointerMove}
-            >
-                {rect}
-                {mouseDown ? <FingerShadow /> : null}
-            </div>
+    return (
+        <div
+            className={rectClassName}
+            onMouseMove={handlePointerMove}
+            onMouseLeave={mouseLeave}
+            onTouchMove={handlePointerMove}
+        >
+            {rect}
+            {mouseDown ? <FingerShadow /> : null}
+        </div>
+    )
 }

@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useRef, useState} from "react";
 
 import { IPuzzle } from "../constant/interfaces"
 import { authService } from "../app-services/auth-service";
@@ -17,9 +17,22 @@ export const PuzzleSelector: React.FC = React.memo(() => {
     const [requestingSystem, setRequestingSystem] = useState(puzzlesManager.requestingSystem)
     const [filterOpen, setFiltersOpen] = useState(false)
     const [loading, setLoading] = useState(puzzlesManager.loading)
-    const [startIndex, setStartIndex] = useState(0)
-    const puzzlesLimit = 25
+    const [currentScroll, setCurrentScroll] = useState(0)
+    const puzzlesRef = useRef(null)
+    let puzzlesLimit = 25
 
+    useEffect(() => {
+        const scrollDown = () => {
+            const elem = puzzlesRef.current as unknown as HTMLElement
+            if (!elem
+                || (requestingSystem && puzzles.length < 25)
+                || (!requestingSystem && customPuzzles.length < 25)
+            ) return
+            if (!loading && currentScroll < 1) setCurrentScroll(1)
+        }
+        scrollDown()
+    }, [loading])
+    // console.log(systemPuzzles)
     const handleFilterOpen = () => {
         setFiltersOpen(!filterOpen)
     }
@@ -30,23 +43,19 @@ export const PuzzleSelector: React.FC = React.memo(() => {
     }
 
     useEffect(() => {
+        const sub1 = puzzlesManager.$requestSystem.subscribe(setRequestingSystem)
+        const sub2 = puzzlesManager.$puzzles.subscribe(setSystemPuzzles)
+        const sub3 = puzzlesManager.$customPuzzles.subscribe(setCustomPuzzles)
+        const sub4 = puzzlesManager.$loading.subscribe(handleLoading)
         return () => {
-            puzzlesManager.$requestSystem.subscribe(setRequestingSystem)
-            puzzlesManager.$puzzles.subscribe(setSystemPuzzles)
-            puzzlesManager.$customPuzzles.subscribe(setCustomPuzzles)
-            puzzlesManager.$loading.subscribe(handleLoading)
+            sub1(); sub2(); sub3(); sub4()
         }
     }, [])
 
-    useEffect(() => {
-        const length = puzzlesManager.customPuzzles.length
-        if (!loading && length > puzzlesLimit) {
-            setStartIndex(length - puzzlesLimit - 1)
-        }
-    }, [loading])
-
     const switchToCustom = () => {
+        console.log('switch system')
         puzzlesManager.setRequestSystem(!puzzlesManager.requestingSystem)
+        setCurrentScroll(0) //TODO change to user.level
     }
 
     if (!Array.isArray(systemPuzzles)) {
@@ -54,25 +63,16 @@ export const PuzzleSelector: React.FC = React.memo(() => {
     }
     const userLev = authService.user.level !== undefined ? authService.user.level : 0
     const puzzles = (!requestingSystem ? customPuzzles : systemPuzzles)
-
-    console.log(startIndex, puzzlesLimit, puzzles.length, customPuzzles.length)
+    const numberOfRows = puzzles.length % 5 ? Math.trunc(puzzles.length / 5) + 1 : puzzles.length / 5
+    // console.log(numberOfRows)
     return (
-        <ShowUP>
+        <ShowUP className={' animated_puzzles' + (filterOpen ? ' filter-open' : '')}>
             {
                 filterOpen
-                    ? <PuzzleFilters close={handleFilterOpen}/>
+                    ? <PuzzleFilters close={handleFilterOpen} />
                     : null
             }
-        <div className={'puzzles-container' + (filterOpen ? ' filter-open' : '')}>
-            {
-                puzzles.length > puzzlesLimit
-                    ? <ScrollBar
-                        handlers={{d: () => {}}}
-                        current={startIndex}
-                        max={customPuzzles.length - 1}
-                    />
-                    : null
-            }
+        <div className={'puzzles-container' + (filterOpen ? ' filter-open' : '')} >
             {!requestingSystem
                 ? <button
                         type='button'
@@ -100,36 +100,46 @@ export const PuzzleSelector: React.FC = React.memo(() => {
                         </svg>
                 }
             </button>
-            {
-                !loading
-                    ? puzzles
-                        .slice(startIndex, startIndex + puzzlesLimit)
-                        .sort((a: IPuzzle, b: IPuzzle) => a.difficulty - b.difficulty)
-                        .map((p: IPuzzle, i: number) => {
-                            const diff = p.difficulty
-                            const curLev = userLev === diff ? ' cur-level' : ''
-                            const btnCl = `puzzle-btn${curLev} col-${getPColor(diff)}`
-                            return <ShowUP
-                                        key={i + (p.createdAt || Math.floor(Math.random() * 10000000))}
-                                    >
-                                        <button
-                                            className={btnCl}
-                                            type="button"
-                                            onClick={() => puzzlesManager.setUnresolved(puzzles[i])}
-                                                >
-                                            {diff}
-                                        </button>
-                                    </ShowUP>
-                        })
-                    : <>
-                        <div className='loading-spinner_puzzles' />
-                        <div className='loading-spinner_puzzles' />
-                        <div className='loading-spinner_puzzles' />
-                        <div className='loading-spinner_puzzles' />
-                        <div className='loading-spinner_puzzles' />
-                    </>
-            }
+            <div className='puzzles-container_puzzle-box' ref={puzzlesRef}>
+                {
+                    !loading
+                        ? puzzles
+                            .sort((a: IPuzzle, b: IPuzzle) => a.difficulty - b.difficulty)
+                            .map((p: IPuzzle, i: number) => {
+                                const diff = p.difficulty
+                                const curLev = userLev === diff ? ' cur-level' : ''
+                                const btnCl = `puzzle-btn${curLev} col-${getPColor(diff)}`
+                                return <ShowUP
+                                            key={i + (p.createdAt || Math.floor(Math.random() * 10000000))}
+                                        >
+                                            <button
+                                                className={btnCl}
+                                                type="button"
+                                                onClick={() => puzzlesManager.setUnresolved(puzzles[i])}
+                                                    >
+                                                {diff}
+                                            </button>
+                                        </ShowUP>
+                            })
+                        : <>
+                            {
+                                new Array(puzzlesLimit).fill(1)
+                                    .map((i, j) =>
+                                        <div key={j} className='loading-spinner_puzzles' />)
+                            }
+                        </>
+                }
 
+            </div>
+            {
+                puzzles.length > puzzlesLimit
+                    ? <ScrollBar
+                        numberOfRows={numberOfRows}
+                        container={puzzlesRef.current as unknown as HTMLElement}
+                        currentScroll={currentScroll}
+                    />
+                    : null
+            }
         </div>
         </ShowUP>
     )

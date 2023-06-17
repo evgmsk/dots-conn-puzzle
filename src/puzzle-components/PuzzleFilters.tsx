@@ -10,7 +10,7 @@ let timeout = null as NodeJS.Timeout | null
 const delay = 500
 
 export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Function}) => {
-    const [size, setSize] = useState(9)
+    const [currentValue, setSize] = useState(9)
     const [showUp, setShowUp] = useState('')
     const [sizeOver, setSizeOver] = useState(true)
     const [rating, setRating] = useState(5)
@@ -23,8 +23,8 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
         return () => {timeout && clearTimeout(timeout)}
     }, [])
 
-    const changeSize = (size: number) => {
-        const _size = size%400
+    const changeSize = (currentValue: number) => {
+        const _size = currentValue%400
         setSize( _size > 9 ? _size : 9)
         handleChange()
     }
@@ -67,7 +67,7 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
                 <div className='puzzle-filters_container__size-wrapper'>
 
                     <SizeInput
-                        size={size}
+                        currentValue={currentValue}
                         label={'Puzzles square'}
                         handlers={{changeSize}}
                         step={2}
@@ -109,7 +109,7 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
 
                 </div>
                 <div className='puzzle-filters_container__rating-wrapper'>
-                    <SizeInput size={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
+                    <SizeInput currentValue={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
                     <div className='checkbox-wrapper'>
                         <label htmlFor='rating-checkbox'>over</label>
                         <input
@@ -122,7 +122,7 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
 
                 </div>
                 <div className='puzzle-filters_container__grade-wrapper'>
-                    <SizeInput size={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
+                    <SizeInput currentValue={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
                     <div className='checkbox-wrapper'>
                         <label htmlFor='grade-checkbox'>over</label>
                         <input
