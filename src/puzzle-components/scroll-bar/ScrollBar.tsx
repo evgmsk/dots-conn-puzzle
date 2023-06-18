@@ -3,7 +3,7 @@ import React, { useEffect, useRef, useState } from "react";
 import { IncreaseBtn, DecreaseBtn } from "../size-input/SizeInput";
 import './scroll-bar.scss'
 
-const ScrollRate = {
+const scrollRate = {
     rate: 0
 }
 
@@ -12,6 +12,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         orientation = 1,
         numberOfRows,
         container,
+        behavior = 'smooth'
     } = props
 
     const progressRef = useRef(null)
@@ -25,9 +26,9 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         const scroll = currentScroll * scrollHeight
         container.scroll({
             [orientation ? 'top' : 'left']: scroll,
-            // behavior: 'smooth'
+            behavior
         })
-        ScrollRate.rate = currentScroll
+        scrollRate.rate = currentScroll 
     }, [currentScroll])
 
     useEffect(() => {
@@ -55,7 +56,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
 
     const handleClickButton = (value: number) => {
         if (value > numberOfRows || value < 0 || !container || !progressRef.current) return
-        ScrollRate.rate = value / numberOfRows
+        scrollRate.rate = value / numberOfRows
         setCurrentScroll(value / numberOfRows)
     }
 
@@ -67,29 +68,29 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         e.stopPropagation()
         if (!mouseDown || !progressRef.current) return
         const {clientX, clientY} = getCoordinates(e)
-        const {x, y, height, width} = (progressRef.current as HTMLElement)
+        const {x, y} = (progressRef.current as HTMLElement)
             .getBoundingClientRect()
-       const currPos = orientation ? clientY - y : clientX - x
-        // console.warn('move1', mouseDown, clientY, currPos)
+        const currPos = orientation ? clientY - y : clientX - x
         if (currPos < 0) return
-        ScrollRate.rate = Math.min(currPos / barSize, 1)
+        scrollRate.rate = Math.min(currPos / barSize, 1)
         setCurrentScroll(Math.min(currPos / barSize, 1))
         container.scroll({
             top: currentScroll * scrollHeight,
-            behavior: 'smooth'
+            behavior
         })
     }
 
     const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
         const target = e.target as HTMLElement
-        if (target.classList.contains('progress-bar')) {
-            const {clientX, clientY} = getCoordinates(e)
-            const {x, y, height, width} = (progressRef.current! as HTMLElement).getBoundingClientRect()
-            const pos = orientation ? clientY - y : clientX - x
-            setCurrentScroll(Math.min(pos / barSize, 1))
-        } else if (target.classList.contains('progress-bar_slider')) {
+        if (target.classList.contains('progress-bar_slider')) {
             setMouseDown(1)
+            return
         }
+        const {clientX, clientY} = getCoordinates(e)
+        const {x, y} = (progressRef.current! as HTMLElement).getBoundingClientRect()
+        const pos = orientation ? clientY - y : clientX - x
+        const scroll = Math.max(pos / barSize, 0)
+        setCurrentScroll(Math.min(scroll, 1))
     }
 
     const handleMouseUp = () => {
@@ -97,20 +98,21 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
     }
 
     const handleWheel = (e: React.WheelEvent | WheelEvent) => {
-        console.log(e)
         const {deltaY} = e
+        if (deltaY > 0 && scrollRate.rate > .99) { return }
         const value = deltaY < 0
-            ? Math.max((ScrollRate.rate * numberOfRows - 1), 0)
-            : Math.min((ScrollRate.rate * numberOfRows + 1), numberOfRows)
-        ScrollRate.rate = value / numberOfRows
-        setCurrentScroll(value / numberOfRows)
+            ? Math.max((scrollRate.rate * numberOfRows - 1), 0)
+            : Math.min((scrollRate.rate * numberOfRows + 1), numberOfRows)
+
+        const scroll = Math.min(value / numberOfRows, 1.1)
+        scrollRate.rate = scroll
+        setCurrentScroll(scroll)
         container.scroll({
-            [orientation ? 'top': 'left']: value / numberOfRows * scrollHeight,
-            behavior: 'smooth'
+            [orientation ? 'top': 'left']: scroll * scrollHeight,
+            behavior
         })
     }
 
-    // console.log('cur val' , getStyle(), container, scrollHeight, barSize)
     return (
         <div
             className={'scroll-bar' + (orientation ? ' vertical-bar' : 'horizontal-bar')}
@@ -123,11 +125,14 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
                 min={0}
                 max={numberOfRows}
             />
-            <div className='progress-bar_wrapper' >
+            <div
+                className='progress-bar_wrapper'
+                onMouseDown={handleMouseDown}
+            >
                 <div
                     className='progress-bar'
                     ref={progressRef}
-                    onMouseDown={handleMouseDown}
+                    // onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onWheel={handleWheel}
                 >

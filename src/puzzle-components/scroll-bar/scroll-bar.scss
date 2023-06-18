@@ -10,16 +10,13 @@
     transform: translateY(-50%);
     z-index: 1000;
     background-color: #252324;
-    .container_bg {
-        position: absolute;
-        z-index: -1000;
-        height: 400px;
-        width: 400px;
-        right: 0;
-    }
     &.vertical-bar {
         flex-direction: column;
         .progress-bar_wrapper {
+            &:hover {
+                cursor: pointer;
+                background-color: rgba(120, 206, 206, 0.2);
+            }
             position: relative;
             min-height: 240px;
             width: 24px;
@@ -28,18 +25,15 @@
         }
         .progress-bar {
             position: absolute;
-            top: 30px;
+            top: 15px;
             width: 24px;
-            min-height: 180px;
-            &:hover {
-                cursor: pointer;
-                background-color: rgba(120, 206, 206, 0.2);
-            }
+            min-height: 210px;
+
             &_slider {
                 width: 24px;
                 left: 0px;
-                height: 60px;
-                margin-top: -30px;
+                height: 30px;
+                margin-top: -15px;
             }
         }
     }

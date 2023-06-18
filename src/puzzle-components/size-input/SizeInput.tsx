@@ -15,7 +15,6 @@ export const IncreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
     const {handler, step = 1, currentValue, min = 3, max = Infinity} = props
     const handleClick = () => {
         const newValue = Math.max(Math.min(currentValue + step, max), min)
-        console.log(min, newValue, currentValue)
         handler(newValue)
     }
 

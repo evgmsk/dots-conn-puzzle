@@ -162,6 +162,7 @@ export interface IScrollBar {
     numberOfRows: number
     currentScroll: number
     orientation?: number
+    behavior?: ScrollBehavior
 }
 
 export interface IScroll {
