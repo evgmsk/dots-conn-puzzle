@@ -1,5 +1,6 @@
 
 import {
+    IDLines,
     IEndpoints,
     IEndpointsValue,
 } from '../constant/interfaces'
@@ -7,7 +8,7 @@ import {PuzzleCommons} from "./rect-commons";
 import {DefaultColor, Height, Width} from "../constant/constants";
 
 export class PuzzleEvaluator extends PuzzleCommons {
-    linesInterfering = {} as {[key: string]: {[key: string]: number}}
+    linesInterfering = {} as {[key: string]: number}
     lineError = ''
     lineEndpoints = {} as IEndpoints
 
@@ -30,8 +31,9 @@ export class PuzzleEvaluator extends PuzzleCommons {
     }
 
     preparePuzzleEvaluation = () => {
-        console.log('prepare')
+        console.log('prepare evaluation')
         const passed = {} as {[key: string]: boolean}
+        const lines = {} as {[key: string]: number}
         for (const point in this.takenPoints) {
             if (passed[point]) { continue }
             const {
@@ -40,14 +42,15 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 neighbors
             } = this.checkPoint(point)
             if (!connections) {
-                return console.error('connect', colors, point)
+                return console.error('not connections', colors, point)
             }
             for (const color of colors) {
                 const lineNeighbors = colors.length > 1
                     ? this.getLineNeighbors(connections, color)
                     : neighbors
                 const line = this.getFullLineFromAnyPoint(point, color, lineNeighbors)
-                if (!line.length) {
+                if (!line.length || line.length < 3) {
+                    this.lineError = `Line of ${color} color is too short. It has Less then 3 points`
                     return console.error(line)
                 }
                 const start = line[0]
@@ -55,30 +58,30 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 this.convertLastToEndpoint(start)
                 this.convertLastToEndpoint(end)
                 line.forEach(p => { passed[p] = true })
-                this.addPairEndpoints(start, end, color)
-                this.addLine(line, color)
+                if (this.addLineEndpoint([start, end])) {
+                    if (lines[color] && lines[color] > 0) {
+                        this.lineError = `There are too many lines of ${color} color. Limit is 2`
+                        return false
+                    }
+                    lines[color] = 1
+                }
             }
         }
+        console.log('prepared', this.lineEndpoints)
         return true
     }
 
-    addLine = (line: string[], color: string) => {
-        if (!this.lines[color]) {
-            this.lines[color] = []
+    addLineEndpoint = (points: string[]) => {
+        if (this.lineEndpoints[`${points[0]}_${points[1]}`]
+            || this.lineEndpoints[`${points[1]}_${points[0]}`]) {
+            return false
         }
-        this.lines[color].push(line)
+        const {pairKey, ...endpoints} = this.getLineEndpoints(points)
+        this.lineEndpoints[pairKey] = endpoints
+        return true
     }
 
-    addPairEndpoints = (start: string, end: string, color: string) => {
-        const lineIntervals = this.getLineIntervals([start, end])
-        if (this.lineEndpoints[color]) {
-            this.lineEndpoints[color].push(lineIntervals)
-        } else {
-            this.lineEndpoints[color] = [lineIntervals]
-        }
-    }
-
-    getLineIntervals = (points: string[]): IEndpointsValue => {
+    getLineEndpoints = (points: string[]): IEndpointsValue & {pairKey: string} => {
         const firstPointCoords = points[0].split('-').map(i => parseInt(i))
         const secondPointCoords = points[1].split('-').map(i => parseInt(i))
         return {
@@ -94,23 +97,19 @@ export class PuzzleEvaluator extends PuzzleCommons {
 
     evaluatePuzzle = () => {
         let puzzleInterfering = 0
-        for (const line in this.lines) {
-            const restColors = Object.keys(this.lines).filter(col => col !== line)
-            for (const color of restColors) {
-                if (this.linesInterfering[color] && this.linesInterfering[color][line]) {
+        console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
+        for (const key1 in this.lineEndpoints) {
+            for (const key2 in this.lineEndpoints) {
+                if (key1 === key2
+                    || this.linesInterfering[`${key1}_${key2}`]
+                    || this.linesInterfering[`${key2}_${key1}`]) {
                     continue
                 }
-                // eslint-disable-next-line no-loop-func
-                this.lineEndpoints[line].forEach(utPair => {
-                    this.lineEndpoints[color].forEach(uP => {
-                        const interfering = this.twoLinesInterfering(uP, utPair)
-                        this.linesInterfering[line] = this.linesInterfering[line] || {}
-                        this.linesInterfering[color] = this.linesInterfering[color] || {}
-                        this.linesInterfering[color][line] = interfering
-                        this.linesInterfering[line][color] = interfering
-                        puzzleInterfering += interfering
-                    })
-                })
+                const key = `${key1}_${key2}`
+                const line1 = this.lineEndpoints[key1]
+                const line2 = this.lineEndpoints[key2]
+                this.linesInterfering[key] = this.twoLinesInterfering(line1, line2)
+                puzzleInterfering += this.linesInterfering[key]
             }
         }
         return Math.round(puzzleInterfering
@@ -126,7 +125,8 @@ export class PuzzleEvaluator extends PuzzleCommons {
             + line1.intervals.y * line1.intervals.y)
         const line2Abs = Math.sqrt(line2.intervals.x * line2.intervals.x
             + line2.intervals.y * line2.intervals.y)
-        return linesMultiply / line1Abs / line2Abs
+        const cos = linesMultiply / line1Abs / line2Abs
+        return Math.min(Math.max(cos, -1), 1)
     }
 
     twoLinesInterfering = (line1: IEndpointsValue, line2: IEndpointsValue) => {
@@ -149,10 +149,13 @@ export class PuzzleEvaluator extends PuzzleCommons {
         const intersectionY1 = Math.min(line1Y[1], line2Y[1])
         const cos = this.cosOfLines(line1, line2)
         const sin = Math.sqrt((1 - cos * cos))
-        const interfering = Math.abs((intersectionX1 - intersectionX0) * cos)
+        const interfering1 = Math.abs((intersectionX1 - intersectionX0) * cos)
             + Math.abs((intersectionY1 - intersectionY0) * sin)
-        console.log('interfering', line1, line2, sin, cos, interfering)
-        return interfering
+        const line1Length = Math.sqrt((l1x1 - l1x2) * (l1x1 - l1x2) + (l1y1 - l1y2) * (l1y1 - l1y2))
+        const line2Length = Math.sqrt((l2x1 - l2x2) * (l2x1 - l2x2) + (l2y1 - l2y2) * (l2y1 - l2y2))
+        const interfering2 = Math.round((line1Length + line2Length) * sin / 4)
+        console.log('interfering', line1, line2, sin, interfering1, interfering2)
+        return Math.max(interfering1, interfering2)
     }
 
     getLeastMeddlingPointKey() {

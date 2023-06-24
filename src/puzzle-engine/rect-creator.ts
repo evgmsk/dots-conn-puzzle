@@ -2,12 +2,12 @@ import { Height, Width } from "../constant/constants";
 import {
     ICollision,
     IPuzzle,
-    IRectDimension,
     ITakenPoints,
-    IEndpoints, ISLines,
+    IEndpoints,
+    IDLines,
 } from "../constant/interfaces";
 
-import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../helper-fns/helper-fn";
+import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../utils/helper-fn";
 import {PuzzleEvaluator} from "./rect-evaluator";
 // import {puzzlesManager} from "../app-services/puzzles-manager";
 import {authService} from "../app-services/auth-service";
@@ -16,11 +16,6 @@ export class RectCreator extends PuzzleEvaluator {
     steps: ITakenPoints[] = [{}]
     currentStep = 0
     puzzle = {} as IPuzzle
-
-    constructor(props: IRectDimension) {
-        super(props);
-        // isDev() && console.log(props)
-    }
 
     undo = () => {
         this.currentStep = this.currentStep > 0
@@ -41,7 +36,7 @@ export class RectCreator extends PuzzleEvaluator {
     clearAll = () => {
         this.clearPoints()
         this.steps = [{}] as ITakenPoints[]
-        this.lines = {} as ISLines
+        this.lines = {} as IDLines
         this.currentStep = 0
         this.puzzle = {} as IPuzzle
         this.lineError = ''
@@ -62,13 +57,13 @@ export class RectCreator extends PuzzleEvaluator {
     }
 
     buildPuzzle = (): IPuzzle | undefined => {
-        if (!Object.keys(this.lines).length) {
+        if (!Object.keys(this.lineEndpoints).length) {
             return
         }
+        this.puzzle = {} as IPuzzle
         const difficulty = this.evaluatePuzzle()
         const {width, height} = this
         const name = `${authService.user.name}_size-${width}x${height}_diff-${difficulty}`
-        isDev() && console.log('new puzzle', name)
         const puzzle = {
             name,
             difficulty,
@@ -77,6 +72,7 @@ export class RectCreator extends PuzzleEvaluator {
             height,
             points: this.getTotalPoints()
         } as IPuzzle
+        isDev() && console.log('new puzzle', puzzle)
         this.puzzle = puzzle
         // puzzlesManager.setUnresolved(puzzle)
         return puzzle
@@ -219,11 +215,11 @@ export class RectCreator extends PuzzleEvaluator {
 
     continueLineWithoutInterfering = (next: string, prev: string, color: string) => {
         const {connections, endpoint} = this.getPoint(prev)
-        console.log('no interfering', connections, endpoint)
+        // console.log('no interfering', connections, endpoint)
         if (endpoint
             && this.getLineNeighbors(connections, color).length > 0
             && this.getColors(connections).length === 1) {
-            console.log('move endpoint')
+            // console.log('move endpoint')
             this.moveEndpoint(next, prev, color)
         } else {
             this.updateLineStart(next, prev, color, true)

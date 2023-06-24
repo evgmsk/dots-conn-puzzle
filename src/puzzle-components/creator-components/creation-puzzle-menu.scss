@@ -9,6 +9,9 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        .input__size-value {
+            font-size: 1.2rem;
+        }
     }
 
     &__level {
@@ -17,8 +20,9 @@
         margin-right: 10px;
         height: 2.6rem;
         line-height: 2.6rem;
-        font-size: 1.4rem;
+        font-size: 1.2rem;
         width: 3rem;
+        margin-left: -10px;
         span {
             color: inherit;
         }

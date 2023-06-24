@@ -56,10 +56,6 @@ export interface IColorBTN {
     color: string
 }
 
-export interface ISLines {
-    [color: string]: string[][]
-}
-
 export interface IRectDimension {
     width: number
     height: number
@@ -87,6 +83,14 @@ export enum LineDirections {
     left = 'left',
     right = 'right',
     top = 'top', 
+}
+
+export interface IDLines {
+    [key: string]: {line: string[], color: string}
+}
+
+export interface ISLines {
+    [color: string]: string[][]
 }
 
 export interface ILines {
@@ -124,11 +128,10 @@ export interface ITakenPoints {
 }
 
 export interface IEndpoints {
-    [color: string]: IEndpointsValue[]
+    [key: string]: IEndpointsValue
 }
 
 export interface IEndpointsValue {
-    pairKey: string
     coords1: number[]
     coords2: number[]
     intervals: {x: number, y: number}
@@ -159,8 +162,8 @@ export interface ICollision {
 
 export interface IScrollBar {
     container: HTMLElement
-    numberOfRows: number
-    currentScroll: number
+    numberOfRows?: number
+    currentScroll?: number
     orientation?: number
     behavior?: ScrollBehavior
 }

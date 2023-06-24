@@ -2,7 +2,7 @@ import {memo, useEffect, useState} from "react"
 import { ITakenPointProps, IDotSectorProps } from "../../constant/interfaces"
 
 import './point.scss'
-import {getSectorsData} from "../../helper-fns/helper-fn";
+import {getSectorsData} from "../../utils/helper-fn";
 
 
 export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointProps) => {

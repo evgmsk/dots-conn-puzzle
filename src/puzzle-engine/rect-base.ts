@@ -1,14 +1,16 @@
 import {Height, Width} from '../constant/constants'
 import {
+    IDLines,
     IDotConnections,
     ILinedRect,
     IRectCell,
-    IRectDimension, ISLines,
+    IRectDimension,
+    ISLines,
     ITakenPointProps,
     ITakenPoints,
     LineDirections,
 } from '../constant/interfaces'
-import {copyObj, isDev} from '../helper-fns/helper-fn'
+import {copyObj, isDev} from '../utils/helper-fn'
 import {Observable} from "../app-services/observable";
 
 
@@ -17,7 +19,8 @@ export class LinedRectBase implements ILinedRect {
     _height = Height
     rect = {} as IRectCell
     _takenPoints = {} as ITakenPoints
-    lines = {} as ISLines
+    // lines = {} as ISLines
+    lines = {} as IDLines
     $points = new Observable<ITakenPoints>(this._takenPoints)
     $width = new Observable<number>(this._width)
     $height = new Observable<number>(this._height)

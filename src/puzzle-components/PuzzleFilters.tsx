@@ -4,7 +4,7 @@ import React, {useEffect, useState} from "react";
 import {SizeInput} from "./size-input/SizeInput";
 import {StartDate} from "../constant/constants";
 import {puzzlesManager} from "../app-services/puzzles-manager";
-import {getUTCDate} from "../helper-fns/helper-fn";
+import {getUTCDate} from "../utils/helper-fn";
 
 let timeout = null as NodeJS.Timeout | null
 const delay = 500

@@ -1,6 +1,6 @@
 import { ITakenPointProps, LineDirections } from '../../constant/interfaces'
-import {defaultConnectionsWithColor, oppositeDirection} from '../../helper-fns/helper-fn'
-import {defaultSectors, getSectorsData} from "../../helper-fns/helper-fn";
+import {defaultConnectionsWithColor, oppositeDirection} from '../../utils/helper-fn'
+import {defaultSectors, getSectorsData} from "../../utils/helper-fn";
 
 
 test('sectors data', () => {

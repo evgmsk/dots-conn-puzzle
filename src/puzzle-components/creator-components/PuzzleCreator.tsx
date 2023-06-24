@@ -8,7 +8,7 @@ import { CreationPuzzleMenu, ManagerMenu } from './CreationPuzzleMenu'
 
 import { pC } from '../../puzzle-engine/rect-creator'
 import { CreationConfirmModal } from '../../modals/creator-modals/CreationConfirmModal'
-import { isDev } from "../../helper-fns/helper-fn";
+import { isDev } from "../../utils/helper-fn";
 import { puzzlesManager } from "../../app-services/puzzles-manager";
 import { shadowState } from "../../app-services/finger-shadow-state";
 import {ShowUP} from "../show-up/ShowUp";
@@ -226,6 +226,7 @@ export const PuzzleCreator: React.FC = () => {
         localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
             steps: pC.steps, width: pC.width, height: pC.height
         }))
+        console.log(pC.puzzleFulfilled(), pC.preparePuzzleEvaluation())
         if (!pC.puzzleFulfilled() || !pC.preparePuzzleEvaluation()) {
             return
         }

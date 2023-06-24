@@ -1,6 +1,6 @@
 import { DefaultColor } from "../constant/constants";
 import {IDotConnections, ISLines, ITakenPointProps, ITakenPoints, LineDirections} from "../constant/interfaces";
-import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../helper-fns/helper-fn";
+import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../utils/helper-fn";
 import { LinedRectBase } from "./rect-base";
 
 
@@ -25,9 +25,13 @@ export class PuzzleCommons extends LinedRectBase {
             : {
                 ...defaultConnectionsWithColor(joinPoint[0]),
                 [LineDirections.right]: {color: joinPoint[1]},
-                [LineDirections.left]: {color: joinPoint[2] || ''},
-                [LineDirections.bottom]: {color: joinPoint[3] || ''},
+                [LineDirections.left]: {color: joinPoint[2] || joinPoint[0]},
+                [LineDirections.bottom]: {color: joinPoint[3] || joinPoint[0]},
             }
+
+        if (joinPoint) {
+            console.log(_connections)
+        }
         return {
             connections: _connections,
             crossLine,
@@ -116,58 +120,44 @@ export class PuzzleCommons extends LinedRectBase {
         return ''
     }
 
-    // isTargetOrLastPoint = (
-    //     key: string,
-    //     point: ITakenPointProps,
-    //     prev: string,
-    //     target: string,
-    //     color: string
-    // ) => {
-    //     const neighbors = this.getLineNeighbors(point.connections, color)
-    //     const last = neighbors.length  === 1 || key === target
-    //     isDev() && last && console.log('last point', point, last, color)
-    //     return last ? key : ''
-    // }
-
     isEndpoint = (key: string, point: ITakenPointProps, color: string) => {
         const last = (point.endpoint && !point.crossLine)
         isDev() && last && console.log('endpoint point', point, last, color)
         return last ? key : ''
     }
 
-    separateDotsByLines = (points: ITakenPoints): ISLines => {
-        const passed = {} as {[key: string]: boolean}
-        const lines = {} as ISLines
-        // isDev() && console.log('sep by lines', points)
-        for (const point in points) {
-            if (passed[point]) { continue }
-            const {connections} = points[point]
-            if (!connections) return {}
-            const colors = this.getColors(connections)
-            for (const color of colors) {
-                lines[color] = lines[color] || []
-                const neighbors = this.getLineNeighbors(point,  color, points)
-                const line = this.getFullLineFromAnyPoint(point, color, neighbors, points)
-                if (!line.length) return {}
-                line.forEach(p => {
-                    passed[p] = true
-                })
-                lines[color].push(line)
-            }
-        }
-        return lines
-    }
+    // separateDotsByLines = (points: ITakenPoints): ISLines => {
+    //     const passed = {} as {[key: string]: boolean}
+    //     const lines = {} as ISLines
+    //     // isDev() && console.log('sep by lines', points)
+    //     for (const point in points) {
+    //         if (passed[point]) { continue }
+    //         const {connections} = points[point]
+    //         if (!connections) return {}
+    //         const colors = this.getColors(connections)
+    //         for (const color of colors) {
+    //             lines[color] = lines[color] || []
+    //             const neighbors = this.getLineNeighbors(point,  color, points)
+    //             const line = this.getFullLineFromAnyPoint(point, color, neighbors, points)
+    //             if (!line.length) return {}
+    //             line.forEach(p => {
+    //                 passed[p] = true
+    //             })
+    //             lines[color].push(line)
+    //         }
+    //     }
+    //     return lines
+    // }
 
     removeLinePart = (line: string[], color: string, fn = this.updateCrossLineRemovingFork) => {
-        // console.log('remove line part', line, color)
         if (!line.length) return
         for (let i = 0; i < line.length; i++) {
             const point = line[i]
             const pointProps = this.getPoint(point)
             if (!pointProps) {return}
-            const {connections, endpoint, crossLine} = pointProps
+            const {connections, endpoint, crossLine, joinPoint} = pointProps
             const lineNeighbors = this.getLineNeighbors(connections, color)
-            const colors = this.getColors(connections)
+            const colors = crossLine || joinPoint || this.getColors(connections)
             const lastPoints = !i || i === line.length - 1
             if (lastPoints && (lineNeighbors.length > 1 || endpoint)) {
                 const prev = !i ? line[i + 1] :  line[i - 1]
@@ -260,7 +250,7 @@ export class PuzzleCommons extends LinedRectBase {
         this.addTakenPoints(updatedPoint)
     }
 
-    puzzleFulfilled = () => Object.keys(this.takenPoints).length === this.width * this.height
+    puzzleFulfilled = () => Object.keys(this.takenPoints).length >= this.width * this.height
 
     updateLastPoint = (last: string, prev: string, color: string) => {
         const {endpoint, connections, crossLine, joinPoint} = this.getPoint(last) || {}

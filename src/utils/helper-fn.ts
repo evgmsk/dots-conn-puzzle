@@ -65,8 +65,8 @@ export function getPuzzlesFromStorage() {
 }
 
 export const getPColor = (n: number) => {
-    const ind = n % LineColors.length
-    return LineColors[ind]
+    const ind = n % LineColors.slice(1).length
+    return LineColors.slice(1)[ind]
 }
 
 export function getUserPuzzlesFromStorage() {

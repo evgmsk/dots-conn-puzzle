@@ -22,7 +22,7 @@ export const IncreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
         <button
             type='button'
             role='menuitem'
-            className='dots-input__btn btn-up'
+            className='input__btn btn-up'
             onClick={handleClick}
         >
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
@@ -41,7 +41,7 @@ export const DecreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
     return (
         <button
             type='button'
-            className='dots-input__btn btn-down'
+            className='input__btn btn-down'
             role='menuitem'
             onClick={handleClick}
         >
@@ -63,8 +63,8 @@ export const SizeInput: React.FC<IDimensionControlsProps> = (props: IDimensionCo
     const {handlers: {changeSize}, label, currentValue, step = 1} = props
 
     return (
-        <div className='dots-input__size'>
-            <div className='dots-input__size-value'>
+        <div className='input__size'>
+            <div className='input__size-value'>
                 {label}:&nbsp;{currentValue}
             </div>
             <div className='size-setter'>

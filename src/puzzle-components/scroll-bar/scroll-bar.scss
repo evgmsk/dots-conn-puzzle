@@ -1,17 +1,46 @@
 @import '../../assets/scss/constant';
 
+
+.scroll-bars-container {
+    position: relative;
+}
+
 .scroll-bar {
     display: flex;
     align-items: center;
     justify-content: center;
     position: absolute;
-    right: -15px;
-    top: 50%;
-    transform: translateY(-50%);
     z-index: 1000;
     background-color: #252324;
+    .progress-bar_wrapper {
+        &:hover {
+            cursor: pointer;
+            background-color: rgba(120, 206, 206, 0.2);
+        }
+        position: relative;
+        @extend .shadow;
+    }
+    &.horizontal-bar {
+        left: 50%;
+        bottom: -15px;
+        transform: translateX(-50%);
+        min-width: 210px;
+        .progress-bar_wrapper {
+            min-width: 240px;
+            height: 24px;
+        }
+        .input__btn {
+            transform: rotate(-90deg) scale(.9);
+        }
+    }
     &.vertical-bar {
         flex-direction: column;
+        right: -15px;
+        top: 50%;
+        transform: translateY(-50%);
+        .input__btn {
+            transform: scale(.9);
+        }
         .progress-bar_wrapper {
             &:hover {
                 cursor: pointer;

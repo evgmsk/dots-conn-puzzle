@@ -9,25 +9,25 @@ export const AddsModal = (props = { message: 'Great' }) => {
     const [time, setTime] = useState(addsService.addsTimeout)
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
-        if (time === 0) {
-            clearInterval(interval as unknown as NodeJS.Timeout)
-        }
         interval = setInterval(() => {
             setTime(time => time - 1);
         }, 1000);
+        if (time <= 0) {
+            clearInterval(interval as unknown as NodeJS.Timeout)
+        }
         return () => clearInterval(interval as NodeJS.Timeout);
     }, [time]);
 
     return (
         <ShowUP>
             <div className="adds-modal">
-                <header className='adds-modal_header'>
+                <header className='modal_header'>
                     {message || 'Great!!'}
                     <button
                         type="button"
                         className='close-modal-btn'
                         onClick={() => addsService.setAddsShown(true)}
-                        disabled={!!time}
+                        disabled={time > 0}
                     >
                         {time > 0
                             ? <span className='adds-timer'>{time}</span>

@@ -21,7 +21,7 @@ export class LinedRect extends LinedRectBase {
     // convertUtmostPointsToStart = (points: ITakenPoints, color: string) => {
     //     const pointKeys = Object.keys(points)
     //     if (pointKeys.length === 2) {
-    //        // this.addLineIntervals({[color]: [this.getLineIntervals(pointKeys)]})
+    //        // this.addLineIntervals({[color]: [this.getLineEndpoints(pointKeys)]})
     //     } else if (pointKeys.length > 2) {
     //
     //     }
@@ -217,17 +217,17 @@ export class LinedRect extends LinedRectBase {
     //         return 1
     // }
 
-    getMeddlestUnresolvedLine() {
-        return Object.keys(this.lineEndPoints)
-        .reduce((acc, color) => {
-            const pair = this.lineEndPoints[color][0]
-            if (!pair.resolved && (pair.difficulty || 0) >= acc.difficulty) {
-                acc.difficulty = pair.difficulty!
-                acc.color = color
-            }
-            return acc
-        }, {difficulty: 0, color: ''}).color
-    }
+    // getMeddlestUnresolvedLine() {
+    //     return Object.keys(this.lineEndPoints)
+    //     .reduce((acc, color) => {
+    //         const pair = this.lineEndPoints[color][0]
+    //         if (!pair.resolved && (pair.difficulty || 0) >= acc.difficulty) {
+    //             acc.difficulty = pair.difficulty!
+    //             acc.color = color
+    //         }
+    //         return acc
+    //     }, {difficulty: 0, color: ''}).color
+    // }
 
     finishLine = (key: string) => {
         return

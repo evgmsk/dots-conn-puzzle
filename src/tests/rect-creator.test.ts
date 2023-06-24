@@ -1,10 +1,45 @@
 import {LineDirections} from '../constant/interfaces'
-import {RectCreator} from './rect-creator'
-import {defaultConnectionsWithColor, isDev, sectorIndex} from '../helper-fns/helper-fn'
+import {RectCreator} from '../puzzle-engine/rect-creator'
+import {defaultConnectionsWithColor, isDev, sectorIndex} from '../utils/helper-fn'
 import {DefaultColor} from "../constant/constants";
 
 
 describe('test rect-creator methods', () => {
+
+    test('interfering lines', () => {
+        const rectCR0 = new RectCreator({width: 3, height: 3})
+        const line1 = {
+            "pairKey": "0-0_2-0",
+            "coords1": [
+                0,
+                0
+            ],
+            "coords2": [
+                2,
+                0
+            ],
+            "intervals": {
+                "x": -2,
+                "y": 0
+            }
+        }
+        const line2 = {
+            "pairKey": "1-2_1-0",
+            "coords1": [
+                1,
+                2
+            ],
+            "coords2": [
+                1,
+                0
+            ],
+            "intervals": {
+                "x": 0,
+                "y": 2
+            }
+        }
+        expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(1)
+    })
     test('get start point function', () => {
         const points0 = {
 

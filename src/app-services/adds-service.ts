@@ -29,6 +29,7 @@ export class AddsService {
     // }
 
     setAddsShown = (shown: boolean) => {
+        console.log(shown)
         this.addsShown = shown
         this.$addsShown.emit(this.addsShown)
     }

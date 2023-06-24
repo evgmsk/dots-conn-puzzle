@@ -1,7 +1,7 @@
 
-import {PuzzleResolver} from './rect-resolver'
+import {PuzzleResolver} from '../puzzle-engine/rect-resolver'
 import {IPuzzle} from "../constant/interfaces";
-// import {defaultConnectionsWithColor, isDev, sectorIndex} from '../helper-fns/helper-fn'
+// import {defaultConnectionsWithColor, isDev, sectorIndex} from '../utils/helper-fn'
 // import {DefaultColor} from "../constant/constants";
 // import {LineDirections} from "../constant/interfaces";
 // import {manager} from '../puzzles-storage/puzzles-manager'

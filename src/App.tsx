@@ -5,7 +5,7 @@ import { PuzzleWrapper } from './puzzle-components/resolver-components/PuzzleRes
 import { PuzzleCreator } from './puzzle-components/creator-components/PuzzleCreator';
 import { ConfirmAdmin } from "./confirm-admin/ConfirmAdmin";
 
-import { isDev } from "./helper-fns/helper-fn";
+import { isDev } from "./utils/helper-fn";
 import { modeService } from "./app-services/mode-service";
 import { authService } from "./app-services/auth-service";
 

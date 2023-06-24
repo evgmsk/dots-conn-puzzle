@@ -4,7 +4,7 @@ import {
     getPuzzlesFromStorage,
     getUserPuzzlesFromStorage, getUTCDate, isDev,
     // isDev,
-} from "../helper-fns/helper-fn";
+} from "../utils/helper-fn";
 
 import {authService} from './auth-service'
 
@@ -195,7 +195,8 @@ export class PuzzlesManager {
 
     deletePuzzle = async () => {
         if (authService.user.role !== Admin) return
-        const url = `puzzles/:${this.unresolvedPuzzle._id}`
+        console.log(this.unresolvedPuzzle._id)
+        const url = `puzzles/${this.unresolvedPuzzle._id}`
         await authService.makeFetch(url, {method: 'DELETE'})
             .then(d => console.log(d))
             .catch(e => console.log(e))
@@ -203,7 +204,7 @@ export class PuzzlesManager {
 
     updatePuzzle = () => {
         if (authService.user.role !== Admin) return
-        const url = `puzzles/:${this.unresolvedPuzzle._id}`
+        const url = `puzzles/${this.unresolvedPuzzle._id}`
         authService.makeFetch(url, {method: 'DELETE'})
             .then(d => console.log(d))
             .catch(e => console.log(e))

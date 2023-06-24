@@ -6,7 +6,7 @@ import { PuzzleSelector } from '../PuzzlesMenu'
 
 import { PuzzleResolver as PR } from '../../puzzle-engine/rect-resolver'
 
-import { isDev } from "../../helper-fns/helper-fn";
+import { isDev } from "../../utils/helper-fn";
 import { FooterMenu, ResolverMenuPanels } from './ResolverMenuPanels'
 import { PauseModal } from "../../modals/PauseModal";
 import { Congratulations, DefaultColor } from "../../constant/constants";
@@ -26,7 +26,7 @@ export const PuzzleWrapper: React.FC = () => {
     const [addsShown, setAddsShown] = useState(true)
     const [puzzleGraded, setPuzzleGraded] = useState(true)
     const [puzzle, setPuzzle] = useState(false)
-
+    console.log(puzzlesManager.unresolvedPuzzle?._id)
     const pCB = (p: IPuzzle) => {
         setPuzzle(!!p)
     }
@@ -108,7 +108,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         const {connections, crossLine, joinPoint} = resolver.getPoint(key) || {}
         if (!connections) { return }
         setPossibleColors(joinPoint || crossLine || [])
-        const colors = resolver.getColors(connections)
+        const colors = crossLine || joinPoint || resolver.getColors(connections)
         const newColor = colors.length === 1 ? colors[0] : DefaultColor
         resolver.resolveMouseDown(key, newColor)
         setPoints(resolver.takenPoints)
@@ -120,13 +120,14 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
 
     const revealLine = () => {
         let lineToShow = {} as ITakenPoints
-        const {line, color} = resolver.getUnresolvedLine()
+        const {line, color} = resolver.checkIfPuzzleIsResolved()
         if (!line) {
             timeout = setTimeout(setResolved, 300,true)
             return
         }
         for (const point of line) {
             if (resolver.totalPoints[point].crossLine || resolver.totalPoints[point].joinPoint) {
+                console.log('sds')
                 lineToShow[point] = resolver.updateCrossLinePointToRevealLine(point, color)
             } else {
                 lineToShow[point] = resolver.totalPoints[point] as ITakenPointProps
@@ -134,10 +135,10 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         }
         resolver.addTakenPoints(lineToShow)
         console.log('reveal line', lineToShow, resolver.takenPoints)
-        setPoints(resolver.takenPoints)
         if (resolver.puzzleFulfilled() && resolver.checkIfPuzzleIsResolved().resolved) {
             timeout = setTimeout(setResolved, 300,true)
         }
+        setPoints(resolver.takenPoints)
     }
 
     const checkLine = (nextPoint: string, prevPoint: string): string => {
@@ -178,7 +179,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             prevPoint = tryContinueLine(nextPoint, prevPoint, color)
             isDev() && console.warn('new prevP', prevPoint)
             const line = getLinePartPoints(color, prevPoint, nextPoint)
-            if (!prevPoint || (prevPoint && getPoint(line[line.length - 1]).endpoint)) {
+            if (!prevPoint || (prevPoint && !getPoint(line[line.length - 1]).endpoint)) {
                 isDev() && console.error('line without valid start', nextPoint, prevPoint,
                     'prevP: ', prevPoint)
                 setMouseDown('')
@@ -187,11 +188,16 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         }
         setMouseDown(nextPoint)
         resolveMouseEnter(nextPoint, prevPoint, color, newColor)
-        setPoints(resolver.takenPoints)
+        if (getPoint(nextPoint).joinPoint) {
+            setColor(DefaultColor)
+        }
+        // setPoints(resolver.takenPoints)
     }
 
     const handleMouseUp = () => {
+
         if (!mouseDown || !color || !resolver.getPoint(mouseDown)) return
+        console.log('up', mouseDown, color, resolver.getPoint(mouseDown))
         resolver.resolveMouseUp(mouseDown, color)
         setMouseDown('')
         if (resolver.resolved && !verify) {
@@ -253,10 +259,10 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                     highlightedEndpoints={resolver.highlightedEndpoints}
                 />
                 <FooterMenu handlers={handlers} />
-                {pause
+                {pause && !resolved
                     ? <PauseModal>
-                        <p>{Congratulations[Math.floor(Math.random() * Congratulations.length)]}</p>
-                    </PauseModal>
+                        <p>{'Pause'}</p>
+                      </PauseModal>
                     : null
                 }
             </div>

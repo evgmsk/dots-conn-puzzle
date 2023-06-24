@@ -7,16 +7,55 @@ const scrollRate = {
     rate: 0
 }
 
+interface IScrollBars {
+    children: React.ReactNode
+    clName?: string
+    behavior?: ScrollBehavior
+    style?: {[k: string]: string}
+    container: HTMLElement
+}
+
+export const ScrollBars: React.FC<IScrollBars> = (props) => {
+    const {children, container} = props
+    const [scrollHeight, setScrollHeight] = useState(10)
+    const [scrollWidth, setScrollWidth] = useState(10)
+
+    useEffect(() => {
+        if (!container) {
+            return
+        }
+        const rect = container.getBoundingClientRect()
+        // console.log('rect', rect, container.scrollHeight, container.scrollWidth)
+        setScrollHeight(container.scrollHeight - rect.height)
+        setScrollWidth(container.scrollWidth - rect.width)
+    }, [container])
+    if (scrollHeight <=0 && scrollWidth <= 0) {
+        return <>{children}</>
+    }
+    // console.log(scrollHeight, scrollWidth, children)
+    return <div className='scroll-bars-container'>
+        {children}
+        {scrollHeight > 0 && container
+            ? <ScrollBar container={container} numberOfRows={10}/>
+            : null
+        }
+        {scrollWidth > 0 && container
+            ? <ScrollBar container={container} numberOfRows={10} orientation={0}/>
+            : null
+        }
+    </div>
+}
+
 export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) => {
     const {
         orientation = 1,
-        numberOfRows,
+        numberOfRows = 10,
         container,
-        behavior = 'smooth'
+        behavior = 'smooth',
     } = props
 
     const progressRef = useRef(null)
-    const [currentScroll, setCurrentScroll] = useState(props.currentScroll)
+    const [currentScroll, setCurrentScroll] = useState(props.currentScroll || 0)
     const [mouseDown, setMouseDown] = useState(0)
     const [scrollHeight, setScrollHeight] = useState(container?.scrollHeight || 100)
     const [barSize, setBarSize] = useState(100)
@@ -115,7 +154,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
 
     return (
         <div
-            className={'scroll-bar' + (orientation ? ' vertical-bar' : 'horizontal-bar')}
+            className={'scroll-bar' + (orientation ? ' vertical-bar' : ' horizontal-bar')}
             onMouseUp={handleMouseUp}
         >
             <IncreaseBtn

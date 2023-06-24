@@ -1,4 +1,4 @@
-import {isDev} from "../helper-fns/helper-fn";
+import {isDev} from "../utils/helper-fn";
 
 export class Observable<T> {
     data: T

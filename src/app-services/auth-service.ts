@@ -1,7 +1,7 @@
 import {Observable} from "./observable";
 import {BaseDevUrl, BaseProdUrl, LSToken, LSUser} from "../constant/constants";
 import {IUser} from "../constant/interfaces";
-import {isDev} from "../helper-fns/helper-fn";
+import {isDev} from "../utils/helper-fn";
 
 
 export class AuthService {
