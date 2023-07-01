@@ -2,44 +2,75 @@
 
 .input {
     &__btn {
-        @extend #menu-btn;
         &.btn-down, &.btn-up {
-            margin: 2px;
-            width: 1.8rem;
+            margin: 0;
             height: 1.2rem;
-            transform: scale(.8);
-            svg {
-                display: block;
-                width: 1.4rem;
-                height: 1.4rem;
-                stroke-width: 1.2;
-            }
-            &.btn-down {
-                border-radius: 0 0 20px 20px;
-            }
-            &.btn-up {
-                border-radius: 20px 20px 0 0;
+            position: relative;
+            //transform: rotate(90deg);
+            background: none;
+            border: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            &:after, &:before {
+                content: '';
+                width: 0;
+                height: 0;
+                position: absolute;
+                border-bottom: $size-input-btn solid transparent;
+                border-top:  $size-input-btn solid transparent;
             }
         }
-
+        &:hover {
+            svg {
+                color: #104b4f;
+            }
+        }
+        &.btn-down:after {
+            left: 70%;
+            border-right:  $size-input-btn solid #add0e6;
+        }
+        &.btn-down:before {
+            z-index: 1;
+            left: 90%;
+            border-right:  $size-input-btn solid $bg-main;
+        }
+        &.btn-up:before {
+            z-index: 1;
+            right: 90%;
+            border-left:  $size-input-btn solid $bg-main;
+        }
+        &.btn-up:after {
+            right: 70%;
+            border-left:  $size-input-btn solid #add0e6;
+        }
     }
     &__size-value {
         color: #bac9dc;
         text-align: center;
-        margin-right: 1rem;
         height: 1.6rem;
         line-height: 1.6rem;
-        width: 5.5rem;
-        font-size: 1.4rem;
+        font-size: 1rem;
+        cursor: pointer;
+        padding: 0 .1rem;
+        min-width: 4.5rem;
+        max-width: 4.5rem;
+        border-left-color: transparent;
+        border-right-color: transparent;
+        &:hover {
+            background-color: #add0e6;
+            color: #5600f4;
+        }
     }
     &__size {
-        width: 48%;
-        display: flex;
+        height: 2rem;
+        width: 36%;
+        display: inline-flex;
         align-items: center;
-        justify-content: flex-start;
-        &:last-of-type {
-            justify-content: flex-end;
-        }
+        justify-content: space-between;
+        @extend .shadow;
+        margin: 0 5px;
+        border-radius: 20px;
     }
 }
 

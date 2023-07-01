@@ -79,9 +79,9 @@ export class AuthService {
     getToken = async () => {
         await this.makeFetch(this.guestTokenUrl).then(res => {
             const {resData, error} = res
-            isDev() && console.log(resData)
-            this.setToken(resData?.token)
-            this.setUser(resData?.user)
+            isDev() && console.log(resData, error)
+            resData?.token && this.setToken(resData.token)
+            resData?.user && this.setUser(resData.user)
             if (error) {
                 this.tokenError.message = error.message
             }

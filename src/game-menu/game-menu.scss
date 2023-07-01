@@ -1,13 +1,15 @@
 @import "../assets/scss/constant";
 
 .dots-puzzle_menu {
+
     .open-dropdown-btn{
         @extend #main-btn;
+        @extend .shadow;
         margin-left: 10px;
         border-radius: 0 5rem 5rem 0;
         width: 2.5rem;
         height: 2.5rem;
-        box-shadow: 0 0 3px 3px #add0e6;
+        //box-shadow: 0 0 3px 3px #add0e6;
         display: flex;
         align-items: center;
         justify-content: center;
@@ -22,7 +24,7 @@
     justify-content: center;
     &.main-menu {
         position: absolute;
-        top: 20vh;
+        top: 5vh;
         left: 0;
         .menu-dropdown {
             top: 4rem;
@@ -72,5 +74,5 @@
 
     padding: 10px 15px;
     font-size: 1.2rem;
-    box-shadow: 0 0 3px 3px #add0e6;
+    //box-shadow: 0 0 3px 3px #add0e6;
 }

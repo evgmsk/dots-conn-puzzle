@@ -1,7 +1,9 @@
 import { IScrollBar } from "../../constant/interfaces";
 import React, { useEffect, useRef, useState } from "react";
 import { IncreaseBtn, DecreaseBtn } from "../size-input/SizeInput";
-import './scroll-bar.scss'
+import {getCoordinates} from '../../utils/helper-fn';
+
+import './scroll-bar.scss';
 
 const scrollRate = {
     rate: 0
@@ -71,6 +73,18 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
     }, [currentScroll])
 
     useEffect(() => {
+        const handleUp = () => {
+            if (mouseDown) {
+                setMouseDown(0)
+            }
+        }
+        if (mouseDown) {
+            document.addEventListener('mouseup', handleUp)
+        }
+        return () => document.removeEventListener('mouseup', handleUp)
+    }, [mouseDown])
+
+    useEffect(() => {
         if (!container || !progressRef.current) return
         const {height, width} = (progressRef.current as HTMLElement).getBoundingClientRect()
         const size = orientation ? height : width
@@ -85,26 +99,19 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         }
     }, [container, orientation])
 
-    const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
-        const { clientY, clientX } =
-            e.type === 'touchmove'
-                ? (e as React.TouchEvent).changedTouches['0']
-                : e as React.MouseEvent
-        return {clientY, clientX}
-    }
-
     const handleClickButton = (value: number) => {
         if (value > numberOfRows || value < 0 || !container || !progressRef.current) return
         scrollRate.rate = value / numberOfRows
         setCurrentScroll(value / numberOfRows)
     }
 
-    const getStyle = () => ({[orientation ? 'top' : 'left']: `${barSize * currentScroll}px`})
 
+
+    const getStyle = () => ({[orientation ? 'top' : 'left']: `${barSize * currentScroll}px`})
     const getCurrentValue = () => Math.floor(numberOfRows * currentScroll)
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-        e.stopPropagation()
+        // e.stopPropagation()
         if (!mouseDown || !progressRef.current) return
         const {clientX, clientY} = getCoordinates(e)
         const {x, y} = (progressRef.current as HTMLElement)
@@ -132,10 +139,6 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         setCurrentScroll(Math.min(scroll, 1))
     }
 
-    const handleMouseUp = () => {
-        setMouseDown(0)
-    }
-
     const handleWheel = (e: React.WheelEvent | WheelEvent) => {
         const {deltaY} = e
         if (deltaY > 0 && scrollRate.rate > .99) { return }
@@ -155,7 +158,6 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
     return (
         <div
             className={'scroll-bar' + (orientation ? ' vertical-bar' : ' horizontal-bar')}
-            onMouseUp={handleMouseUp}
         >
             <IncreaseBtn
                 handler={handleClickButton}

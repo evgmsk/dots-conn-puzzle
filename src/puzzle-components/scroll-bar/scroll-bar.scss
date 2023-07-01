@@ -48,18 +48,18 @@
             }
             position: relative;
             min-height: 240px;
-            width: 24px;
+            width: 26px;
             //border-radius: 10px;
             @extend .shadow;
         }
         .progress-bar {
             position: absolute;
             top: 15px;
-            width: 24px;
+            width: 26px;
             min-height: 210px;
 
             &_slider {
-                width: 24px;
+                width: 26px;
                 left: 0px;
                 height: 30px;
                 margin-top: -15px;

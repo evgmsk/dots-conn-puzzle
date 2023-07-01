@@ -71,6 +71,7 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
                         label={'Puzzles square'}
                         handlers={{changeSize}}
                         step={2}
+                        max={500}
                     />
                     <div className='checkbox-wrapper'>
                         <label htmlFor='size-checkbox'>from</label>
@@ -109,7 +110,12 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
 
                 </div>
                 <div className='puzzle-filters_container__rating-wrapper'>
-                    <SizeInput currentValue={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
+                    <SizeInput
+                        currentValue={rating}
+                        label={'Puzzle rating'}
+                        handlers={{changeSize: setRating}}
+                        max={500}
+                    />
                     <div className='checkbox-wrapper'>
                         <label htmlFor='rating-checkbox'>over</label>
                         <input
@@ -122,7 +128,11 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
 
                 </div>
                 <div className='puzzle-filters_container__grade-wrapper'>
-                    <SizeInput currentValue={rating} label={'Puzzle rating'} handlers={{changeSize: setRating}} />
+                    <SizeInput
+                        currentValue={rating} label={'Puzzle rating'}
+                        handlers={{changeSize: setRating}}
+                        max={100}
+                    />
                     <div className='checkbox-wrapper'>
                         <label htmlFor='grade-checkbox'>over</label>
                         <input

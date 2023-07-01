@@ -16,6 +16,9 @@
     min-height: 100vw;
     max-height: 100vw;
   }
+  @media screen and (max-aspect-ratio: 54/71){
+    padding: 0;
+  }
 }
 
 .close-modal-btn {
@@ -61,54 +64,41 @@
 
 .dots-conn-puzzle {
   // border: solid 2px black;
+
   &_resolver {
-    transition: opacity .8s;
     opacity: 0;
-    &.show-up {
-      opacity: 1;
-    }
     @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
-      max-width: 100vh;
+      max-width: 90vh;
+    }
+    @media screen and (max-aspect-ratio: 54/71){
+      padding: 20px 0 0;
     }
   }
 
   &_creator {
-    transition: opacity .8s;
     height: auto;
+    max-width: 90vw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
     @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
       width: 90vh;
+    }
+    @media screen and (max-aspect-ratio: 54/71){
+      padding: 20px 0 0;
     }
   }
 
   &_body {
     position: relative;
-    background-color: aliceblue;
+    background-color: $bg-main;
     border-radius: 10px;
-    border: solid 1px gray;
-    $width: 80vw;
-    min-width: 360px;
-    max-height: 70vh;
-    width: $width;
-    max-width: $puzzle-max-width;
-    @for $i from 3 to 30 {
-      @for $j from 3 to 40 {
-        &.size-#{$i}-#{$j} {
-          height:  $width / $i * $j;
-          max-height:  $puzzle-max-width / $i * $j;
-          display: grid;
-          grid-template-columns: repeat(#{$i}, 1fr);
-          grid-template-rows: repeat(#{$j}, 1fr);
-          .c-0-#{$j - 1} {
-            border-bottom-left-radius: 10px;
-          }
-          .c-#{$i - 1}-#{$j - 1} {
-            border-bottom-right-radius: 10px;
-          }
-          .c-#{$i - 1}-0 {
-            border-top-right-radius: 10px;
-          }
-        }
-      }
+    border: solid 1px lightblue;
+    min-width: 320px;
+    @include rect(90vw);
+    @media screen and (max-aspect-ratio: 54/71){
+      @include rect(66vw);
     }
   }
 }

@@ -220,6 +220,7 @@ export const PuzzleCreator: React.FC = () => {
         const newWidth = parseInt(width)
         if (newWidth > 20) {return}
         pC.setWidth(newWidth)
+        clearAll()
     }
 
     const saveLocally = () => {
@@ -238,6 +239,7 @@ export const PuzzleCreator: React.FC = () => {
         const newHeight = parseInt(height)
         if (newHeight > 25) {return}
         pC.setHeight(newHeight)
+        clearAll()
     }
 
     const customPuzzleMenuHandlers = {
@@ -256,8 +258,8 @@ export const PuzzleCreator: React.FC = () => {
     }
     // console.log(resolverView)
     return (
-        <ShowUP>
-        <div className='dots-conn-puzzle_creator'>
+        <ShowUP className='dots-conn-puzzle_creator'>
+        {/*<div >*/}
             <CreationPuzzleMenu
                 handlers={customPuzzleMenuHandlers}
                 color={color}
@@ -281,7 +283,7 @@ export const PuzzleCreator: React.FC = () => {
                 handler={confirmationHandler}
                 question={confirm.question}
             />
-        </div>
+        {/*</div>*/}
         </ShowUP>
     )
 }

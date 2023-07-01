@@ -1,18 +1,18 @@
 import {
-    BaseDevUrl, BaseProdUrl,
     DefaultColor,
     DefaultConnections,
     DefaultSectors, LineColors,
     LSPuzzles,
-    LSToken, LSUserPuzzles
+    LSUserPuzzles
 } from "../constant/constants";
 import {
     IDotSectorProps,
     ITakenPointProps,
     LineDirections,
-    ISector, IDotConnections
+    ISector
 } from "../constant/interfaces";
-import {authService} from "../app-services/auth-service";
+
+import React from "react";
 
 const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'production';
 
@@ -42,6 +42,8 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
     })
 }
 
+export const checkIfPointNeighbor = (neighbors: string[], target: string,) => neighbors.includes(target)
+
 export const getCommonColor = (colors1: string[], colors2: string[]) => {
     for (let color of colors1) {
         if (colors2.includes(color)) {
@@ -51,13 +53,12 @@ export const getCommonColor = (colors1: string[], colors2: string[]) => {
     return ''
 }
 
-export const haveSameColorConnection = (connections: IDotConnections, colors: string[]) => {
-    for (const dir in connections) {
-        if (connections[dir].neighbor && colors.includes(connections[dir].color)) {
-            return true
-        }
-    }
-    return false
+export const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+    const { clientY, clientX } =
+        e.type === 'touchmove'
+            ? (e as React.TouchEvent).changedTouches['0']
+            : e as React.MouseEvent
+    return {clientY, clientX}
 }
 
 export function getPuzzlesFromStorage() {
@@ -86,7 +87,6 @@ export const sectorIndex = (dir: LineDirections) => {
     }
 }
 
-
 export const defaultConnectionsWithColor = (color = DefaultColor) => {
     const connections = Object.assign({}, DefaultConnections)
     if (color !== DefaultColor) {
@@ -111,7 +111,6 @@ export const oppositeDirection = (dir: LineDirections) => {
             return LineDirections.left
     } 
 }
-
 
 export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
     if (typeof obj !== 'object') return obj

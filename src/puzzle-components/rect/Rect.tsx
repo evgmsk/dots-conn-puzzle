@@ -65,7 +65,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
         shadowState.detectDirection({x: clientX, y: clientY})
         if (targetKey !== mouseDown) {
-            console.warn('enter in square', targetKey, mouseDown, width)
+            // console.warn('enter in square', targetKey, mouseDown, width)
             entered = targetKey
             handleMouseEnter(targetKey, mouseDown)
         }

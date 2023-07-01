@@ -143,16 +143,20 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
 
     const checkLine = (nextPoint: string, prevPoint: string): string => {
         const {getLineNeighbors, getPoint, checkIfCanJoin, lineContinuationIsImpossible} = resolver
+        const {connections, endpoint, crossLine, joinPoint} = getPoint(prevPoint) || {}
         if (!mouseDown
             || prevPoint !== mouseDown
-            || (getLineNeighbors(prevPoint).length > 1
-                && !getPoint(prevPoint).endpoint)) {
+            || (getLineNeighbors(connections).length > 1
+                && !endpoint)) {
             console.error('line broken', nextPoint, prevPoint, mouseDown, color, resolver.takenPoints)
             setMouseDown('')
             return ''
         }
         const commonColor = !lineContinuationIsImpossible(nextPoint, prevPoint, color)
             && checkIfCanJoin(nextPoint, prevPoint, color, possibleColors)
+        if (commonColor === DefaultColor && (crossLine || joinPoint)) {
+            setPossibleColors(crossLine || joinPoint || [])
+        }
         if (!commonColor) {
             console.error('line continue impossible', nextPoint, prevPoint, resolver.takenPoints,
                 !lineContinuationIsImpossible(nextPoint, prevPoint, color),
@@ -165,7 +169,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
 
     const handleMouseEnter = (nextPoint: string, prevPoint: string) => {
         if (resolved) { return }
-        const newColor = checkLine(nextPoint, prevPoint, )
+        const newColor = checkLine(nextPoint, prevPoint)
         if (!newColor) { return }
         isDev() && console.log('handle mouse enter', nextPoint, color, prevPoint)
         const {
@@ -195,7 +199,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
     }
 
     const handleMouseUp = () => {
-
         if (!mouseDown || !color || !resolver.getPoint(mouseDown)) return
         console.log('up', mouseDown, color, resolver.getPoint(mouseDown))
         resolver.resolveMouseUp(mouseDown, color)
@@ -243,29 +246,27 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
     }
 
     return (
-        <ShowUP>
-            <div className={puzClass}>
-                <ResolverMenuPanels
-                        handlers={handlers}
-                        resolved={resolved}
-                        diff={resolver.difficulty || 0}
-                />
-                <Puzzle
-                    points={points}
-                    mouseDown={mouseDown}
-                    dimension={{width, height}}
-                    handlers={resolvePuzzleHandlers}
-                    mouseColor={color}
-                    highlightedEndpoints={resolver.highlightedEndpoints}
-                />
-                <FooterMenu handlers={handlers} />
-                {pause && !resolved
-                    ? <PauseModal>
-                        <p>{'Pause'}</p>
-                      </PauseModal>
-                    : null
-                }
-            </div>
+        <ShowUP className={puzClass}>
+            <ResolverMenuPanels
+                    handlers={handlers}
+                    resolved={resolved}
+                    diff={resolver.difficulty || 0}
+            />
+            <Puzzle
+                points={points}
+                mouseDown={mouseDown}
+                dimension={{width, height}}
+                handlers={resolvePuzzleHandlers}
+                mouseColor={color}
+                highlightedEndpoints={resolver.highlightedEndpoints}
+            />
+            <FooterMenu handlers={handlers} />
+            {pause && !resolved
+                ? <PauseModal>
+                    <p>{'Pause'}</p>
+                  </PauseModal>
+                : null
+            }
         </ShowUP>
     )
 }

@@ -1,11 +1,11 @@
 @import '../../assets/scss/constant.scss';
 
-@mixin line-after($col: $puzzle-bg-color) {
+@mixin line-after($col: $bg-main) {
     &::after {
         content: '';
         position: absolute;
         z-index: 1500;
-        background-color: $puzzle-bg-color;
+        background-color: $bg-main;
         border-radius: 100%;
         width: 100%;
         height: $minor-line-size / $main-line-size * 100%;

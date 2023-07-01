@@ -53,7 +53,7 @@ function App() {
         return <ConfirmAdmin cb={confirmAdminHandler} />
     }
     console.log(gameMode)
-    const appClass = `app app-${gameMode}`
+    const appClass = `app app-${gameMode} no-select`
     return (
         <div className={appClass}>
             {gameMode === 'create'

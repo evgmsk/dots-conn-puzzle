@@ -26,8 +26,9 @@ export const GradeModal = (props: {[key: string]: any}) => {
     }
 
     return (
-        <ShowUP>
+
         <div className='grade-modal'>
+            <ShowUP>
             <header className='grade-modal_header'>
                 <h3 className='grade-modal_header_title'>
                     {message}
@@ -61,7 +62,7 @@ export const GradeModal = (props: {[key: string]: any}) => {
                     Block
                 </button>
             </footer>
+            </ShowUP>
         </div>
-        </ShowUP>
     )
 }

@@ -19,7 +19,6 @@ export class LinedRectBase implements ILinedRect {
     _height = Height
     rect = {} as IRectCell
     _takenPoints = {} as ITakenPoints
-    // lines = {} as ISLines
     lines = {} as IDLines
     $points = new Observable<ITakenPoints>(this._takenPoints)
     $width = new Observable<number>(this._width)
@@ -47,7 +46,18 @@ export class LinedRectBase implements ILinedRect {
         this._takenPoints = pts
         this.$points.emit(this.takenPoints)
         if (!isDev()) return
+        this.checkPoints(points)
         // console.log('updated Points' ,this.takenPoints, this.$points.subscribers)
+    }
+
+    checkPoints = (points: ITakenPoints) => {
+        for (const key in points) {
+            const {connections, endpoint, crossLine, joinPoint} = points[key]
+            if (endpoint && !crossLine && !joinPoint
+                && this.getColors(connections).length !== 1) {
+                console.error('invalid props', key, points, connections)
+            }
+        }
     }
 
     deletePoint = (key: string) => {
@@ -72,7 +82,9 @@ export class LinedRectBase implements ILinedRect {
 
     setDimension(props: {width?: number, height?: number}) {
         const {width, height} = props
+        console.log(width, height)
         if (!width && !height) {return}
+
         if (width) {
             this._width = width
             if (this.height < width || this.height > width * 1.5) {

@@ -9,21 +9,23 @@
     height: 1.6rem;
     margin: .2rem;
     border-radius: 40px;
-    border-color: transparent;
+    border: 2px solid transparent;
+    box-sizing: border-box;
     position: relative;
+    background: transparent;
+    @media screen and (max-width: 399px){
+        width: 1.4rem;
+        height: 1.4rem;
+    }
     @each $name, $color  in $colors {
         &.btn-#{$name} {
-            background-color: #{$color};
-            // cursor: url('../../assets/images/#{$color}-cursor.png') 10 10, pointer;
-            //@if $color == yellow {
-            //    background-color: darken($color, 5);
-            //}
+            border-color: #{$color};
             &.selected::after {
                 content: '';
-                width: .9rem;
-                height: .9rem;
+                width: 1rem;
+                height: 1rem;
                 border-radius: 50%;
-                background-color: lighten($color, 25);
+                background-color: $color;
                 position: absolute;
                 top: 50%;
                 left: 50%;

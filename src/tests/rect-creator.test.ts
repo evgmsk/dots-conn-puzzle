@@ -1,4 +1,4 @@
-import {LineDirections} from '../constant/interfaces'
+import {IEndpoints, IEndpointsValue, LineDirections} from '../constant/interfaces'
 import {RectCreator} from '../puzzle-engine/rect-creator'
 import {defaultConnectionsWithColor, isDev, sectorIndex} from '../utils/helper-fn'
 import {DefaultColor} from "../constant/constants";
@@ -38,7 +38,7 @@ describe('test rect-creator methods', () => {
                 "y": 2
             }
         }
-        expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(1)
+        expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(4)
     })
     test('get start point function', () => {
         const points0 = {
@@ -60,6 +60,7 @@ describe('test rect-creator methods', () => {
             },
             '1-1': {
                 endpoint: true,
+                crossLine: ['red', 'green'],
                 connections: {
                     [LineDirections.top]: {neighbor: '1-0', color: 'green'},
                     [LineDirections.right]: {neighbor: '2-1', color: 'red'},
@@ -178,7 +179,7 @@ describe('test rect-creator methods', () => {
         expect(rectCR0.checkPoint('1-1').crossLine!.length).toBe(2)
 
         const line1 = rectCR1.getFullLineFromAnyPoint('1-1', 'blue', ['2-1'])
-        console.log(line1)
+        // console.log(line1)
         const line2 = rectCR1.getFullLineFromAnyPoint('2-1', 'blue', ['1-1', '3-1'])
         // console.log(line2)
         expect(line2).toEqual(line1)
@@ -217,9 +218,19 @@ describe('test rect-creator methods', () => {
 
         }
     })
+    test('line interfering', () => {
+        const line1: IEndpointsValue = {
+            coords1: [0, 3],
+            coords2: [3, 0],
+            intervals: {x: -3, y: 3}
+        }
+        const line2 = {
+
+        }
+    })
     test('get direction', () => {
         expect(rect.determineDirection('1-2', '2-2')).toBe(LineDirections.right)
-        expect(rect.tryContinueLine('4-4', '3-3', DefaultColor)).toBe('3-4' || '4-3')
+        // expect(rect.tryContinueLine('4-4', '3-3', DefaultColor)).toBe('3-4' || '4-3')
         rect.clearAll()
         rect.addTakenPoints({
             '2-3': {

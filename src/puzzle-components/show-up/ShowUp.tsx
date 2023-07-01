@@ -7,7 +7,7 @@ export const ShowUP = (props: {children: React.ReactNode, className?: string}) =
         return () => setShowUp('')
     }, [])
     return (
-        <div className={'animated-component' + showUp + (props.className || '')}>
+        <div className={'animated-component' + showUp + (` ${props.className}` || '')}>
             {props.children}
         </div>
     )

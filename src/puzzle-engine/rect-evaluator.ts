@@ -97,9 +97,10 @@ export class PuzzleEvaluator extends PuzzleCommons {
 
     evaluatePuzzle = () => {
         let puzzleInterfering = 0
-        console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
+        this.linesInterfering = {}
         for (const key1 in this.lineEndpoints) {
             for (const key2 in this.lineEndpoints) {
+                console.log(key1, key2, this.linesInterfering)
                 if (key1 === key2
                     || this.linesInterfering[`${key1}_${key2}`]
                     || this.linesInterfering[`${key2}_${key1}`]) {
@@ -112,9 +113,8 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 puzzleInterfering += this.linesInterfering[key]
             }
         }
-        return Math.round(puzzleInterfering
-            * Math.sqrt(this.width * this.height / Height / Width)
-        )
+        console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
+        return Math.round(puzzleInterfering / Object.keys(this.lineEndpoints).length)
     }
 
     cosOfLines = (line1: IEndpointsValue, line2: IEndpointsValue) => {
@@ -136,25 +136,27 @@ export class PuzzleEvaluator extends PuzzleCommons {
         const line2X = [l2x1, l2x2].sort()
         const line1Y = [l1y1, l1y2].sort()
         const line2Y = [l2y1, l2y2].sort()
-        if (line1X[1] < line2X[0]
+        const cos = this.cosOfLines(line1, line2)
+        const sin = Math.sqrt((1 - cos * cos))
+        const line1Length = Math.sqrt((l1x1 - l1x2) * (l1x1 - l1x2) + (l1y1 - l1y2) * (l1y1 - l1y2))
+        const line2Length = Math.sqrt((l2x1 - l2x2) * (l2x1 - l2x2) + (l2y1 - l2y2) * (l2y1 - l2y2))
+        const interfering1 = ((line1Length + line2Length) * sin)
+        if ((line1X[1] < line2X[0]
             || line1Y[1] < line2Y[0]
             || line2Y[1] < line1Y[0]
-            || line2X[1] < line1X[0]
+            || line2X[1] < line1X[0])
+            && !interfering1
         ) {
+            console.warn('no interfering', line1, line2)
             return 0
         }
         const intersectionX0 = Math.max(line1X[0], line2X[0])
         const intersectionX1 = Math.min(line1X[1], line2X[1])
         const intersectionY0 = Math.max(line1Y[0], line2Y[0])
         const intersectionY1 = Math.min(line1Y[1], line2Y[1])
-        const cos = this.cosOfLines(line1, line2)
-        const sin = Math.sqrt((1 - cos * cos))
-        const interfering1 = Math.abs((intersectionX1 - intersectionX0) * cos)
+        const interfering2 = Math.abs((intersectionX1 - intersectionX0) * cos)
             + Math.abs((intersectionY1 - intersectionY0) * sin)
-        const line1Length = Math.sqrt((l1x1 - l1x2) * (l1x1 - l1x2) + (l1y1 - l1y2) * (l1y1 - l1y2))
-        const line2Length = Math.sqrt((l2x1 - l2x2) * (l2x1 - l2x2) + (l2y1 - l2y2) * (l2y1 - l2y2))
-        const interfering2 = Math.round((line1Length + line2Length) * sin / 4)
-        console.log('interfering', line1, line2, sin, interfering1, interfering2)
+        // console.log('interfering', line1, line2, sin, interfering1, interfering2)
         return Math.max(interfering1, interfering2)
     }
 
