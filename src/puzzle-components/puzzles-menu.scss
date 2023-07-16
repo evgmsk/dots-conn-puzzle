@@ -36,7 +36,7 @@
     }
     &.show-up {
         opacity: 1;
-        transition: all .2s linear;
+        transition: all .3s;
     }
     .size-setter {
         transform: rotate(90deg) scale(1.2);
@@ -124,7 +124,7 @@
     max-width: 400px;
     min-width: 350px;
     box-sizing: border-box;
-    transition: all .2s linear;
+    transition: all .3s;
     max-height: 400px;
     &_puzzle-box {
         display: grid;

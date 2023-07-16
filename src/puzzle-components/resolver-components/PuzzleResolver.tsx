@@ -6,12 +6,11 @@ import { PuzzleSelector } from '../PuzzlesMenu'
 
 import { PuzzleResolver as PR } from '../../puzzle-engine/rect-resolver'
 
-import { isDev } from "../../utils/helper-fn";
+import {defaultConnectionsWithColor, getCommonColor, isDev} from "../../utils/helper-fn";
 import { FooterMenu, ResolverMenuPanels } from './ResolverMenuPanels'
 import { PauseModal } from "../../modals/PauseModal";
 import { Congratulations, DefaultColor } from "../../constant/constants";
 import { puzzlesManager } from "../../app-services/puzzles-manager";
-import { shadowState } from '../../app-services/finger-shadow-state'
 import { authService } from "../../app-services/auth-service";
 import { GameMenu } from "../../game-menu/GameMenu";
 import { modeService } from "../../app-services/mode-service";
@@ -19,14 +18,16 @@ import { GradeModal } from '../../modals/GradeModal'
 import { ShowUP } from "../show-up/ShowUp";
 import { AddsModal } from "../../modals/AddsModal";
 import { addsService } from "../../app-services/adds-service";
+import {shadowState} from "../../app-services/finger-shadow-state";
+import {pC} from "../../puzzle-engine/rect-creator";
 
-let resolver = {} as PR
+let resolver = {getPossibleColors: () => DefaultColor} as unknown as PR
 
 export const PuzzleWrapper: React.FC = () => {
     const [addsShown, setAddsShown] = useState(true)
     const [puzzleGraded, setPuzzleGraded] = useState(true)
     const [puzzle, setPuzzle] = useState(false)
-    console.log(puzzlesManager.unresolvedPuzzle?._id)
+
     const pCB = (p: IPuzzle) => {
         setPuzzle(!!p)
     }
@@ -35,10 +36,11 @@ export const PuzzleWrapper: React.FC = () => {
         const sub1 = puzzlesManager.$unresolved.subscribe(pCB)
         const sub2 = addsService.$addsShown.subscribe(setAddsShown)
         const sub3 = puzzlesManager.$graded.subscribe(setPuzzleGraded)
+        puzzlesManager.unresolvedPuzzle && console.log(puzzlesManager.unresolvedPuzzle._id)
         return () => {
             sub1(); sub2(); sub3()
         }
-    }, [])
+    }, [puzzle])
     if (!puzzleGraded) {
         return (
             <>
@@ -65,11 +67,9 @@ export const PuzzleWrapper: React.FC = () => {
 export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) => {
     const {width, height} = puzzlesManager.unresolvedPuzzle
     const [points, setPoints] = useState({} as ITakenPoints)
-    const [color, setColor] = useState('')
     const [mouseDown, setMouseDown] = useState('')
     const [resolved, setResolved] = useState(false)
-    const [possibleColors, setPossibleColors] = useState([] as string[])
-    const [puzClass, setPuzClass] = useState('dots-conn-puzzle_resolver')
+    const [lineStartPoint, setLineStartPoint] = useState('')
     const [pause, setPause] = useState(false)
     let timeout = null as unknown as ReturnType<typeof setTimeout>
 
@@ -81,7 +81,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         }
         setPoints(resolver.takenPoints)
         console.log('taken points & props', resolver.difficulty, resolver.takenPoints, resolver.lines)
-        setPuzClass('dots-conn-puzzle_resolver show-up')
         const sub1 = modeService.$pause.subscribe(setPause)
         const sub2 = resolver.$points.subscribe(setPoints)
         return () => {
@@ -102,22 +101,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         }
     }, [resolved])
 
-    const handleMouseDown = (key: string) => {
-        if (resolved) return
-        setMouseDown(key)
-        const {connections, crossLine, joinPoint} = resolver.getPoint(key) || {}
-        if (!connections) { return }
-        setPossibleColors(joinPoint || crossLine || [])
-        const colors = crossLine || joinPoint || resolver.getColors(connections)
-        const newColor = colors.length === 1 ? colors[0] : DefaultColor
-        resolver.resolveMouseDown(key, newColor)
-        setPoints(resolver.takenPoints)
-        if (color !== newColor) {
-            shadowState.setColor(newColor)
-            setColor(newColor)
-        }
-    }
-
     const revealLine = () => {
         let lineToShow = {} as ITakenPoints
         const {line, color} = resolver.checkIfPuzzleIsResolved()
@@ -126,8 +109,13 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             return
         }
         for (const point of line) {
+            const existedPoint = pC.getPoint(point)
+            if (existedPoint && !existedPoint.endpoint) {
+                const pointColor = pC.getColors(existedPoint.connections)[0]
+                const lineToRemove = pC.getFullLineFromAnyPoint(point, pointColor)
+                pC.removeLinePart(lineToRemove, pointColor)
+            }
             if (resolver.totalPoints[point].crossLine || resolver.totalPoints[point].joinPoint) {
-                console.log('sds')
                 lineToShow[point] = resolver.updateCrossLinePointToRevealLine(point, color)
             } else {
                 lineToShow[point] = resolver.totalPoints[point] as ITakenPointProps
@@ -141,78 +129,114 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         setPoints(resolver.takenPoints)
     }
 
-    const checkLine = (nextPoint: string, prevPoint: string): string => {
-        const {getLineNeighbors, getPoint, checkIfCanJoin, lineContinuationIsImpossible} = resolver
-        const {connections, endpoint, crossLine, joinPoint} = getPoint(prevPoint) || {}
+    const checkLine = (nextPoint: string, prevPoint: string) => {
+        const {getLineNeighbors, getPoint} = resolver
         if (!mouseDown
             || prevPoint !== mouseDown
-            || (getLineNeighbors(connections).length > 1
-                && !endpoint)) {
-            console.error('line broken', nextPoint, prevPoint, mouseDown, color, resolver.takenPoints)
+            || (getLineNeighbors(prevPoint).length > 1
+                && !getPoint(prevPoint).endpoint)) {
+            console.error('line broken', nextPoint, prevPoint, mouseDown, resolver.takenPoints)
             setMouseDown('')
-            return ''
+            return false
         }
-        const commonColor = !lineContinuationIsImpossible(nextPoint, prevPoint, color)
-            && checkIfCanJoin(nextPoint, prevPoint, color, possibleColors)
-        if (commonColor === DefaultColor && (crossLine || joinPoint)) {
-            setPossibleColors(crossLine || joinPoint || [])
+        return true
+    }
+
+    const updateStateOnMouseDown = (key: string, endpoint: boolean) => {
+        setMouseDown(key)
+        const colors = resolver.getPossibleColors(key)
+        shadowState.setColor(colors.length > 1 ? DefaultColor: colors[0])
+        if (endpoint) {
+            setLineStartPoint(key)
+        } else {
+            const line = resolver.getFullLineFromAnyPoint(key, colors[0])
+            if (pC.getPoint(line[0])?.endpoint) {
+                setLineStartPoint(line[0])
+            } else {
+                setLineStartPoint(line[line.length - 1])
+            }
         }
-        if (!commonColor) {
-            console.error('line continue impossible', nextPoint, prevPoint, resolver.takenPoints,
-                !lineContinuationIsImpossible(nextPoint, prevPoint, color),
-            )
-            setMouseDown('')
-            return ''
-        }
-        return commonColor
+        return colors
+    }
+
+    const handleMouseDown = (key: string) => {
+        if (resolved) return
+
+        const {connections, endpoint} = resolver.getPoint(key) || {}
+        console.log('handle mouse down', key, connections, endpoint)
+        if (!connections) { return }
+        const colors = updateStateOnMouseDown(key, endpoint)
+        const color = colors.length > 1 ?  DefaultColor : colors[0]
+        resolver.resolveMouseDown(key, color)
     }
 
     const handleMouseEnter = (nextPoint: string, prevPoint: string) => {
-        if (resolved) { return }
-        const newColor = checkLine(nextPoint, prevPoint)
-        if (!newColor) { return }
-        isDev() && console.log('handle mouse enter', nextPoint, color, prevPoint)
+        if (resolved || !checkLine(nextPoint, prevPoint) || !lineStartPoint) { return }
         const {
-            resolveMouseEnter,
-            tryContinueLine,
-            getLinePartPoints,
-            getPoint,
-            rect
+            resolveMouseEnter, getPoint, findPath, getColorsOfGreyLineStart, getPossibleColors
         } = resolver
-        if (!rect[nextPoint].neighbors.includes(prevPoint)) {
-            prevPoint = tryContinueLine(nextPoint, prevPoint, color)
-            isDev() && console.warn('new prevP', prevPoint)
-            const line = getLinePartPoints(color, prevPoint, nextPoint)
-            if (!prevPoint || (prevPoint && !getPoint(line[line.length - 1]).endpoint)) {
-                isDev() && console.error('line without valid start', nextPoint, prevPoint,
-                    'prevP: ', prevPoint)
-                setMouseDown('')
-                return
+        const newColor = resolver.determineColor(lineStartPoint, prevPoint, nextPoint)
+        console.log('handle enter', newColor, nextPoint, prevPoint, lineStartPoint)
+        if (!newColor) return
+        let path = [prevPoint]
+        const lineConsistent = resolver.rect[prevPoint].neighbors.includes(nextPoint)
+        if (!lineConsistent) {
+            console.log('not consistent line')
+            const colors = newColor === DefaultColor
+                ? getColorsOfGreyLineStart(prevPoint)
+                : [newColor]
+            path = findPath(prevPoint, nextPoint, colors)
+            if (path.length > 1) {
+                const oldColors = getPossibleColors(prevPoint)
+                const oldColor = oldColors.length > 1 ? DefaultColor : oldColors[0]
+                if (new Set(path).size !==  path.length) {
+                    console.error('invalid path', path)
+                    path = []
+                }
+                if (oldColor === DefaultColor) {
+                    const restPath = resolver.getFullLineFromAnyPoint(path[0], oldColor)
+                    if (restPath.length && new Set(restPath).size === restPath.length) {
+                        path = restPath.slice(1).reverse().concat(path)
+                    }
+                    console.log('rest path', restPath, path, new Set(restPath).size, restPath.length)
+                }
+                const jp = resolver.makeIntermediateSteps(path, newColor)
+                if (jp) {
+                    setLineStartPoint(jp)
+                    shadowState.setColor(DefaultColor)
+                }
             }
         }
-        setMouseDown(nextPoint)
-        resolveMouseEnter(nextPoint, prevPoint, color, newColor)
-        if (getPoint(nextPoint).joinPoint) {
-            setColor(DefaultColor)
+        isDev() && console.log('handle mouse enter', nextPoint, newColor, prevPoint, lineConsistent, path)
+        if (!path.length) {
+            console.error('no path found', prevPoint, nextPoint, lineStartPoint)
+            return
         }
-        // setPoints(resolver.takenPoints)
+        setMouseDown(nextPoint)
+        const color = getPossibleColors(path[path.length - 1]).includes(newColor)
+            ? newColor
+            : DefaultColor
+        resolveMouseEnter(nextPoint, path[path.length - 1], color, newColor)
+        if (getPoint(nextPoint)?.joinPoint) {
+            setLineStartPoint(nextPoint)
+            shadowState.setColor(DefaultColor)
+        }
     }
 
     const handleMouseUp = () => {
-        if (!mouseDown || !color || !resolver.getPoint(mouseDown)) return
-        console.log('up', mouseDown, color, resolver.getPoint(mouseDown))
-        resolver.resolveMouseUp(mouseDown, color)
+        console.log('up', mouseDown, lineStartPoint, resolver.getPoint(mouseDown))
+        if (!mouseDown || !resolver.getPoint(lineStartPoint)) return
+        resolver.resolveMouseUp(mouseDown, lineStartPoint)
         setMouseDown('')
+        setLineStartPoint('')
+        shadowState.setColor(DefaultColor)
         if (resolver.resolved && !verify) {
             console.log(resolver.puzzleName)
-            resolver.puzzleName === 'admin' && authService.setLevel(resolver.difficulty + 1)
-            if (resolver.resolved) {
-                timeout = setTimeout(setResolved, 300,true)
-            }
+            resolver.puzzleName !== 'admin' && authService.setLevel(resolver.difficulty + 1)
+            timeout = setTimeout(setResolved, 300,true)
         }
         isDev() && console.log('filled: ', resolver.puzzleFulfilled(),
             'resolved: ', resolver.resolved)
-
     }
 
     const handleMouseLeave = () => {
@@ -238,7 +262,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                     mouseDown={mouseDown}
                     dimension={{width, height}}
                     handlers={resolvePuzzleHandlers}
-                    mouseColor={color}
                     highlightedEndpoints={resolver.highlightedEndpoints}
                 />
             </ShowUP>
@@ -246,7 +269,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
     }
 
     return (
-        <ShowUP className={puzClass}>
+        <ShowUP className='dots-conn-puzzle_resolver'>
             <ResolverMenuPanels
                     handlers={handlers}
                     resolved={resolved}
@@ -257,7 +280,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                 mouseDown={mouseDown}
                 dimension={{width, height}}
                 handlers={resolvePuzzleHandlers}
-                mouseColor={color}
                 highlightedEndpoints={resolver.highlightedEndpoints}
             />
             <FooterMenu handlers={handlers} />

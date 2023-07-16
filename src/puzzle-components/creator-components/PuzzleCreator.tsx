@@ -195,6 +195,7 @@ export const PuzzleCreator: React.FC = () => {
             })
         } else if (sameColor) {
             const sameLine = pC.checkIfPointsBelongToSameLine(nextPoint, prevPoint, color)
+            console.warn('same line', sameLine, nextPoint, prevPoint)
             const joinPoint = endpoint && !sameLine
             let interfere = {joinPoint, sameLine, sameColor} as ICollision
             pC.resolveMouseEnter(nextPoint, prevPoint, color, interfere)
@@ -224,9 +225,13 @@ export const PuzzleCreator: React.FC = () => {
     }
 
     const saveLocally = () => {
-        localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
-            steps: pC.steps, width: pC.width, height: pC.height
-        }))
+        try {
+            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
+                steps: pC.steps, width: pC.width, height: pC.height
+            }))
+        } catch (e) {
+            console.error(e)
+        }
         console.log(pC.puzzleFulfilled(), pC.preparePuzzleEvaluation())
         if (!pC.puzzleFulfilled() || !pC.preparePuzzleEvaluation()) {
             return

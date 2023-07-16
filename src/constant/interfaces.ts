@@ -113,6 +113,13 @@ export interface IPuzzle {
 //     [color: string]: string[]
 // }
 
+export interface IPath {
+    dist: number,
+    path: string[],
+    target: string,
+    index?: number
+}
+
 export interface ITakenPointProps {
     endpoint: boolean
     connections: IDotConnections

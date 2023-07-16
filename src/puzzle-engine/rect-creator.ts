@@ -197,6 +197,9 @@ export class RectCreator extends PuzzleEvaluator {
             this.removeLinePartCreator(sameLine, color)
             return this.updateSteps()
         }
+        if (sameLine && !sameLine.length) {
+            this.createJoinPoint(next, prev, color, sameColor)
+        }
         if (!interfere) {
             this.continueLineWithoutInterfering(next, prev, color)
             return this.updateSteps()

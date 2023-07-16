@@ -7,8 +7,6 @@ import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/int
 import { Point } from "../point/Point"
 import { shadowState } from '../../app-services/finger-shadow-state'
 import { FingerShadow } from './finger-shadow/FingerShadow'
-import {ShowUP} from "../show-up/ShowUp";
-
 
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
     const containerSizes = document.querySelector(selector)?.getBoundingClientRect()
@@ -17,12 +15,10 @@ const getCellKey = (X: number, Y: number, selector: string, size: number) => {
     const cellSize = width / size
     const iIndex = Math.floor(Math.abs(x - X)%width / cellSize)
     const jIndex = Math.floor(Math.abs(y - Y)%height / cellSize)
-     // if (iIndex < 0 || Y < 0 || X < 0) {return  ''}
     return `${iIndex}-${jIndex}`
 }
 
 export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
-    // const [pos, setPos] = useState({start: {} as IPos, current: {} as IPos})
     const {
         dimension: {width, height},
         points,
@@ -54,10 +50,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     }
 
     const handlePointerMove = (e: React.MouseEvent | React.TouchEvent) => {
-        if (entered) {
-            console.error('ent', e.target, entered)
-        }
-        if (!mouseDown || entered) return
+        if (!mouseDown || (e.target as HTMLElement).id === entered) return
         const {clientX, clientY } =
             e.type === 'touchmove'
                 ? (e as React.TouchEvent).changedTouches['0']
@@ -65,13 +58,13 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
         shadowState.detectDirection({x: clientX, y: clientY})
         if (targetKey !== mouseDown) {
-            // console.warn('enter in square', targetKey, mouseDown, width)
             entered = targetKey
             handleMouseEnter(targetKey, mouseDown)
         }
     }
 
     const handleUp = (key: string) => {
+        console.log('up', mouseDown)
         if (!mouseDown) return
         handleMouseUp(key)
     }
@@ -88,7 +81,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
             const key = `${n}-${k}`
             const point = points[key] || {} as ITakenPointProps
             const color = !(point.crossLine || point.joinPoint)
-                ? point.connections && point.connections[LineDirections.top].color
+                ? point?.connections && point?.connections[LineDirections.top]?.color
                 : ''
             const colorCl = color ? ` ${color}` : ''
             const className = !point

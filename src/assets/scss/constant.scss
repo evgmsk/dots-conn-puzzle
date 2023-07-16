@@ -53,12 +53,13 @@ $font-main: 'Roboto', sans-serif;
     margin: 15px 0;
     width: 2.2rem;
     height: 2.2rem;
-    border-radius: 50%;
-    @extend .shadow;
+    //border-radius: 50%;
+    border: none;
+    //@extend .shadow;
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: $bg-main;
+    background-color: transparent;
     //transition: box-shadow .3s;
     &:hover {
         //box-shadow: 0 0 3px 3px lighten(blue, 30%);

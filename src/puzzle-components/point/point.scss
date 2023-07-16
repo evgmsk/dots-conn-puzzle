@@ -134,7 +134,7 @@
 @each $dir in $directions {
     .line-#{$dir} {
         position: absolute;
-        transition: all .3s;
+        transition: all .1s;
         z-index: 1;
         opacity: 0;
         &.animated {
@@ -142,7 +142,7 @@
         }
         @each $name, $col in $colors {
             &.line-#{$name} {
-                transition: all .3s;
+                transition: all .1s;
                 background-color: #{$col};
                 @if $dir == 'top' {
                     width: $minor-line-size;

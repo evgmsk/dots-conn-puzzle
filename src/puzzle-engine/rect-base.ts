@@ -5,7 +5,6 @@ import {
     ILinedRect,
     IRectCell,
     IRectDimension,
-    ISLines,
     ITakenPointProps,
     ITakenPoints,
     LineDirections,
@@ -82,7 +81,6 @@ export class LinedRectBase implements ILinedRect {
 
     setDimension(props: {width?: number, height?: number}) {
         const {width, height} = props
-        console.log(width, height)
         if (!width && !height) {return}
 
         if (width) {
@@ -223,17 +221,17 @@ export class LinedRectBase implements ILinedRect {
     ): string[] => {
 
         const _neighbors = neighbors || this.getLineNeighbors( point, color, points)
-        // isDev() && console.log('get full line', point, color, _neighbors)
+        isDev() && console.log('get full line', point, color, _neighbors)
         if (!_neighbors.length) {
-            return []
+            return [point]
         }
         if (_neighbors.length === 1) {
             return this.getLinePartPoints(color, point, '', points)
         }
         const linePart1 = this.getLinePartPoints(color, _neighbors[0], point, points)
         const linePart2 = this.getLinePartPoints(color, _neighbors[1], point, points)
-        // console.log(linePart1, linePart2, _neighbors, color, point)
-        return linePart1.reverse().concat(linePart2.slice(1))
+        const line = linePart1.reverse().concat(linePart2.slice(1))
+        return points[line[line.length -1]].endpoint ? line : line.reverse()
     }
 
     getLinePartPoints = (
@@ -243,13 +241,14 @@ export class LinedRectBase implements ILinedRect {
         points = this.takenPoints
     ): string[] => {
         const {connections, crossLine} = points[current] || {}
-        // isDev() && console.log('get line part', color, current, prev, connections)
+
         if (!connections) {
             isDev() && console.error('invalid start line point', color, current, crossLine, points)
             return []
         }
         const linePoints = prev ? [prev] : [current]
         const neighbors = this.getLineNeighbors(current, color, points)
+        isDev() && console.log('get line part', color, current, prev, connections, neighbors)
         if (!neighbors.length) {
             return [current]
         }
@@ -263,7 +262,7 @@ export class LinedRectBase implements ILinedRect {
         }
         !prev && this.goToLinePoint(neighbors[0], current, stopFn, color, 0, points)
         prev && this.goToLinePoint(current, prev, stopFn, color, 0, points)
-        // isDev() && console.log('line', linePoints)
+        isDev() && console.log('line', linePoints, neighbors)
         return linePoints
     }
 
@@ -271,12 +270,30 @@ export class LinedRectBase implements ILinedRect {
         const indexOf = line.indexOf(point)
         if (indexOf < 0) return []
         const indexOf2 = secondPoint ? line.indexOf(secondPoint) : -1
+        console.log('belong', line, point, secondPoint, this.getPoint(line[line.length - 1]))
+        const stPoint = this.getPoint(line[0])
+        const endPoint = this.getPoint(line[line.length - 1])
         if (indexOf2 < 0) {
-            return line.slice(0, indexOf + 1)
+            return stPoint.endpoint
+                ? line.slice(indexOf)
+                : line.slice(0, indexOf + 1)
         }
-        return indexOf > indexOf2
-            ? line.slice(indexOf2, indexOf + 1)
-            : line.slice(indexOf, indexOf2 + 1)
+        if (stPoint.endpoint && endPoint.endpoint) {
+            return indexOf > indexOf2
+                ? line.slice(indexOf2, indexOf + 1)
+                : line.slice(indexOf, indexOf2 + 1)
+        }
+        if (stPoint.endpoint) {
+            return indexOf < indexOf2
+                ? line.slice(indexOf2)
+                : line.slice(indexOf)
+        }
+        if (endPoint.endpoint) {
+            return indexOf > indexOf2
+                ? line.slice(0, indexOf + 1)
+                : line.slice(0, indexOf2 + 1)
+        }
+        return []
     }
 
     checkIfPointsBelongToSameLine = (
@@ -287,7 +304,7 @@ export class LinedRectBase implements ILinedRect {
     ) => {
         const nextNeighbors = this.getLineNeighbors(next, color, points)
         const line = this.getFullLineFromAnyPoint(next, color, nextNeighbors, points)
-        // isDev() && console.log('line', line, this.takenPoints, next, prev, color)
+        // isDev() && console.log('check same line', line, this.takenPoints, next, prev, color)
         return this.checkIfPointBelongsToLine(line, prev, next)
     }
 
@@ -303,6 +320,19 @@ export class LinedRectBase implements ILinedRect {
             }
         }
         return Object.keys(colors)
+    }
+
+    getColorsOfConnections = (props: string | IDotConnections): string[] => {
+        const connections = typeof props === "string"
+            ? this.getPoint(props)?.connections
+            : props
+        const colors = [] as string[]
+        for (const dir in connections) {
+            if (connections[dir].neighbor) {
+                colors.push(connections[dir].color)
+            }
+        }
+        return colors
     }
 
     determineDirection = (nextPoint: string, prevPoint: string) => {
