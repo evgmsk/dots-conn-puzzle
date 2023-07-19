@@ -22,7 +22,27 @@ export class LinedRectBase implements ILinedRect {
     $points = new Observable<ITakenPoints>(this._takenPoints)
     $width = new Observable<number>(this._width)
     $height = new Observable<number>(this._height)
+    _temporalPoints = {} as ITakenPoints
 
+    get temporalPoints(): ITakenPoints {
+        return copyObj(this._temporalPoints) as ITakenPoints
+    }
+
+    addTemporalPoints = (points: ITakenPoints) => {
+        const pts = this.temporalPoints
+        for (const key in points) {
+            pts[key] = points[key]
+        }
+        this._temporalPoints = pts
+        if (!isDev()) return
+        this.checkPoints(points)
+    }
+
+    deleteTemporalPoint = (key: string) => {
+        const pts = this.temporalPoints
+        delete pts[key]
+        this._temporalPoints = pts
+    }
     constructor(size: IRectDimension) {
         this._width = size.width
         this._height = size.height
@@ -55,6 +75,13 @@ export class LinedRectBase implements ILinedRect {
             if (endpoint && !crossLine && !joinPoint
                 && this.getColors(connections).length !== 1) {
                 console.error('invalid props', key, points, connections)
+            }
+            const neighbors = this.getLineNeighbors(connections)
+            const pointNeighbors = this.rect[key].neighbors
+            for (const nei of neighbors) {
+                if (!pointNeighbors.includes(nei)) {
+                    console.error('invalid neighbor in connection', connections)
+                }
             }
         }
     }
@@ -145,8 +172,9 @@ export class LinedRectBase implements ILinedRect {
     getLineNeighbors = (
         props: string | IDotConnections,
         color?: string,
-        points = this.takenPoints
+        temporalPoint = false,
     ) => {
+        const points = temporalPoint ? this.temporalPoints : this.takenPoints
         const connections = typeof props === 'string'
             ? points[props]?.connections
             : props
@@ -169,11 +197,11 @@ export class LinedRectBase implements ILinedRect {
         stopFn: Function, // function to determine condition to stop loop (target point reached)
         color?: string,
         index?: number, // required to select neighbor (prevPoint) in case of more than one valid neighbors of start point
-        points = this.takenPoints, // function to call with params of a current line point
+        temporalPoints = false, // function to call with params of a current line point
         ): string => {
             let current = from
             let prevPoint = passed
-            let lineNeighbors = this.getLineNeighbors(current, color, points)
+            let lineNeighbors = this.getLineNeighbors(current, color, temporalPoints)
             let nextPoint = lineNeighbors.filter(n => n !== passed)[0]
             if (!lineNeighbors.length || (!prevPoint && lineNeighbors.length !== 1)) {
                 isDev() && console.error('invalid props because of two ways or no ways', color,
@@ -186,7 +214,7 @@ export class LinedRectBase implements ILinedRect {
                 if (!current) {
                     return ''
                 }
-                lineNeighbors = this.getLineNeighbors(nextPoint, color, points)
+                lineNeighbors = this.getLineNeighbors(nextPoint, color, temporalPoints)
                 // eslint-disable-next-line no-loop-func
                 nextPoint = lineNeighbors.filter(n => n !== prevPoint)[0]
             }
@@ -217,61 +245,68 @@ export class LinedRectBase implements ILinedRect {
         point: string,
         color: string,
         neighbors?: string[],
-        points = this.takenPoints
+        temporalPoints = false
     ): string[] => {
-
-        const _neighbors = neighbors || this.getLineNeighbors( point, color, points)
-        isDev() && console.log('get full line', point, color, _neighbors)
+        const points = temporalPoints ? this.temporalPoints : this.takenPoints
+        const _neighbors = neighbors || this.getLineNeighbors( point, color, temporalPoints)
+        // isDev() && console.log('get full line', point, color, _neighbors)
         if (!_neighbors.length) {
             return [point]
         }
         if (_neighbors.length === 1) {
-            return this.getLinePartPoints(color, point, '', points)
+            const line = this.getLinePartPoints(color, point, '', temporalPoints)
+            return points[line[line.length -1]].endpoint
+                ? line
+                : line.reverse()
         }
-        const linePart1 = this.getLinePartPoints(color, _neighbors[0], point, points)
-        const linePart2 = this.getLinePartPoints(color, _neighbors[1], point, points)
+        const linePart1 = this.getLinePartPoints(color, _neighbors[0], point, temporalPoints)
+        const linePart2 = this.getLinePartPoints(color, _neighbors[1], point, temporalPoints)
         const line = linePart1.reverse().concat(linePart2.slice(1))
-        return points[line[line.length -1]].endpoint ? line : line.reverse()
+        return points[line[line.length -1]].endpoint
+            ? line
+            : line.reverse()
     }
 
     getLinePartPoints = (
         color: string,
         current: string,
         prev= '',
-        points = this.takenPoints
+        temporalPoints = false
     ): string[] => {
+        const points = temporalPoints ? this.temporalPoints : this.takenPoints
         const {connections, crossLine} = points[current] || {}
 
         if (!connections) {
             isDev() && console.error('invalid start line point', color, current, crossLine, points)
             return []
         }
-        const linePoints = prev ? [prev] : [current]
-        const neighbors = this.getLineNeighbors(current, color, points)
-        isDev() && console.log('get line part', color, current, prev, connections, neighbors)
+        const line = prev ? [prev] : [current]
+        const neighbors = this.getLineNeighbors(current, color, temporalPoints)
+        // isDev() && console.log('get line part', color, current, prev, connections, neighbors)
         if (!neighbors.length) {
             return [current]
         }
         if (!prev && neighbors.length !== 1 ) {
-            isDev() && console.error('invalid props to get line points', neighbors, linePoints, prev, current)
+            isDev() && console.error('invalid props to get line points', neighbors, line, prev, current)
             return []
         }
         const stopFn = (key: string) => {
-            linePoints.push(key)
-            return connections && this.getLineNeighbors(key, color, points).length < 2
+            line.push(key)
+            return connections && this.getLineNeighbors(key, color, temporalPoints).length < 2
         }
-        !prev && this.goToLinePoint(neighbors[0], current, stopFn, color, 0, points)
-        prev && this.goToLinePoint(current, prev, stopFn, color, 0, points)
-        isDev() && console.log('line', linePoints, neighbors)
-        return linePoints
+        !prev && this.goToLinePoint(neighbors[0], current, stopFn, color, 0, temporalPoints)
+        prev && this.goToLinePoint(current, prev, stopFn, color, 0, temporalPoints)
+        // isDev() && console.log('get line part2', color, current, prev, connections, neighbors, points)
+        return line
     }
 
     checkIfPointBelongsToLine = (line: string[], point: string, secondPoint?: string): string[] => {
         const indexOf = line.indexOf(point)
-        if (indexOf < 0) return []
         const indexOf2 = secondPoint ? line.indexOf(secondPoint) : -1
-        console.log('belong', line, point, secondPoint, this.getPoint(line[line.length - 1]))
         const stPoint = this.getPoint(line[0])
+        console.log('belong', stPoint, line, point, indexOf, indexOf2, secondPoint, this.getPoint(line[line.length - 1]))
+
+        if (indexOf < 0 || !stPoint) return []
         const endPoint = this.getPoint(line[line.length - 1])
         if (indexOf2 < 0) {
             return stPoint.endpoint
@@ -290,8 +325,8 @@ export class LinedRectBase implements ILinedRect {
         }
         if (endPoint.endpoint) {
             return indexOf > indexOf2
-                ? line.slice(0, indexOf + 1)
-                : line.slice(0, indexOf2 + 1)
+                ? line.slice(0, indexOf2 + 1)
+                : line.slice(0, indexOf + 1)
         }
         return []
     }
@@ -300,10 +335,10 @@ export class LinedRectBase implements ILinedRect {
         next: string,
         prev: string,
         color: string,
-        points = this.takenPoints
+        temporalPoints = false
     ) => {
-        const nextNeighbors = this.getLineNeighbors(next, color, points)
-        const line = this.getFullLineFromAnyPoint(next, color, nextNeighbors, points)
+        const nextNeighbors = this.getLineNeighbors(next, color, temporalPoints)
+        const line = this.getFullLineFromAnyPoint(next, color, nextNeighbors, temporalPoints)
         // isDev() && console.log('check same line', line, this.takenPoints, next, prev, color)
         return this.checkIfPointBelongsToLine(line, prev, next)
     }

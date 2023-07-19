@@ -69,7 +69,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
     const [points, setPoints] = useState({} as ITakenPoints)
     const [mouseDown, setMouseDown] = useState('')
     const [resolved, setResolved] = useState(false)
-    const [lineStartPoint, setLineStartPoint] = useState('')
+    // const [lineStartPoint, setLineStartPoint] = useState('')
     const [pause, setPause] = useState(false)
     let timeout = null as unknown as ReturnType<typeof setTimeout>
 
@@ -147,13 +147,13 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         const colors = resolver.getPossibleColors(key)
         shadowState.setColor(colors.length > 1 ? DefaultColor: colors[0])
         if (endpoint) {
-            setLineStartPoint(key)
+            resolver.setLineStartPoint(key)
         } else {
             const line = resolver.getFullLineFromAnyPoint(key, colors[0])
             if (pC.getPoint(line[0])?.endpoint) {
-                setLineStartPoint(line[0])
+                resolver.setLineStartPoint(line[0])
             } else {
-                setLineStartPoint(line[line.length - 1])
+                resolver.setLineStartPoint(line[line.length - 1])
             }
         }
         return colors
@@ -171,9 +171,9 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
     }
 
     const handleMouseEnter = (nextPoint: string, prevPoint: string) => {
-        if (resolved || !checkLine(nextPoint, prevPoint) || !lineStartPoint) { return }
+        if (resolved || !checkLine(nextPoint, prevPoint) || !resolver.lineStartPoint) { return }
         const {
-            resolveMouseEnter, getPoint, findPath, getColorsOfGreyLineStart, getPossibleColors
+            resolveMouseEnter, getPoint, findPath, getColorsOfGreyLineStart, getPossibleColors, lineStartPoint
         } = resolver
         const newColor = resolver.determineColor(lineStartPoint, prevPoint, nextPoint)
         console.log('handle enter', newColor, nextPoint, prevPoint, lineStartPoint)
@@ -181,11 +181,12 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         let path = [prevPoint]
         const lineConsistent = resolver.rect[prevPoint].neighbors.includes(nextPoint)
         if (!lineConsistent) {
-            console.log('not consistent line')
+
             const colors = newColor === DefaultColor
                 ? getColorsOfGreyLineStart(prevPoint)
                 : [newColor]
             path = findPath(prevPoint, nextPoint, colors)
+            console.log('not consistent line, path:', path)
             if (path.length > 1) {
                 const oldColors = getPossibleColors(prevPoint)
                 const oldColor = oldColors.length > 1 ? DefaultColor : oldColors[0]
@@ -193,7 +194,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                     console.error('invalid path', path)
                     path = []
                 }
-                if (oldColor === DefaultColor) {
+                if (oldColor === DefaultColor && oldColor !== newColor) {
                     const restPath = resolver.getFullLineFromAnyPoint(path[0], oldColor)
                     if (restPath.length && new Set(restPath).size === restPath.length) {
                         path = restPath.slice(1).reverse().concat(path)
@@ -202,7 +203,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                 }
                 const jp = resolver.makeIntermediateSteps(path, newColor)
                 if (jp) {
-                    setLineStartPoint(jp)
+                    resolver.setLineStartPoint(jp)
                     shadowState.setColor(DefaultColor)
                 }
             }
@@ -218,17 +219,17 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             : DefaultColor
         resolveMouseEnter(nextPoint, path[path.length - 1], color, newColor)
         if (getPoint(nextPoint)?.joinPoint) {
-            setLineStartPoint(nextPoint)
+            resolver.setLineStartPoint(nextPoint)
             shadowState.setColor(DefaultColor)
         }
     }
 
     const handleMouseUp = () => {
-        console.log('up', mouseDown, lineStartPoint, resolver.getPoint(mouseDown))
-        if (!mouseDown || !resolver.getPoint(lineStartPoint)) return
-        resolver.resolveMouseUp(mouseDown, lineStartPoint)
+        console.log('up', mouseDown, resolver.lineStartPoint, resolver.getPoint(mouseDown))
+        if (!mouseDown || !resolver.getPoint(resolver.lineStartPoint)) return
+        resolver.resolveMouseUp(mouseDown, resolver.lineStartPoint)
         setMouseDown('')
-        setLineStartPoint('')
+        resolver.setLineStartPoint('')
         shadowState.setColor(DefaultColor)
         if (resolver.resolved && !verify) {
             console.log(resolver.puzzleName)

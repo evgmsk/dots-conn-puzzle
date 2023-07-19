@@ -142,7 +142,7 @@ export interface IEndpointsValue {
     coords1: number[]
     coords2: number[]
     intervals: {x: number, y: number}
-    difficulty?: number
+    meddling: number
     resolved?: boolean
 }
 

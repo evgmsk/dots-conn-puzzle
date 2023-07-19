@@ -21,7 +21,8 @@ describe('test rect-creator methods', () => {
             "intervals": {
                 "x": -2,
                 "y": 0
-            }
+            },
+            meddling: 0
         }
         const line2 = {
             "pairKey": "1-2_1-0",
@@ -36,7 +37,8 @@ describe('test rect-creator methods', () => {
             "intervals": {
                 "x": 0,
                 "y": 2
-            }
+            },
+            meddling: 0
         }
         expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(4)
     })
@@ -209,7 +211,8 @@ describe('test rect-creator methods', () => {
         const line1: IEndpointsValue = {
             coords1: [0, 3],
             coords2: [3, 0],
-            intervals: {x: -3, y: 3}
+            intervals: {x: -3, y: 3},
+            meddling: 0
         }
         const line2 = {
 

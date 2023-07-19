@@ -1,11 +1,11 @@
-
 import {
-    IDLines,
     IEndpoints,
     IEndpointsValue,
+    ITakenPoints,
 } from '../constant/interfaces'
-import {PuzzleCommons} from "./rect-commons";
-import {DefaultColor, Height, Width} from "../constant/constants";
+import { PuzzleCommons } from "./rect-commons";
+import { DefaultColor } from "../constant/constants";
+import { isDev } from "../utils/helper-fn";
 
 export class PuzzleEvaluator extends PuzzleCommons {
     linesInterfering = {} as {[key: string]: number}
@@ -91,7 +91,8 @@ export class PuzzleEvaluator extends PuzzleCommons {
             intervals: {
                 x: firstPointCoords[0] - secondPointCoords[0],
                 y: firstPointCoords[1] - secondPointCoords[1]
-            }
+            },
+            meddling: 0
         }
     }
 
@@ -100,7 +101,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
         this.linesInterfering = {}
         for (const key1 in this.lineEndpoints) {
             for (const key2 in this.lineEndpoints) {
-                console.log(key1, key2, this.linesInterfering)
+                // console.log(key1, key2, this.linesInterfering)
                 if (key1 === key2
                     || this.linesInterfering[`${key1}_${key2}`]
                     || this.linesInterfering[`${key2}_${key1}`]) {
@@ -111,14 +112,15 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 const line2 = this.lineEndpoints[key2]
                 this.linesInterfering[key] = this.twoLinesInterfering(line1, line2)
                 puzzleInterfering += this.linesInterfering[key]
+                this.lineEndpoints[key1].meddling += this.linesInterfering[key]
+                this.lineEndpoints[key2].meddling += this.linesInterfering[key]
             }
         }
-        console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
+        // console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
         return Math.round(puzzleInterfering / Object.keys(this.lineEndpoints).length)
     }
 
     cosOfLines = (line1: IEndpointsValue, line2: IEndpointsValue) => {
-
         const linesMultiply = (line1.intervals.x * line2.intervals.x) +
             (line1.intervals.y   * line2.intervals.y)
         const line1Abs = Math.sqrt(line1.intervals.x * line1.intervals.x
@@ -136,20 +138,20 @@ export class PuzzleEvaluator extends PuzzleCommons {
         const line2X = [l2x1, l2x2].sort()
         const line1Y = [l1y1, l1y2].sort()
         const line2Y = [l2y1, l2y2].sort()
+        if ((line1X[1] < line2X[0]
+            || line1Y[1] < line2Y[0]
+            || line2Y[1] < line1Y[0]
+            || line2X[1] < line1X[0])
+            // && !interfering1
+        ) {
+            // console.warn('no interfering', line1, line2)
+            return 0
+        }
         const cos = this.cosOfLines(line1, line2)
         const sin = Math.sqrt((1 - cos * cos))
         const line1Length = Math.sqrt((l1x1 - l1x2) * (l1x1 - l1x2) + (l1y1 - l1y2) * (l1y1 - l1y2))
         const line2Length = Math.sqrt((l2x1 - l2x2) * (l2x1 - l2x2) + (l2y1 - l2y2) * (l2y1 - l2y2))
         const interfering1 = ((line1Length + line2Length) * sin)
-        if ((line1X[1] < line2X[0]
-            || line1Y[1] < line2Y[0]
-            || line2Y[1] < line1Y[0]
-            || line2X[1] < line1X[0])
-            && !interfering1
-        ) {
-            console.warn('no interfering', line1, line2)
-            return 0
-        }
         const intersectionX0 = Math.max(line1X[0], line2X[0])
         const intersectionX1 = Math.min(line1X[1], line2X[1])
         const intersectionY0 = Math.max(line1Y[0], line2Y[0])
@@ -160,8 +162,41 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return Math.max(interfering1, interfering2)
     }
 
-    getLeastMeddlingPointKey() {
+    resolvePuzzle = () => {
+        const lineKeys = Object.keys(this.lineEndpoints).sort((a, b) => {
+                return this.lineEndpoints[b].meddling - this.lineEndpoints[a].meddling
+        })
+        if (!Object.keys(this.lineEndpoints).length) {
+            return console.error('impossible resolve')
+        }
 
     }
 
+    getDistantWithMeddling = (point: string, target: string) => {
+        const dist = this.getDistantBetweenPoints(point, target)
+        if (dist === 0) {
+            return 0
+        }
+        return this.getPointMeddling(point) + dist / 100
+    }
+
+    getPointMeddling(point: string) {
+        const coords = this.rect[point].point
+        let meddling = 0
+        let lines = 0
+        for (const key in this.lineEndpoints) {
+            lines++
+            const lineProps = this.lineEndpoints[key]
+            const sortedX = [lineProps.coords1[0], lineProps.coords2[0]].sort()
+            const sortedY = [lineProps.coords1[1], lineProps.coords2[1]].sort()
+            if (sortedX[0] < coords[0] && sortedX[1] > coords[0]
+                && sortedY[0] < coords[1] && sortedY[1] > coords[1]) {
+                meddling += 1
+            }
+        }
+        if (lines < 1) {
+            console.error('not evaluated', this.lineEndpoints)
+        }
+        return meddling
+    }
 }

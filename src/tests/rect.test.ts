@@ -72,11 +72,18 @@ describe('test rect common methods', () => {
                 connections: defaultConnectionsWithColor(LineColors[2]),
                 endpoint: true,
             },
-
-            // '5-2': {
-            //     connections: defaultConnectionsWithColor(LineColors[6]),
-            //     endpoint: true,
-            // },
+            '0-5': {
+                connections: defaultConnectionsWithColor(LineColors[4]),
+                    endpoint: true,
+            },
+            '5-2': {
+                connections: defaultConnectionsWithColor(LineColors[6]),
+                endpoint: true,
+            },
+            '5-3': {
+                connections: defaultConnectionsWithColor(LineColors[3]),
+                endpoint: true,
+            },
             '4-4': {
                 connections: defaultConnectionsWithColor(LineColors[6]),
                 endpoint: true,
@@ -100,7 +107,7 @@ describe('test rect common methods', () => {
         expect(rect.findPath('0-5', '5-4', LineColors.slice(2,3), ).length).toEqual(6)
         expect(rect.findPath('0-2', '0-5', LineColors.slice(3,4), '').length).toEqual(3)
         expect(rect.findPath('0-5', '1-5', LineColors.slice(4,5), '')).toEqual(['0-5'])
-        expect(rect.findPath('5-3', '5-0', LineColors.slice(3,4), '').length).toEqual(3)
+        expect(rect.findPath('5-3', '5-0', LineColors.slice(3,4), '').length).toEqual(5)
 
     })
     // test('check line consistent', () => {

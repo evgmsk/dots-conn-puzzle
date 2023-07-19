@@ -253,7 +253,7 @@ export class RectCreator extends PuzzleEvaluator {
     }
 
     removeLinePartCreator = (line: string[], color: string) => {
-        this.removeLinePart(line, color, this.updateCrossLineRemovingFork)
+        this.removeLinePart(line, color)
     }
 
     resolveSameColorInterfering = (next: string, prev: string, color: string) => {

@@ -9,7 +9,7 @@ import {
 import {
     IDLines, IDotConnections,
     ILines,
-    IPuzzle, ISLines,
+    IPuzzle,
     ITakenPointProps,
     ITakenPoints,
 } from "../constant/interfaces";
@@ -34,6 +34,7 @@ export class PuzzleResolver extends PuzzleCommons {
     getLines = (points: ITakenPoints) => {
         const lines = {} as IDLines
         const passed = {} as {[key: string]: boolean}
+        this._temporalPoints = points
         // isDev() && console.log('sep by lines', points)
         for (const point in points) {
             if (passed[point]) { continue }
@@ -41,8 +42,8 @@ export class PuzzleResolver extends PuzzleCommons {
             if (!connections) return {}
             const colors = this.getColors(connections)
             for (const color of colors) {
-                const neighbors = this.getLineNeighbors(point,  color, points)
-                const line = this.getFullLineFromAnyPoint(point, color, neighbors, points)
+                const neighbors = this.getLineNeighbors(point,  color, true)
+                const line = this.getFullLineFromAnyPoint(point, color, neighbors, true)
                 if (!line.length) return {}
                 line.forEach(p => {
                     passed[p] = true
@@ -73,37 +74,16 @@ export class PuzzleResolver extends PuzzleCommons {
         const connections = copyObj(currentProps.connections)
         const pointProps = this.totalPoints[point]
         const lineDirections = this.getLineDirections(pointProps.connections, color)
-        console.log(lineDirections, color)
         for (const dir in connections) {
             if (lineDirections.includes(dir)) {
                 connections[dir] = {
                     color,
                     neighbor: (pointProps.connections)[dir].neighbor
                 }
-                // if (pointProps.joinPoint) {
-                //     break
-                // }
             }
         }
         return {...currentProps, connections}
     }
-
-    // lineContinuationIsImpossible = (nextPoint: string, prevPoint: string, color: string) => {
-    //     const {connections, joinPoint, endpoint} = this.getPoint(prevPoint) || {}
-    //     if (!connections) return true
-    //     const {
-    //         connections: nConnection,
-    //         joinPoint: nJoinPoint,
-    //         crossLine: nCrossLine
-    //     } = this.getPoint(nextPoint) || {}
-    //     const nColors = nCrossLine || nJoinPoint || this.getColors(nConnection)
-    //     if (!nConnection || !endpoint || nColors.includes(color)) return false
-    //     const possible = ((joinPoint &&
-    //             (color === DefaultColor
-    //                 || joinPoint.includes(color)))
-    //             || this.getColors(connections).includes(color))
-    //     return !possible
-    // }
 
     getCurrentLine = (color: string, prevPoint: string): string[] => {
         return this.getFullLineFromAnyPoint(prevPoint, color)
@@ -111,8 +91,8 @@ export class PuzzleResolver extends PuzzleCommons {
 
     getPuzzleLine = (color: string, point: string): string[] => {
         for (const key in this.lines) {
-            const {line, color} = this.lines[key]
-            if (color === color && line.includes(point)) {
+            const {line, color: col} = this.lines[key]
+            if (color === col && line.includes(point)) {
                 return line
             }
         }
@@ -149,6 +129,7 @@ export class PuzzleResolver extends PuzzleCommons {
             const neighbors = this.getLineNeighbors(connections, DefaultColor)
             if (!neighbors.length) return
             const line = this.getFullLineFromAnyPoint(point, DefaultColor)
+            console.log('line to remove', line)
             return line.length && this.removeLinePartResolver(line, DefaultColor)
         }
         const neighbors = this.getLineNeighbors(connections, color)
@@ -254,6 +235,7 @@ export class PuzzleResolver extends PuzzleCommons {
         let jointPoint = null as unknown as string
         const dir = this.determineDirection(path[0], path[1])
         const dirBack = this.determineDirection(path[path.length - 1], path[path.length - 2])
+
         pointsToUpdate[path[0]] = {
             ...(startPointProps || {endpoint: false}),
             connections: {
@@ -385,16 +367,58 @@ export class PuzzleResolver extends PuzzleCommons {
     }
 
     removeLinePartResolver = (line: string[], color: string) => {
-        this.removeLinePart(line, color, this.updateCrossLineRemovingFork)
+        this.removeLinePart(line, color)
     }
 
-    // removeLinePointResolver = (
-    //     line: string[],
-    //     color: string,
-    //     i: number,
-    // ) => {
-    //
-    // }
+    determineColor = (startLinePoint: string, prevPoint: string, nextPoint: string): string => {
+        const startColors = this.getPossibleColors(startLinePoint)
+        const startPointProps = this.getPoint(startLinePoint)
+        const {connections, joinPoint, crossLine} = this.getPoint(prevPoint) || {}
+        if (!connections) return ''
+        const prevColors = this.getPossibleColors(prevPoint)
+        const nextPointProps = this.getPoint(nextPoint)
+        const nextColors = this.getPossibleColors(nextPoint)
+        console.log('determine colors', startColors, prevColors, nextColors, startPointProps?.crossLine)
+        if (!nextPointProps || !nextPointProps.endpoint) {
+            if (joinPoint || (crossLine && startColors.length > 1)) {
+                return DefaultColor
+            }
+            if (prevColors.length > 1
+                && prevPoint !== startLinePoint
+            ) {
+                return getCommonColor(prevColors, startColors) || DefaultColor
+            }
+            if (prevPoint === startLinePoint) {
+                return startColors.length > 1 ? DefaultColor : startColors[0]
+            }
+            return prevColors[0]
+        }
+        if (nextColors.length === 1 && prevColors.length === 1 && prevColors[0] !== DefaultColor) {
+            return getCommonColor(nextColors, prevColors)
+        }
+        if ((crossLine && nextPointProps.crossLine)
+            || (prevColors[0] === DefaultColor && nextPointProps.crossLine)) {
+            if (getCommonColor(prevColors, [getCommonColor(startColors, nextColors)])
+                && (startColors.length === 1)) {
+                return getCommonColor(prevColors, [getCommonColor(startColors, nextColors)])
+            }
+            return DefaultColor
+        }
+        if (startColors.length === 1) {
+            if (prevColors[0] === DefaultColor) {
+                return getCommonColor(this.getColorsOfGreyLineStart(prevPoint), nextColors)
+            }
+            if (nextPointProps.crossLine) {
+                return startColors[0]
+            }
+            return getCommonColor(startColors, nextColors)
+        }
+        if (nextPoint === startLinePoint && prevColors.length === 1) {
+            console.log('special case')
+            return prevColors[0]
+        }
+        return getCommonColor(startColors, nextColors)
+    }
 
     changeColorOfGrayLine = (nextPoint: string, prevPoint: string, color: string) => {
         const {connections, endpoint, joinPoint, crossLine} = this.getPoint(nextPoint)

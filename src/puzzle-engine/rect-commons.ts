@@ -10,6 +10,11 @@ import { LinedRectBase } from "./rect-base";
 
 
 export class PuzzleCommons extends LinedRectBase {
+    lineStartPoint = ''
+
+    setLineStartPoint = (point: string) => {
+        this.lineStartPoint = point
+    }
 
     prepareEndpointForResolver = (point: ITakenPointProps): ITakenPointProps => {
         const {endpoint, connections} = point
@@ -132,18 +137,27 @@ export class PuzzleCommons extends LinedRectBase {
         return last ? key : ''
     }
 
-    removeLastOnePoint = (point: string, color: string) => {
-        const pointProps = this.getPoint(point)
-        const neighbors = this.getLineNeighbors(pointProps.connections)
-        if (!pointProps.endpoint) {
-            this.deletePoint(point)
+    removeLastOnePoint = (
+        point: string,
+        color: string,
+        temporalPoints = false
+    ) => {
+        const [points, addPoints, deletePoint] = temporalPoints
+            ? [this.temporalPoints, this.addTemporalPoints, this.deleteTemporalPoint]
+            : [this.takenPoints, this.addTakenPoints, this.deletePoint]
+        const pointProps = points[point]
+        if (!pointProps?.connections) {
+            return console.error('no point to delete', point, points)
         }
-        console.log('rem one last', point, neighbors)
+        const neighbors = this.getLineNeighbors(pointProps.connections, color, temporalPoints)
+        if (!pointProps.endpoint) {
+            deletePoint(point)
+        }
         if (!neighbors.length) return
         for (const nei of neighbors) {
-            const neighborPoint = this.getPoint(nei)
+            const neighborPoint = points[nei]
             const dir = this.determineDirection(nei, point)
-            this.addTakenPoints({
+            addPoints({
                 [nei]: {
                     ...neighborPoint,
                     connections: {
@@ -155,17 +169,27 @@ export class PuzzleCommons extends LinedRectBase {
         }
     }
 
-    removeLinePart = (line: string[], color: string, fn = this.updateCrossLineRemovingFork) => {
-        console.log('rem line part', line, color)
-        if (line.length === 1 && !this.getPoint(line[0])?.endpoint) {
-            return this.removeLastOnePoint(line[0], color)
+    removeLinePart = (
+        line: string[],
+        color: string,
+        temporalPoints = false,
+        fn = this.updateCrossLineRemovingFork) => {
+        isDev() && console.log('rem line part', line, color, temporalPoints)
+        const [points, addPoints, deletePoint] = temporalPoints
+            ? [this.temporalPoints, this.addTemporalPoints, this.deleteTemporalPoint]
+            : [this.takenPoints, this.addTakenPoints, this.deletePoint]
+        if (line.length === 1 && !points[line[0]]?.endpoint) {
+            return this.removeLastOnePoint(line[0], color, temporalPoints)
+        }
+        if (line[line.length -1] === this.lineStartPoint && points[line[0]]?.endpoint) {
+            this.setLineStartPoint(line[0])
         }
         for (let i = 0; i < line.length; i++) {
             const point = line[i]
-            const pointProps = this.getPoint(point)
+            const pointProps = points[point]
             if (!pointProps) {return}
             const {connections, endpoint, crossLine, joinPoint} = pointProps
-            const lineNeighbors = this.getLineNeighbors(connections, color)
+            const lineNeighbors = this.getLineNeighbors(connections, color, temporalPoints)
             const colors = crossLine || joinPoint || this.getColors(connections)
             const lastPoints = !i || i === line.length - 1
 
@@ -183,18 +207,22 @@ export class PuzzleCommons extends LinedRectBase {
                         [dir]: {color: crossLine ? DefaultColor : _color}
                     }
                 }
-                console.log(i, line[i], Props, dir)
-                this.addTakenPoints({[point]: Props})
+                addPoints({[point]: Props})
             } else if (!endpoint) {
-                this.deletePoint(point)
+                deletePoint(point)
             } else if (crossLine || (colors.length === 2 && !lastPoints)) {
                 fn(color, point, pointProps)
             }
         }
-        console.log(this.getPoint(line[0]))
     }
 
-    validateFreeCell = (path: string[], colors: string[], pathMode: string) => {
+    validateFreeCell = (
+        path: string[],
+        colors: string[],
+        pathMode: string,
+        temporalPoints = false
+    ) => {
+        const points = temporalPoints ? this.temporalPoints : this.takenPoints
         const point = path[path.length - 1]
         const totalNeighbors = this.rect[point].neighbors
         let pathNeighbors = 0
@@ -206,7 +234,7 @@ export class PuzzleCommons extends LinedRectBase {
                 pathNeighbors += 1
                 continue
             }
-            const {crossLine} = this.getPoint(n) || {}
+            const {crossLine} = points[n] || {}
             if (crossLine && pathMode === 'strict') {
                 return !path.includes(n) ? !!getCommonColor(crossLine, colors) : true
             }
@@ -214,86 +242,40 @@ export class PuzzleCommons extends LinedRectBase {
         return true
     }
 
-    checkStartAndTarget = (start: string, target: string, colors: string[], mode = 'soft') => {
-        const startProps = this.getPoint(start)
-        const startNeighbors = this.rect[start].neighbors
-        const targetProps = this.getPoint(target)
-        const targetNeighbors = this.rect[target].neighbors
-        if (startProps) {
-            if ( startProps.endpoint
-                && !startProps.crossLine
-                && !startProps.joinPoint
-                && this.getLineNeighbors(startProps.connections).length > 0
-            ) {
-                return false
-            }
-        }
-        if (targetProps) {
-            const targetColors = this.getPossibleColors(target)
-            if (targetProps.endpoint
-                && !targetProps.crossLine
-                && !targetProps.joinPoint
-                && this.getLineNeighbors(targetProps.connections).length > 0
-                && getCommonColor(colors, targetColors)
-            ) {
-                return false
-            }
-            if (!targetProps.endpoint) {
-                if (getCommonColor(colors, targetColors)) return false
-            }
-        }
-        if (mode === 'strict') {
-            for (const nei of startNeighbors) {
-                const neiProps = this.getPoint(nei)
-                if (!neiProps) continue
-                const neiColors = this.getPossibleColors(nei)
-                if (neiColors.length > 1 && !getCommonColor(neiColors, colors)) {
-                    return false
-                }
-            }
-            for (const nei of targetNeighbors) {
-                const neiProps = this.getPoint(nei)
-                if (!neiProps) continue
-                const neiColors = this.getPossibleColors(nei)
-                if (neiColors.length > 1 && !getCommonColor(neiColors, colors)) {
-                    return false
-                }
-            }
-        }
-        return true
-    }
-
-    getFreeCells = (
+    getFreeCellsAroundPoint = (
+        point: string,
         path: string[],
         passed: ITakenPoints,
         targets: string[],
         colors: string[],
         mode: string,
+        TP = false,
+        distFn = this.getDistantBetweenPoints
     ): IPath[] => {
-        const point = path[path.length - 1]
+        const points = TP ? this.temporalPoints : this.takenPoints
         const freeCells = [] as IPath[]
-        console.log(path, targets)
         const target = targets[targets.length - 1]
+        console.log(point, path)
         for (const neighbor of this.rect[point].neighbors) {
             if (passed[neighbor] || path.includes(neighbor)) {
                 continue
             }
-            const neiProps = this.getPoint(neighbor)
-            const commonColor = getCommonColor(this.getPossibleColors(neighbor), colors)
+            const neiProps = points[neighbor]
+            const commonColor = getCommonColor(this.getPossibleColors(neighbor, TP), colors)
             const indexOfNeighbor = targets.indexOf(neighbor)
             if (indexOfNeighbor >= 0) {
                 const appropriateTarget = !neiProps
                     || (!neiProps.endpoint && mode !== 'strict')
                     || (neiProps.endpoint && !!commonColor)
-                console.warn('fin', neighbor, indexOfNeighbor, path, targets, 'apt', appropriateTarget)
+                console.warn('fin', neighbor, indexOfNeighbor, path, 'apt', appropriateTarget)
                 return appropriateTarget
-                        ? [{dist: 0, path, target: neighbor, index: indexOfNeighbor}]
-                        : [{dist: Infinity, path, target: neighbor}]
+                    ? [{dist: 0, path, target: neighbor, index: indexOfNeighbor}]
+                    : [{dist: Infinity, path, target: neighbor}]
             }
             if (commonColor
-                && this.getLineNeighbors(neiProps.connections!, commonColor).length
+                && this.getLineNeighbors(neiProps.connections!, commonColor, TP).length
             ) {
-                const circle = this.checkIfPointsBelongToSameLine(neighbor, point, commonColor)
+                const circle = this.checkIfPointsBelongToSameLine(neighbor, point, commonColor, TP)
                 if (circle?.length) {
                     console.error('circle', circle, path, point, neighbor, targets)
                     return [{dist: Infinity, path, target}]
@@ -309,189 +291,254 @@ export class PuzzleCommons extends LinedRectBase {
                 && neiProps
                 && (neiProps.crossLine || neiProps.joinPoint)
                 && !path.includes(neighbor)) {
-                const dist = this.getDistantBetweenPoints(neighbor, target)
+                const dist = distFn(neighbor, target)
                 return commonColor
-                        ? [{path: path.concat(neighbor), dist, target}]
-                        : [{dist: Infinity, path, target}]
+                    ? [{path: path.concat(neighbor), dist, target}]
+                    : [{dist: Infinity, path, target}]
             }
             if (!neiProps
                 || (!neiProps.endpoint && !commonColor && !mode)
                 || ((neiProps.joinPoint || neiProps.crossLine) && commonColor)
             ) {
-                const validFreeCell = this.validateFreeCell(path.concat(neighbor), colors, mode)
+                const validFreeCell = this.validateFreeCell(path.concat(neighbor), colors, mode, TP)
                 if (validFreeCell || (neiProps?.endpoint && commonColor)) {
-                    const dist = this.getDistantBetweenPoints(neighbor, target)
+                    const dist = distFn(neighbor, target)
                     freeCells.push({dist, path: path.concat(neighbor), target})
                 }
             }
         }
         return freeCells.length
             ? freeCells.sort((a, b) => b.dist - a.dist)
-            : [{dist: Infinity, path, target}]
+            : [{dist: Infinity, path, target: targets[targets.length - 1]}]
     }
 
-    findPath = (startPoint: string, targetPoint: string, colors: string[], pathMode = 'soft'): string[] => {
-        if (!this.checkStartAndTarget(startPoint, targetPoint, colors, pathMode)) {
-            return []
-        }
-        console.log('find path')
-        let passedFromTarget = this.setFirstPassed(targetPoint)
-        let passedFromStart = this.setFirstPassed(startPoint)
+    getFreeCells = (
+        path: string[],
+        passed: ITakenPoints,
+        targets: string[],
+        colors: string[],
+        mode: string,
+        TP =false,
+        distFn = this.getDistantBetweenPoints
+    ): IPath[] => {
+        const point = path[path.length - 1]
+        let freeCells = [] as IPath[]
+        console.log('get free cells', path, passed, targets, colors)
+        freeCells = freeCells.concat(
+            this.getFreeCellsAroundPoint(point, path, passed, targets, colors, mode, TP, distFn)
+        )
+        return freeCells.length
+            ? freeCells.sort((a, b) => b.dist - a.dist)
+            : [{dist: Infinity, path, target: targets[targets.length - 1]}]
+    }
+
+    findPath = (
+        startPoint: string,
+        targetPoint: string,
+        colors: string[],
+        pathMode = 'soft',
+        TP = false,
+        distFn = this.getDistantBetweenPoints
+    ): string[] => {
+        const points = TP ? this.temporalPoints : this.takenPoints
+        console.log('find path', startPoint, targetPoint, colors)
+        let passedFromTarget = this.setFirstPassed(targetPoint, TP)
+        let passedFromStart = this.setFirstPassed(startPoint, TP)
         const lineColor = colors.length > 1 ? DefaultColor : colors[0]
-        const startPath = this.getFullLineFromAnyPoint(startPoint, lineColor).reverse()
-        let pathsFromStart =
-            this.getFreeCells(startPath, passedFromStart, [targetPoint], colors, pathMode)
-        let ch = this.checkIfPathFound(pathsFromStart, [], startPoint)
+        const nei = null as unknown as string[]
+        const startPath = points[startPoint]
+            ? this.getFullLineFromAnyPoint(startPoint, lineColor, nei, TP).reverse()
+            : [startPoint]
+        if (!startPath.length) {
+            console.error(startPath, startPoint)
+        }
+        let pathsFromStart = this.getPathsFromStart(
+            startPath,
+            targetPoint,
+            colors,
+            pathMode,
+            passedFromStart,
+            TP,
+            distFn,
+        )
+        let ch = this.checkIfPathFound(pathsFromStart, [], startPoint, startPath,true, TP)
         if (ch.resultPath) return ch.resultPath
-        let pathsFromTarget =
-            this.getFreeCells([targetPoint], passedFromTarget, ch.lastStart!, colors, pathMode)
+        let pathsFromTarget = this.getFreeCells(
+            [targetPoint], passedFromTarget, ch.lastStart!, colors, pathMode, TP, distFn
+        )
         while (pathsFromTarget.length > 0 && pathsFromStart.length > 0) {
-            let ch = this.checkIfPathFound(pathsFromStart, pathsFromTarget, startPoint, false)
+            let ch = this.checkIfPathFound(
+                pathsFromStart, pathsFromTarget, startPoint, startPath, false, TP
+            )
             if (ch.resultPath) return ch.resultPath
-            pathsFromStart =
-                this.getNext(pathsFromStart, passedFromStart, colors, ch.lastTarget!, pathMode)
+            pathsFromStart = this.getNext(
+                pathsFromStart, passedFromStart, colors, ch.lastTarget!, pathMode, TP, distFn
+            )
             if (pathsFromStart[0].dist < 0) {
                 if (startPath.length > 1) {
                     console.log('restart', pathsFromStart, pathsFromTarget)
-                    const path = startPath.slice(0, 1)
-                    passedFromStart = this.setFirstPassed(startPath[0])
-                    passedFromTarget = this.setFirstPassed(targetPoint)
-                    pathsFromStart = this.getFreeCells(
-                        path, passedFromStart, [targetPoint], colors, pathMode
+                    passedFromStart = this.setFirstPassed(startPath[0], TP)
+                    passedFromTarget = this.setFirstPassed(targetPoint, TP)
+                    pathsFromStart = this.getPathsFromStart(
+                        startPath.slice(0, -1),
+                        targetPoint,
+                        colors,
+                        pathMode,
+                        passedFromStart,
+                        TP,
+                        distFn
                     )
                 }
                 if (!pathsFromStart.length || startPath.length === 1) {
                     return []
                 }
-                this.removeLinePart(startPath, lineColor)
+                this.removeLinePart(startPath, lineColor, TP)
             }
-            ch = this.checkIfPathFound(pathsFromStart, pathsFromTarget, startPoint)
+            ch = this.checkIfPathFound(pathsFromStart, pathsFromTarget, startPoint, startPath, true, TP)
             if (ch.resultPath) return ch.resultPath
-            pathsFromTarget =
-                this.getNext(pathsFromTarget, passedFromTarget, colors, ch.lastStart!, pathMode)
+            pathsFromTarget = this.getNext(
+                pathsFromTarget, passedFromTarget, colors, ch.lastStart!, pathMode, TP, distFn
+            )
         }
         return []
     }
 
-    setFirstPassed = (point: string) => ({
-        [point]: {
-            ...(this.getPoint(point) || {
-                endpoint: true})
-            ,connections: {
-                ...defaultConnectionsWithColor(),
-                ...this.getPoint(point)?.connections,
+    getPathsFromStart = (
+        startPath: string[],
+        targetPoint: string,
+        colors: string[],
+        pathMode: string,
+        passedFromStart: ITakenPoints,
+        TP = false,
+        distFn = this.getDistantBetweenPoints,
+    ) => {
+        const lineColor = colors.length > 1 ? DefaultColor : colors[0]
+        const _stP = [...startPath]
+        let pathsFromStart = this.getFreeCells(
+            _stP,
+            this.setFirstPassed(startPath[startPath.length - 1], TP),
+            [targetPoint],
+            colors,
+            pathMode,
+            TP,
+            distFn
+        )
+        console.log('path from start', pathsFromStart, startPath, targetPoint, colors,
+            pathsFromStart[0].dist < Infinity)
+        if (pathsFromStart.length && (pathsFromStart[0].dist < Infinity || startPath.length < 2)) {
+            return pathsFromStart
+        }
+        while (startPath.length) {
+            const lineToRemove = [_stP.pop()!]
+            pathsFromStart = this.getFreeCells(
+                _stP,
+                this.setFirstPassed(startPath[startPath.length - 1], TP),
+                [targetPoint],
+                colors,
+                pathMode,
+                TP,
+                distFn
+            )
+            console.log('path from start2', pathsFromStart, _stP, targetPoint)
+            this.removeLinePart(lineToRemove, lineColor, TP)
+            if (pathsFromStart.length) return pathsFromStart
+        }
+        return [{dist: Infinity, path: startPath, target: targetPoint}]
+
+    }
+
+    setFirstPassed = (point: string, TP = false) => {
+        const points = TP ? this.temporalPoints : this.takenPoints
+        return {
+            [point]: {
+                ...(points[point] || {
+                    endpoint: true})
+                ,connections: {
+                    ...defaultConnectionsWithColor(),
+                    ...points[point]?.connections,
+                }
             }
         }
-    })
+    }
 
     checkIfPathFound = (
         startPaths: IPath[],
         targetPaths: IPath[],
         startPoint: string,
-        start = true
+        startPath: string[],
+        start = true,
+        TP = false
     ) => {
-        console.log('check path', startPaths, targetPaths, start)
         const lastStartPath = startPaths[startPaths.length - 1]
         const lastTargetPath = targetPaths[targetPaths.length - 1]
         const pathToCheck = start ? lastStartPath : lastTargetPath
         const pathFromTarget = lastTargetPath?.path || []
+        console.log('check path', startPaths, targetPaths, start)
         if (pathToCheck?.dist === Infinity) {
             return {resultPath: []}
         }
         if (pathToCheck?.dist === 0) {
-            console.log('get result path', targetPaths, startPaths, pathToCheck.index)
             const startPath = start
                 ? lastStartPath.path
                 : lastStartPath.path.slice(0, pathToCheck.index! + 1)
             if (startPath[0] !== startPoint && !startPath.includes(startPoint)) {
                 this.removeLinePart(
                     lastStartPath.path.slice(pathToCheck.index!),
-                    this.getPossibleColors(startPoint)[0]
+                    this.getPossibleColors(startPoint, TP)[0],
+                    TP
                 )
             }
             const endPath = start
-                ? lastTargetPath.path.slice(1, pathToCheck.index! + 1).reverse()
-                : lastTargetPath.path.slice(1).reverse()
-            return {
-                resultPath: startPath.concat(endPath)
-            }
+                ? lastTargetPath?.path.slice(1, pathToCheck.index! + 1).reverse()
+                : lastTargetPath?.path.slice(1).reverse()
+            // console.log('check path 2', startPath.concat(endPath))
+            return endPath?.length
+                ? {
+                    resultPath: startPath.concat(endPath)
+                }
+                : {
+                    resultPath: startPath
+                }
         }
         const lastStart = lastStartPath.path
         return {lastStart, lastTarget: pathFromTarget}
     }
 
-    getNext = (paths: IPath[], passed: ITakenPoints, colors: string[], targets: string[], pathMode: string) => {
+    getNext = (
+        paths: IPath[],
+        passed: ITakenPoints,
+        colors: string[],
+        targets: string[],
+        pathMode: string,
+        TP = false,
+        distFn = this.getDistantBetweenPoints
+    ) => {
         const _paths = Object.assign([], paths) as IPath[]
         while (paths.length > 0) {
-            const path = _paths.pop()!.path
-            const nextPaths = this.getFreeCells(path, passed, targets, colors, pathMode)
+            let path = _paths.pop()!.path
+            const nextPaths = this.getFreeCells(path, passed, targets, colors, pathMode, TP, distFn)
             // console.log('next', path, nextPaths, paths)
-            if (nextPaths.length) {
+            if (nextPaths.length && nextPaths[nextPaths.length - 1].dist !== Infinity) {
                 return _paths.concat(nextPaths)
+            }
+            if (_paths.length < 1 && path.length > 1) {
+                console.log('path', _paths, path)
+                return [{dist: -1, path: paths[0].path, target: targets[targets.length -1]}]
             }
         }
         return [{dist: -1, path: paths[0].path, target: targets[targets.length -1]}]
     }
 
-    getLineColor = (startLinePoint: string, point: string) => {
-        const startColors = this.getPossibleColors(startLinePoint)
-        const colors = this.getPossibleColors(point)
-        const commonColor = getCommonColor(startColors, colors)
-        if (commonColor) return commonColor
-        if (colors.length === 1) {
-            return colors[0]
-        }
-    }
+    // getLineColor = (startLinePoint: string, point: string) => {
+    //     const startColors = this.getPossibleColors(startLinePoint)
+    //     const colors = this.getPossibleColors(point)
+    //     const commonColor = getCommonColor(startColors, colors)
+    //     if (commonColor) return commonColor
+    //     if (colors.length === 1) {
+    //         return colors[0]
+    //     }
+    // }
 
-    determineColor = (startLinePoint: string, prevPoint: string, nextPoint: string): string => {
-        const startColors = this.getPossibleColors(startLinePoint)
-        const startPointProps = this.getPoint(startLinePoint)
-        const {connections, joinPoint, crossLine} = this.getPoint(prevPoint) || {}
-        if (!connections) return ''
-        const prevColors = this.getPossibleColors(prevPoint)
-        const nextPointProps = this.getPoint(nextPoint)
-        const nextColors = this.getPossibleColors(nextPoint)
-        console.log('determine colors', startColors, prevColors, nextColors, startPointProps?.crossLine)
-        if (!nextPointProps || !nextPointProps.endpoint) {
-            if (joinPoint || (crossLine && startColors.length > 1)) {
-                return DefaultColor
-            }
-            if (prevColors.length > 1
-                && prevPoint !== startLinePoint
-            ) {
-                return getCommonColor(prevColors, startColors) || DefaultColor
-            }
-            if (prevPoint === startLinePoint) {
-                return startColors.length > 1 ? DefaultColor : startColors[0]
-            }
-            return prevColors[0]
-        }
-        if (nextColors.length === 1 && prevColors.length === 1 && prevColors[0] !== DefaultColor) {
-            return getCommonColor(nextColors, prevColors)
-        }
-        if ((crossLine && nextPointProps.crossLine)
-            || (prevColors[0] === DefaultColor && nextPointProps.crossLine)) {
-            if (getCommonColor(prevColors, [getCommonColor(startColors, nextColors)])
-                && (startColors.length === 1)) {
-                return getCommonColor(prevColors, [getCommonColor(startColors, nextColors)])
-            }
-            return DefaultColor
-        }
-        if (startColors.length === 1) {
-            if (prevColors[0] === DefaultColor) {
-                return getCommonColor(this.getColorsOfGreyLineStart(prevPoint), nextColors)
-            }
-            if (nextPointProps.crossLine) {
-                return startColors[0]
-            }
-            return getCommonColor(startColors, nextColors)
-        }
-        if (nextPoint === startLinePoint && prevColors.length === 1) {
-            console.log('special case')
-            return prevColors[0]
-        }
-        return getCommonColor(startColors, nextColors)
-    }
 
     getColorsOfGreyLineStart = (point: string) => {
         const greyLine = this.getLinePartPoints(DefaultColor, point)
@@ -499,9 +546,10 @@ export class PuzzleCommons extends LinedRectBase {
         return this.getPossibleColors(middlePoint)
     }
 
-    getPossibleColors = (point: string | ITakenPointProps) => {
+    getPossibleColors = (point: string | ITakenPointProps, temporalPoints = false) => {
+        const points = temporalPoints ? this.temporalPoints : this.takenPoints
         const {connections, crossLine, joinPoint} = (typeof point === "string"
-            ? this.getPoint(point)
+            ? points[point]
             : point) || {}
         // console.log(connections, crossLine || joinPoint || this.getColors(connections))
         if (!connections) return []
@@ -515,94 +563,6 @@ export class PuzzleCommons extends LinedRectBase {
             ? Math.abs(ps1[0] - ps2[0]) + Math.abs(ps1[1] - ps2[1])
             : Math.sqrt((ps1[0] - ps2[0]) * (ps1[0] - ps2[0]) + (ps1[1] - ps2[1]) * (ps1[1] - ps2[1]))
     }
-
-    // getNearestPoint = (
-    //     path: string[],
-    //     passed: Partial<ITakenPoints>,
-    //     startPointNeighbors: string[],
-    //     targetPoint: string,
-    //     colors: string[],
-    //     pathMode = 'strict'
-    // ): {path: string[], passed: Partial<ITakenPoints>, neighbors: string[], finished: boolean} => {
-    //     const _passed = Object.assign({}, passed) as Partial<ITakenPoints>
-    //     const _path = Object.assign([], path)
-    //     const next = {pathPoint: '', dist: Infinity, neighbors: [] as string[], finished: false}
-    //     for (const n of startPointNeighbors) {
-    //         const dist = this.getDistantBetweenPoints(n, targetPoint)
-    //         const nextFree = this.getFreeCells(path.concat(n), _passed, targetPoint, colors, pathMode)
-    //         if (nextFree[0] === 'fin') {
-    //             _path.push(n)
-    //             return {path: _path, passed, neighbors: [], finished: true}
-    //         }
-    //         if (next.dist > dist && nextFree.length) {
-    //             next.dist = dist
-    //             next.pathPoint = n
-    //             next.neighbors = nextFree
-    //         } else if (!nextFree.length) {
-    //             _passed[n] = _passed[n] || {
-    //                 connections: defaultConnectionsWithColor(DefaultColor),
-    //                 endpoint: true
-    //             }
-    //         }
-    //     }
-    //     if (next.pathPoint) {
-    //         const dir = this.determineDirection(next.pathPoint, path[path.length - 1])
-    //         const crossLine = _passed[next.pathPoint]?.crossLine
-    //         const color = colors[1] ? DefaultColor : colors[0]
-    //         _passed[next.pathPoint] = {
-    //             connections: {
-    //                 ...defaultConnectionsWithColor(color),
-    //                 [dir]: {color, neighbor: next.pathPoint}
-    //             },
-    //             endpoint: !!crossLine,
-    //             crossLine
-    //         }
-    //         _path.push(next.pathPoint)
-    //         return {path: _path, passed: _passed, neighbors: next.neighbors, finished: false}
-    //     }
-    //     if (!next.pathPoint)
-    //     startPointNeighbors.forEach(n => {
-    //         _passed[n] = _passed[n] || {
-    //             connections: defaultConnectionsWithColor(),
-    //             endpoint: true
-    //         }
-    //     })
-    //     return this.getNearestFromPreviousSteps(path, _passed, targetPoint, colors, pathMode)
-    // }
-
-    // getNearestFromPreviousSteps = (
-    //     path: string[],
-    //     passed: Partial<ITakenPoints>,
-    //     targetPoint: string,
-    //     colors: string[],
-    //     trueLine = 'strict'
-    // ): {path: string[], passed: Partial<ITakenPoints>, neighbors: string[], finished: boolean} => {
-    //     let _path = path.slice(0, -1)
-    //     while (_path.length) {
-    //         const lastP = _path[_path.length - 1]
-    //         this.deletePoint(path[path.length - 1])
-    //         const lastPointProps = this.getPoint(lastP)
-    //         if (lastPointProps) {
-    //             const dir = this.determineDirection(lastP, path[path.length - 1])
-    //             this.addTakenPoints({[lastP]: {
-    //                 ...lastPointProps,
-    //                 connections: {
-    //                     ...lastPointProps.connections,
-    //                     [dir]: {color: colors.length > 1 ? DefaultColor : colors[0]}
-    //                 }
-    //             }})
-    //         }
-    //         const prevStepFreeNeighbors = this.getFreeCells(_path.concat(lastP), passed, targetPoint, colors, trueLine)
-    //         if (prevStepFreeNeighbors[0] === 'fin') {
-    //             return {finished: true, path: _path, passed, neighbors: []}
-    //         }
-    //         if (prevStepFreeNeighbors) {
-    //             return this.getNearestPoint(_path, passed, prevStepFreeNeighbors, targetPoint, colors, trueLine)
-    //         }
-    //         _path = _path.slice(0, -1)
-    //     }
-    //     return {path, passed, neighbors: [], finished: false}
-    // }
 
     removeExtraLine = (next: string, prev: string, color: string) => {
         const line = this.getLinePartPoints(color, next, prev)
