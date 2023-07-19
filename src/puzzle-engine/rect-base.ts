@@ -304,8 +304,7 @@ export class LinedRectBase implements ILinedRect {
         const indexOf = line.indexOf(point)
         const indexOf2 = secondPoint ? line.indexOf(secondPoint) : -1
         const stPoint = this.getPoint(line[0])
-        console.log('belong', stPoint, line, point, indexOf, indexOf2, secondPoint, this.getPoint(line[line.length - 1]))
-
+        console.log('belong', stPoint, line, point, indexOf, indexOf2, secondPoint)
         if (indexOf < 0 || !stPoint) return []
         const endPoint = this.getPoint(line[line.length - 1])
         if (indexOf2 < 0) {
@@ -325,8 +324,8 @@ export class LinedRectBase implements ILinedRect {
         }
         if (endPoint.endpoint) {
             return indexOf > indexOf2
-                ? line.slice(0, indexOf2 + 1)
-                : line.slice(0, indexOf + 1)
+                ? line.slice(0, indexOf + 1)
+                : line.slice(0, indexOf2 + 1)
         }
         return []
     }

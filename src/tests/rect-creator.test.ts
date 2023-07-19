@@ -1,7 +1,7 @@
 import {IEndpoints, IEndpointsValue, LineDirections} from '../constant/interfaces'
 import {RectCreator} from '../puzzle-engine/rect-creator'
 import {defaultConnectionsWithColor, isDev, sectorIndex} from '../utils/helper-fn'
-import {DefaultColor} from "../constant/constants";
+import {DefaultColor, LineColors} from "../constant/constants";
 
 
 describe('test rect-creator methods', () => {
@@ -22,7 +22,8 @@ describe('test rect-creator methods', () => {
                 "x": -2,
                 "y": 0
             },
-            meddling: 0
+            meddling: 0,
+            color: LineColors[4]
         }
         const line2 = {
             "pairKey": "1-2_1-0",
@@ -38,7 +39,8 @@ describe('test rect-creator methods', () => {
                 "x": 0,
                 "y": 2
             },
-            meddling: 0
+            meddling: 0,
+            color: LineColors[3]
         }
         expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(4)
     })
@@ -180,8 +182,8 @@ describe('test rect-creator methods', () => {
         // console.log(line2)
         expect(line2).toEqual(line1)
         expect(rectCR1.checkIfPointBelongsToLine(line1, '3-1').length).toBe(8)
-        expect(rectCR1.checkIfPointsBelongToSameLine('1-1', '3-1', 'blue').length).toBe(8)
-        expect(rectCR1.checkIfPointBelongsToLine(line1, '3-1', '1-1').length).toBe(8)
+        expect(rectCR1.checkIfPointsBelongToSameLine('3-1', '1-1', 'blue').length).toBe(10)
+        expect(rectCR1.checkIfPointBelongsToLine(line1, '3-1', '41-1').length).toBe(8)
 
         expect(rectCR1.getFullLineFromAnyPoint('1-1', 'blue', ['2-1']).includes('2-2')).toBe(true)
         expect(rectCR1.getLineDirections('2-1', 'blue')).toEqual([LineDirections.left,
@@ -212,7 +214,8 @@ describe('test rect-creator methods', () => {
             coords1: [0, 3],
             coords2: [3, 0],
             intervals: {x: -3, y: 3},
-            meddling: 0
+            meddling: 0,
+            color: LineColors[2]
         }
         const line2 = {
 

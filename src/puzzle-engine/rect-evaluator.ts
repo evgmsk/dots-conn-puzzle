@@ -5,7 +5,7 @@ import {
 } from '../constant/interfaces'
 import { PuzzleCommons } from "./rect-commons";
 import { DefaultColor } from "../constant/constants";
-import { isDev } from "../utils/helper-fn";
+// import { isDev } from "../utils/helper-fn";
 
 export class PuzzleEvaluator extends PuzzleCommons {
     linesInterfering = {} as {[key: string]: number}
@@ -35,15 +35,23 @@ export class PuzzleEvaluator extends PuzzleCommons {
         const passed = {} as {[key: string]: boolean}
         const lines = {} as {[key: string]: number}
         for (const point in this.takenPoints) {
-            if (passed[point]) { continue }
             const {
                 colors,
                 connections,
-                neighbors
+                neighbors,
+                endpoint,
+                joinPoint,
+                crossLine
             } = this.checkPoint(point)
-            if (!connections) {
-                return console.error('not connections', colors, point)
+            if (endpoint) {
+                this.addTemporalPoints({
+                    [point]: {
+                        endpoint, connections, crossLine, joinPoint
+                    }
+                })
             }
+            if (passed[point]) { continue }
+            if (!connections) {return console.error('not connections', colors, point)}
             for (const color of colors) {
                 const lineNeighbors = colors.length > 1
                     ? this.getLineNeighbors(connections, color)
@@ -58,7 +66,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 this.convertLastToEndpoint(start)
                 this.convertLastToEndpoint(end)
                 line.forEach(p => { passed[p] = true })
-                if (this.addLineEndpoint([start, end])) {
+                if (this.addLineEndpoint([start, end], color)) {
                     if (lines[color] && lines[color] > 0) {
                         this.lineError = `There are too many lines of ${color} color. Limit is 2`
                         return false
@@ -71,17 +79,17 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return true
     }
 
-    addLineEndpoint = (points: string[]) => {
+    addLineEndpoint = (points: string[], color: string) => {
         if (this.lineEndpoints[`${points[0]}_${points[1]}`]
             || this.lineEndpoints[`${points[1]}_${points[0]}`]) {
             return false
         }
-        const {pairKey, ...endpoints} = this.getLineEndpoints(points)
+        const {pairKey, ...endpoints} = this.getLineEndpoints(points, color)
         this.lineEndpoints[pairKey] = endpoints
         return true
     }
 
-    getLineEndpoints = (points: string[]): IEndpointsValue & {pairKey: string} => {
+    getLineEndpoints = (points: string[], color: string): IEndpointsValue & {pairKey: string} => {
         const firstPointCoords = points[0].split('-').map(i => parseInt(i))
         const secondPointCoords = points[1].split('-').map(i => parseInt(i))
         return {
@@ -92,6 +100,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 x: firstPointCoords[0] - secondPointCoords[0],
                 y: firstPointCoords[1] - secondPointCoords[1]
             },
+            color,
             meddling: 0
         }
     }
@@ -169,7 +178,11 @@ export class PuzzleEvaluator extends PuzzleCommons {
         if (!Object.keys(this.lineEndpoints).length) {
             return console.error('impossible resolve')
         }
-
+        let lineResolved = 0
+        while (lineResolved < lineKeys.length) {
+            const endPoints = this.lineEndpoints[lineResolved]
+            // const line = this.findPath()
+        }
     }
 
     getDistantWithMeddling = (point: string, target: string) => {

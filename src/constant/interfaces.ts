@@ -143,7 +143,9 @@ export interface IEndpointsValue {
     coords2: number[]
     intervals: {x: number, y: number}
     meddling: number
+    color: string
     resolved?: boolean
+
 }
 
 // export interface IPoint {

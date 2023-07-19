@@ -16,6 +16,19 @@ export class PuzzleCommons extends LinedRectBase {
         this.lineStartPoint = point
     }
 
+    setStartingPoints = (points: ITakenPoints, TP = false): ITakenPoints => {
+        const addPoints = TP ? this.addTemporalPoints : this.addTakenPoints
+        for (const point in points) {
+            const pointProps = points[point]
+            if (pointProps.endpoint) {
+                addPoints({
+                    [point]: this.prepareEndpointForResolver(pointProps)
+                })
+            }
+        }
+        return points
+    }
+
     prepareEndpointForResolver = (point: ITakenPointProps): ITakenPointProps => {
         const {endpoint, connections} = point
         const colors = this.getColors(connections)
@@ -255,7 +268,7 @@ export class PuzzleCommons extends LinedRectBase {
         const points = TP ? this.temporalPoints : this.takenPoints
         const freeCells = [] as IPath[]
         const target = targets[targets.length - 1]
-        console.log(point, path)
+        // console.log(point, path)
         for (const neighbor of this.rect[point].neighbors) {
             if (passed[neighbor] || path.includes(neighbor)) {
                 continue
@@ -323,7 +336,7 @@ export class PuzzleCommons extends LinedRectBase {
     ): IPath[] => {
         const point = path[path.length - 1]
         let freeCells = [] as IPath[]
-        console.log('get free cells', path, passed, targets, colors)
+        // console.log('get free cells', path, passed, targets, colors)
         freeCells = freeCells.concat(
             this.getFreeCellsAroundPoint(point, path, passed, targets, colors, mode, TP, distFn)
         )
@@ -473,7 +486,7 @@ export class PuzzleCommons extends LinedRectBase {
         const lastTargetPath = targetPaths[targetPaths.length - 1]
         const pathToCheck = start ? lastStartPath : lastTargetPath
         const pathFromTarget = lastTargetPath?.path || []
-        console.log('check path', startPaths, targetPaths, start)
+        // console.log('check path', startPaths, targetPaths, start)
         if (pathToCheck?.dist === Infinity) {
             return {resultPath: []}
         }

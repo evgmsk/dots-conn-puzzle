@@ -57,18 +57,6 @@ export class PuzzleResolver extends PuzzleCommons {
         return lines
     }
 
-    setStartingPoints = (points: ITakenPoints): ITakenPoints => {
-        for (const point in points) {
-            const pointProps = points[point]
-            if (pointProps.endpoint) {
-                this.addTakenPoints({
-                    [point]: this.prepareEndpointForResolver(pointProps)
-                })
-            }
-        }
-        return points
-    }
-
     updateCrossLinePointToRevealLine = (point: string, color: string): ITakenPointProps => {
         const currentProps = this.getPoint(point)
         const connections = copyObj(currentProps.connections)
@@ -235,7 +223,7 @@ export class PuzzleResolver extends PuzzleCommons {
         let jointPoint = null as unknown as string
         const dir = this.determineDirection(path[0], path[1])
         const dirBack = this.determineDirection(path[path.length - 1], path[path.length - 2])
-
+        let endPointInMiddle = false
         pointsToUpdate[path[0]] = {
             ...(startPointProps || {endpoint: false}),
             connections: {
@@ -247,18 +235,42 @@ export class PuzzleResolver extends PuzzleCommons {
             color = DefaultColor
             jointPoint = path[0]
         }
-        pointsToUpdate[path[path.length - 1]] = {
-            ...(lastPointProps || {endpoint: false}),
-            connections: {
-                ...(lastPointProps?.connections || defaultConnectionsWithColor(color)),
-                [dirBack]: {color, neighbor: path[path.length - 2]}
-            }
-        }
         console.warn('utmost points to update', pointsToUpdate, lastPointProps, startPointProps, path)
         for (let step = 1; step < path.length - 1; step++) {
             const pointProps = this.getPoint(path[step])
             const dirBack = this.determineDirection(path[step], path[step - 1])
             const dir = this.determineDirection(path[step], path[step + 1])
+            if (pointProps && pointProps.endpoint && !pointProps.crossLine && !pointProps.joinPoint) {
+                console.error('endpoint in the middle', step, path, pointProps)
+                for (let _step = step; _step >= 0; _step--) {
+                   delete pointsToUpdate[path[_step]]
+                   if (!this.getPoint(path[_step])?.endpoint) {
+                       this.deletePoint(path[_step])
+                   } else {
+                       const _pointProps = this.getPoint(path[_step])
+                       const dir = this.determineDirection(path[_step], path[_step + 1])
+                       const conn1 = _step !== step
+                           ? {[dir]: {color}}
+                           : {[dir]: {color, neighbor: path[step + 1]}}
+                       const conn2 = _step > 0
+                           ? {[this.determineDirection(path[_step], path[_step - 1])]: {color}}
+                           : {}
+                       const connections = {
+                           ..._pointProps.connections,
+                           ...conn1,
+                           ...conn2
+                       }
+                       this.addTakenPoints({
+                           [path[_step]]: {
+                               ..._pointProps,
+                               connections
+                           }
+                       })
+                       console.log(_pointProps, path[_step], connections, conn1, conn2)
+                   }
+                }
+                continue
+            }
             pointsToUpdate[path[step]] = {
                 ...(pointProps || {endpoint: false}),
                 connections: {
@@ -270,6 +282,15 @@ export class PuzzleResolver extends PuzzleCommons {
             if (pointProps?.joinPoint && step !== path.length - 1) {
                 color = DefaultColor
                 jointPoint = path[step]
+            }
+        }
+        if (!endPointInMiddle) {
+            pointsToUpdate[path[path.length - 1]] = {
+                ...(lastPointProps || {endpoint: false}),
+                connections: {
+                    ...(lastPointProps?.connections || defaultConnectionsWithColor(color)),
+                    [dirBack]: {color, neighbor: path[path.length - 2]}
+                }
             }
         }
         this.addTakenPoints(pointsToUpdate)
@@ -297,7 +318,7 @@ export class PuzzleResolver extends PuzzleCommons {
         const nextColors = this.getPossibleColors(next)
         const circleLine = color === newColor && this.checkIfPointsBelongToSameLine(next, prev, color)
         if (circleLine && circleLine?.length) {
-            // console.log('circle', this.interferedLines, circleLine)
+            console.log('circle', this.interferedLines, circleLine)
             this.removeLinePartResolver(circleLine, color)
             if (Object.keys(this.interferedLines).length) {
                 this.updateInterferedLine(next, prev, color)

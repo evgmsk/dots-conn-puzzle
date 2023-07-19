@@ -19,7 +19,6 @@ import { ShowUP } from "../show-up/ShowUp";
 import { AddsModal } from "../../modals/AddsModal";
 import { addsService } from "../../app-services/adds-service";
 import {shadowState} from "../../app-services/finger-shadow-state";
-import {pC} from "../../puzzle-engine/rect-creator";
 
 let resolver = {getPossibleColors: () => DefaultColor} as unknown as PR
 
@@ -108,12 +107,13 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             timeout = setTimeout(setResolved, 300,true)
             return
         }
+        resolver.resolveMouseDown(line[0], color)
         for (const point of line) {
-            const existedPoint = pC.getPoint(point)
+            const existedPoint = resolver.getPoint(point)
             if (existedPoint && !existedPoint.endpoint) {
-                const pointColor = pC.getColors(existedPoint.connections)[0]
-                const lineToRemove = pC.getFullLineFromAnyPoint(point, pointColor)
-                pC.removeLinePart(lineToRemove, pointColor)
+                const pointColor = resolver.getColors(existedPoint.connections)[0]
+                const lineToRemove = resolver.getFullLineFromAnyPoint(point, pointColor)
+                resolver.removeLinePart(lineToRemove, pointColor)
             }
             if (resolver.totalPoints[point].crossLine || resolver.totalPoints[point].joinPoint) {
                 lineToShow[point] = resolver.updateCrossLinePointToRevealLine(point, color)
@@ -150,7 +150,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             resolver.setLineStartPoint(key)
         } else {
             const line = resolver.getFullLineFromAnyPoint(key, colors[0])
-            if (pC.getPoint(line[0])?.endpoint) {
+            if (resolver.getPoint(line[0])?.endpoint) {
                 resolver.setLineStartPoint(line[0])
             } else {
                 resolver.setLineStartPoint(line[line.length - 1])
@@ -181,31 +181,13 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         let path = [prevPoint]
         const lineConsistent = resolver.rect[prevPoint].neighbors.includes(nextPoint)
         if (!lineConsistent) {
-
             const colors = newColor === DefaultColor
                 ? getColorsOfGreyLineStart(prevPoint)
                 : [newColor]
             path = findPath(prevPoint, nextPoint, colors)
             console.log('not consistent line, path:', path)
             if (path.length > 1) {
-                const oldColors = getPossibleColors(prevPoint)
-                const oldColor = oldColors.length > 1 ? DefaultColor : oldColors[0]
-                if (new Set(path).size !==  path.length) {
-                    console.error('invalid path', path)
-                    path = []
-                }
-                if (oldColor === DefaultColor && oldColor !== newColor) {
-                    const restPath = resolver.getFullLineFromAnyPoint(path[0], oldColor)
-                    if (restPath.length && new Set(restPath).size === restPath.length) {
-                        path = restPath.slice(1).reverse().concat(path)
-                    }
-                    console.log('rest path', restPath, path, new Set(restPath).size, restPath.length)
-                }
-                const jp = resolver.makeIntermediateSteps(path, newColor)
-                if (jp) {
-                    resolver.setLineStartPoint(jp)
-                    shadowState.setColor(DefaultColor)
-                }
+                path = resolvePath(path, prevPoint, newColor)
             }
         }
         isDev() && console.log('handle mouse enter', nextPoint, newColor, prevPoint, lineConsistent, path)
@@ -222,6 +204,29 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             resolver.setLineStartPoint(nextPoint)
             shadowState.setColor(DefaultColor)
         }
+    }
+
+    const resolvePath = (path: string[], prevPoint: string, newColor: string) => {
+        const oldColors = resolver.getPossibleColors(prevPoint)
+        const oldColor = oldColors.length > 1 ? DefaultColor : oldColors[0]
+        if (new Set(path).size !==  path.length) {
+            console.error('invalid path', path)
+            return []
+        }
+        let _path = path
+        if (oldColor === DefaultColor && oldColor !== newColor) {
+            const restPath = resolver.getFullLineFromAnyPoint(path[0], oldColor)
+            if (restPath.length && new Set(restPath).size === restPath.length) {
+                _path = restPath.slice(1).reverse().concat(path)
+            }
+            console.log('rest path', restPath, path, new Set(restPath).size, restPath.length)
+        }
+        const jp = resolver.makeIntermediateSteps(_path, newColor)
+        if (jp) {
+            resolver.setLineStartPoint(jp)
+            shadowState.setColor(DefaultColor)
+        }
+        return _path
     }
 
     const handleMouseUp = () => {
