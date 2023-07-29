@@ -1,11 +1,11 @@
 import React, {useEffect, useState} from "react"
 
-import Timer from './Timer'
+import Timer from '../../app-components/Timer'
 import {IHandlers} from "../../constant/interfaces";
 
 import './resolver-menu.scss'
 
-import {GameMenu} from "../../game-menu/GameMenu";
+import {GameMenu} from "../../app-components/game-menu/GameMenu";
 import {modeService} from "../../app-services/mode-service";
 import {puzzlesManager} from "../../app-services/puzzles-manager";
 import {authService} from "../../app-services/auth-service";
@@ -13,36 +13,27 @@ import {Admin} from "../../constant/constants";
 
 
 export interface ITopPanel {
-    handlers: IHandlers
     resolved: boolean
     diff: number | string
 }
 
-export const ResolverMenuPanels: React.FC<ITopPanel> = (props: ITopPanel) => {
-    // const [starting, setStarting] = useState(true)
-    //
-    // useEffect(() => {
-    //    if (props.resolved) {
-    //        setStarting(false)
-    //    }
-    // }, [props.resolved])
+// export const ResolverMenuPanels: React.FC<ITopPanel> = (props: ITopPanel) => {
+//     return (
+//         <>
+//             <div className="puzzle-resolver-menu_top">
+//
+//                 <div
+//                     className='puzzle-resolver-menu_top-level'
+//                 >
+//                     level:&nbsp;{props.diff}
+//                 </div>
+//             </div>
+//         </>
+//
+//     )
+// }
 
-    return (
-        <>
-            <div className="puzzle-resolver-menu_top">
-                <Timer />
-                <div
-                    className='puzzle-resolver-menu_top-level'
-                >
-                    level:&nbsp;{props.diff}
-                </div>
-            </div>
-        </>
-
-    )
-}
-
-export const FooterMenu: React.FC<{handlers: IHandlers}> = ({handlers}) => {
+export const FooterMenu: React.FC = () => {
     const [pause, setPause] = useState(false)
 
     useEffect(() => {
@@ -51,7 +42,6 @@ export const FooterMenu: React.FC<{handlers: IHandlers}> = ({handlers}) => {
 
     return (
         <div className='dots-puzzle-resolver_menu__footer'>
-            <GameMenu />
             <button
                 className='dots-puzzle_menu__btn'
                 type="button"
@@ -98,7 +88,7 @@ export const FooterMenu: React.FC<{handlers: IHandlers}> = ({handlers}) => {
                 className='dots-puzzle_menu__btn'
                 title='click to reveal one line'
                 type="button"
-                onClick={() => handlers.revealLine()}
+                onClick={() => puzzlesManager.resolver.revealLine()}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />

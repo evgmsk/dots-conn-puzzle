@@ -1,0 +1,14 @@
+.dots-puzzle_menu {
+    &__dimension {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 1px;
+    }
+    &__colors-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 10px 0;
+    }
+}

@@ -1,15 +1,13 @@
-import React from "react";
+import React, {useState} from "react";
 
-import { LineColors } from '../../constant/constants'
-import {IHandlers} from '../../constant/interfaces'
+import { LineColors, LSUserCreatedPuzzle } from '../../constant/constants'
+import { IHandlers } from '../../constant/interfaces'
 import { ColorBtn } from './color-btn/ColorBtn'
-// import {puzzlesManager} from '../../puzzles-storage/puzzles-manager'
-import {SizeInput} from '../size-input/SizeInput'
+import { SizeInput } from '../../app-components/size-input/SizeInput'
+import { puzzlesManager } from "../../app-services/puzzles-manager";
+import { pC } from "../../puzzle-engine/rect-creator";
 
-import './creation-puzzle-menu.scss'
-import {GameMenu} from "../../game-menu/GameMenu";
-import {puzzlesManager} from "../../app-services/puzzles-manager";
-
+import './creator-menu.scss'
 
 export interface ICustomPuzzle {
     color: string
@@ -19,17 +17,67 @@ export interface ICustomPuzzle {
     handlers: IHandlers
 }
 
-export const ManagerMenu: React.FC<{handlers: IHandlers, view: boolean}> = ({handlers, view}) => {
-    const {clearAll, undo, redo, sharePuzzle, viewPuzzleInResolverMode, saveLocally} = handlers
+export const ManagerMenu: React.FC = () => {
+    const [resolveCreated, setResolveCreated] = useState(puzzlesManager.resolveCreated)
+
+    const handleResolveCreated = () => {
+        console.log(resolveCreated)
+        if(!pC.puzzle.points) return
+        puzzlesManager.setResolveCreated()
+        setResolveCreated(!resolveCreated)
+    }
+    const undo = () => {
+        pC.undo()
+    }
+    const redo = () => {
+        pC.redo()
+    }
+    const clearAll = () => {
+        pC.clearAll()
+        puzzlesManager.unresolvedPuzzle && puzzlesManager.setUnresolved()
+    }
 
     const handleClearAll = () => {
         clearAll()
-        view && viewPuzzleInResolverMode(!view)
+        puzzlesManager.resolveCreated && puzzlesManager.setResolveCreated()
+    }
+
+    const sharePuzzle = () => {
+        console.log('save', pC.puzzle)
+        if (pC.puzzle) return puzzlesManager.handleSavePuzzle(pC.puzzle)
+        // const valid = pC.checkPuzzle()
+        // if (valid !== 'valid') {
+        //     // TODO resolve errors
+        //     console.error(valid)
+        //     return
+        // }
+        // const puzzle = pC.buildPuzzle()
+        console.log('save', pC.puzzle)
+    }
+
+    const handleAutoResolve = () => {
+        pC.resolvePuzzle()
+    }
+
+    const saveLocally = () => {
+        try {
+            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
+                steps: pC.steps, width: pC.width, height: pC.height
+            }))
+        } catch (e) {
+            console.error(e)
+        }
+        console.log(pC.puzzleFulfilled(), pC.preparePuzzleEvaluation())
+        if (!pC.puzzleFulfilled() || !pC.preparePuzzleEvaluation()) {
+            return
+        }
+        pC.buildPuzzle()
+        puzzlesManager.setUnresolved(pC.puzzle)
     }
 
     return (
         <div className='dots-puzzle_menu__footer'>
-            <GameMenu />
+
             <button
                 className='dots-puzzle_menu__btn'
                 type="button"
@@ -62,11 +110,10 @@ export const ManagerMenu: React.FC<{handlers: IHandlers, view: boolean}> = ({han
             <button
                 type="button"
                 className='dots-puzzle_menu__btn'
-                onClick={() => viewPuzzleInResolverMode(!view)}
-                disabled={!view && !puzzlesManager.unresolvedPuzzle}
+                onClick={handleResolveCreated}
             >
             {
-                view
+                resolveCreated
                     ? <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
                         <path strokeLinecap="round" strokeLinejoin="round" d="M11.42 15.17L17.25 21A2.652 2.652 0 0021 17.25l-5.877-5.877M11.42 15.17l2.496-3.03c.317-.384.74-.626 1.208-.766M11.42 15.17l-4.655 5.653a2.548 2.548 0 11-3.586-3.586l6.837-5.63m5.108-.233c.55-.164 1.163-.188 1.743-.14a4.5 4.5 0 004.486-6.336l-3.276 3.277a3.004 3.004 0 01-2.25-2.25l3.276-3.276a4.5 4.5 0 00-6.336 4.486c.091 1.076-.071 2.264-.904 2.95l-.102.085m-1.745 1.437L5.909 7.5H4.5L2.25 3.75l1.5-1.5L7.5 4.5v1.409l4.26 4.26m-1.745 1.437l1.745-1.437m6.615 8.206L15.75 15.75M4.867 19.125h.008v.008h-.008v-.008z" />
                     </svg>
@@ -75,7 +122,15 @@ export const ManagerMenu: React.FC<{handlers: IHandlers, view: boolean}> = ({han
                     </svg>
 
             }
-
+            </button>
+            <button
+                type="button"
+                className='dots-puzzle_menu__btn'
+                onClick={handleAutoResolve}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
+                </svg>
             </button>
             <button
                 className='dots-puzzle_menu__btn'

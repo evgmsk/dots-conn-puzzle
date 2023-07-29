@@ -1,5 +1,5 @@
 /* eslint-disable react-hooks/exhaustive-deps */
-import React from "react"
+import React, {useEffect, useRef} from "react"
 
 import './rect.scss'
 
@@ -8,11 +8,15 @@ import { Point } from "../point/Point"
 import { shadowState } from '../../app-services/finger-shadow-state'
 import { FingerShadow } from './finger-shadow/FingerShadow'
 
+
 const getCellKey = (X: number, Y: number, selector: string, size: number) => {
     const containerSizes = document.querySelector(selector)?.getBoundingClientRect()
     if (!containerSizes) return ''
     const {x, y, width, height} = containerSizes;
     const cellSize = width / size
+    if (X - x >= width) {
+        return ''
+    }
     const iIndex = Math.floor(Math.abs(x - X)%width / cellSize)
     const jIndex = Math.floor(Math.abs(y - Y)%height / cellSize)
     return `${iIndex}-${jIndex}`
@@ -32,6 +36,26 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
         }
     } = props
 
+    const ref = useRef(null)
+
+    useEffect(() => {
+        const moUp = (e: MouseEvent | TouchEvent) => {
+            const target = e.target as HTMLElement
+            if (!ref.current
+                || !(ref.current as HTMLElement).contains(target)
+                || !target.id
+            ) {
+                return handleMouseLeave()
+            }
+            handleMouseUp(target.id)
+        }
+        document.addEventListener('mouseup', moUp)
+        document.addEventListener('touchend', moUp)
+        return () => {
+            document.removeEventListener('mouseup', moUp)
+            document.removeEventListener('touchend', moUp)
+        }
+    })
     let entered = ''
 
     const handleDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -56,26 +80,22 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 ? (e as React.TouchEvent).changedTouches['0']
                 : e as React.MouseEvent
         const targetKey = getCellKey(clientX, clientY, '.dots-conn-puzzle_body', width)
+        if (!targetKey) {
+            handleMouseLeave()
+        }
         shadowState.detectDirection({x: clientX, y: clientY})
         if (targetKey !== mouseDown) {
+            console.warn('entered', targetKey)
             entered = targetKey
             handleMouseEnter(targetKey, mouseDown)
         }
     }
 
-    const handleUp = (key: string) => {
-        console.log('up', mouseDown)
-        if (!mouseDown) return
-        handleMouseUp(key)
-    }
-
     const mouseLeave = () => {
-        if (!mouseDown) return
         handleMouseLeave()
     }
 
     const rectClassName = `dots-conn-puzzle_body size-${width}-${height}`
-    const cellClass = 'puzzle-cell'
     const rect = new Array(height).fill('1').map((i, k) => {
         return new Array(width).fill('1').map((j, n) => {
             const key = `${n}-${k}`
@@ -85,8 +105,8 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                 : ''
             const colorCl = color ? ` ${color}` : ''
             const className = !point
-                ? `${cellClass} c-${key} empty-cell`
-                : `${cellClass} c-${key} ${colorCl}`
+                ? `puzzle-cell c-${key} empty-cell`
+                : `puzzle-cell c-${key} ${colorCl}`
             const {connections, endpoint, crossLine, joinPoint} = point
             const highlighted = highlightedEndpoints?.includes(key)
             return <div
@@ -95,8 +115,8 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
                         id={key}
                         onMouseDown={handleDown}
                         onTouchStart={handleDown}
-                        onMouseUp={() => handleUp(key)}
-                        onTouchEnd={() => handleUp(key)}
+                        // onMouseUp={() => handleUp(key)}
+                        // onTouchEnd={() => handleUp(key)}
                     >
                         {point.connections
                             ? <Point
@@ -117,6 +137,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
             onMouseMove={handlePointerMove}
             onMouseLeave={mouseLeave}
             onTouchMove={handlePointerMove}
+            ref={ref}
         >
             {rect}
             {mouseDown ? <FingerShadow /> : null}

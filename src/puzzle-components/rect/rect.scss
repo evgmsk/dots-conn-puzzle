@@ -1,13 +1,13 @@
 @import '../../assets/scss/constant.scss';
 
 .puzzle-cell {
-    border: 1px solid rgba(255, 215, 0, 0.3);
+    @extend .cell-border;
     position: relative;
     display: flex;
     justify-content: center;
     align-items: center;
     &.c-0-0 {
-        border-top-left-radius: 10px;
+        border-top-left-radius: 2px;
     }
     @each $name, $col in $colors {
         &.#{$name} {

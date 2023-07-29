@@ -1,7 +1,5 @@
 import { DefaultColor } from "../constant/constants";
-import { PuzzleCommons } from "./rect-commons";
 import {
-    copyObj,
     defaultConnectionsWithColor,
     getCommonColor,
     isDev
@@ -11,30 +9,32 @@ import {
     ILines,
     IPuzzle,
     ITakenPointProps,
-    ITakenPoints,
+    ITPoints, SA,
 } from "../constant/interfaces";
+import {PathResolver} from "./path-resolver";
+import {Observable} from "../app-services/observable";
 
 
-export class PuzzleResolver extends PuzzleCommons {
+export class PuzzleResolver extends PathResolver {
     puzzleName: string = ''
     difficulty: number = 0
     resolved = false
-    totalPoints = {} as ITakenPoints
-    highlightedEndpoints = [] as string[]
+    highlightedEndpoints = [] as SA
     interferedLines = {} as ILines
+    $resolved = new Observable(this.resolved)
 
     constructor(props: IPuzzle) {
         super(props);
         this.puzzleName = props.name
-        this.lines = this.getLines(props.points)
-        this.totalPoints = this.setStartingPoints(props.points as ITakenPoints)
         this.difficulty = props.difficulty
+        this.getLines(props.points)
+        this.setStartingPoints()
     }
 
-    getLines = (points: ITakenPoints) => {
+    getLines = (points: ITPoints): IDLines => {
         const lines = {} as IDLines
         const passed = {} as {[key: string]: boolean}
-        this._temporalPoints = points
+        this.totalPoints = points
         // isDev() && console.log('sep by lines', points)
         for (const point in points) {
             if (passed[point]) { continue }
@@ -58,33 +58,21 @@ export class PuzzleResolver extends PuzzleCommons {
     }
 
     updateCrossLinePointToRevealLine = (point: string, color: string): ITakenPointProps => {
-        const currentProps = this.getPoint(point)
-        const connections = copyObj(currentProps.connections)
-        const pointProps = this.totalPoints[point]
-        const lineDirections = this.getLineDirections(pointProps.connections, color)
-        for (const dir in connections) {
-            if (lineDirections.includes(dir)) {
-                connections[dir] = {
-                    color,
-                    neighbor: (pointProps.connections)[dir].neighbor
-                }
-            }
-        }
-        return {...currentProps, connections}
+        return this.updateCrossLinePoint(point, color, this.totalPoints[point])
     }
 
-    getCurrentLine = (color: string, prevPoint: string): string[] => {
+    getCurrentLine = (color: string, prevPoint: string): SA => {
         return this.getFullLineFromAnyPoint(prevPoint, color)
     }
 
-    getPuzzleLine = (color: string, point: string): string[] => {
+    getPuzzleLine = (color: string, point: string): SA => {
         for (const key in this.lines) {
             const {line, color: col} = this.lines[key]
             if (color === col && line.includes(point)) {
                 return line
             }
         }
-        return [] as string[]
+        return [] as SA
     }
 
     getPuzzleLineSecondEndpoint = (point: string, color: string) => {
@@ -109,8 +97,8 @@ export class PuzzleResolver extends PuzzleCommons {
         point: string,
         color: string,
         connections: IDotConnections,
-        crossLine?: string[],
-        joinPoint?: string[]
+        crossLine?: SA,
+        joinPoint?: SA
     ) => {
         // isDev() && console.log('resolve endpoint down', point, color, neighbors, crossLine)
         if (crossLine || joinPoint) {
@@ -124,7 +112,7 @@ export class PuzzleResolver extends PuzzleCommons {
         this.resolveMonochromeEndpointDown(point, color, neighbors)
     }
 
-    resolveMonochromeEndpointDown = (point: string, color: string, neighbors: string[]) => {
+    resolveMonochromeEndpointDown = (point: string, color: string, neighbors: SA) => {
         const secondEndpoint = this.getPuzzleLineSecondEndpoint(point, color)
         this.highlightedEndpoints.push(secondEndpoint)
         const line = neighbors.length
@@ -140,7 +128,7 @@ export class PuzzleResolver extends PuzzleCommons {
         })
     }
 
-    removeForkingLine = (line: string[], startPoint: string, point: string, color: string) => {
+    removeForkingLine = (line: SA, startPoint: string, point: string, color: string) => {
         const orderedLine = line[0] === startPoint
             ? line
             : line.reverse()
@@ -149,7 +137,7 @@ export class PuzzleResolver extends PuzzleCommons {
         this.removeLinePartResolver(lineToRemove, color)
     }
 
-    resolveDefaultLineDown = (point: string, color: string, neighbors: string[]) => {
+    resolveDefaultLineDown = (point: string, color: string, neighbors: SA) => {
         const line = this.getFullLineFromAnyPoint(point, color, neighbors)
         const startPoint = this.getPoint(line[0]).crossLine
             ? line[0]
@@ -176,7 +164,7 @@ export class PuzzleResolver extends PuzzleCommons {
         }
     }
 
-    checkIfLinesHaveSameEndPoints = (line1: string[], line2: string[]) => {
+    checkIfLinesHaveSameEndPoints = (line1: SA, line2: SA) => {
         const sameStart = line1[0] === line2[0] || line1[0] === line2[line2.length - 1]
         const sameEnd = line1[line1.length - 1] === line2[0]
             || line1[line1.length -1] === line2[line2.length - 1]
@@ -211,19 +199,22 @@ export class PuzzleResolver extends PuzzleCommons {
             if (line[0] === point) {
                 this.resolved = this.puzzleFulfilled()
                     && this.checkIfPuzzleIsResolved().resolved;
+                if (this.resolved) {
+                    this.$resolved.emit(this.resolved)
+                }
                 console.log(this.resolved, this.checkIfPuzzleIsResolved())
             }
         }
     }
 
-    makeIntermediateSteps = (path: string[], color: string) => {
-        const pointsToUpdate = {} as ITakenPoints
+    makeIntermediateSteps = (path: SA, color: string) => {
+        const pointsToUpdate = {} as ITPoints
         const startPointProps = this.getPoint(path[0]) || {}
         const lastPointProps = this.getPoint(path[path.length - 1]) || {}
         let jointPoint = null as unknown as string
         const dir = this.determineDirection(path[0], path[1])
         const dirBack = this.determineDirection(path[path.length - 1], path[path.length - 2])
-        let endPointInMiddle = false
+        let col = color
         pointsToUpdate[path[0]] = {
             ...(startPointProps || {endpoint: false}),
             connections: {
@@ -232,7 +223,7 @@ export class PuzzleResolver extends PuzzleCommons {
             },
         }
         if (startPointProps.joinPoint) {
-            color = DefaultColor
+            col = DefaultColor
             jointPoint = path[0]
         }
         console.warn('utmost points to update', pointsToUpdate, lastPointProps, startPointProps, path)
@@ -241,19 +232,19 @@ export class PuzzleResolver extends PuzzleCommons {
             const dirBack = this.determineDirection(path[step], path[step - 1])
             const dir = this.determineDirection(path[step], path[step + 1])
             if (pointProps && pointProps.endpoint && !pointProps.crossLine && !pointProps.joinPoint) {
-                console.error('endpoint in the middle', step, path, pointProps)
+                isDev() && console.error('endpoint in the middle', step, path, pointProps)
                 for (let _step = step; _step >= 0; _step--) {
-                   delete pointsToUpdate[path[_step]]
-                   if (!this.getPoint(path[_step])?.endpoint) {
+                    delete pointsToUpdate[path[_step]]
+                    if (!this.getPoint(path[_step])?.endpoint) {
                        this.deletePoint(path[_step])
-                   } else {
+                    } else {
                        const _pointProps = this.getPoint(path[_step])
                        const dir = this.determineDirection(path[_step], path[_step + 1])
                        const conn1 = _step !== step
-                           ? {[dir]: {color}}
-                           : {[dir]: {color, neighbor: path[step + 1]}}
+                           ? {[dir]: {color: col}}
+                           : {[dir]: {color: col, neighbor: path[step + 1]}}
                        const conn2 = _step > 0
-                           ? {[this.determineDirection(path[_step], path[_step - 1])]: {color}}
+                           ? {[this.determineDirection(path[_step], path[_step - 1])]: {color: col}}
                            : {}
                        const connections = {
                            ..._pointProps.connections,
@@ -266,8 +257,27 @@ export class PuzzleResolver extends PuzzleCommons {
                                connections
                            }
                        })
-                       console.log(_pointProps, path[_step], connections, conn1, conn2)
-                   }
+                       isDev() && console.log(_pointProps, path[_step], connections, conn1, conn2)
+                    }
+
+                }
+                continue
+            }
+            if (pointProps && pointProps.joinPoint) {
+                isDev() && console.error('joinPoint in the middle', step, path, pointProps)
+                jointPoint = path[step]
+                col = DefaultColor
+                pointsToUpdate[path[step]] = {
+                    ...pointProps,
+                    connections: {
+                        ...pointProps.connections,
+                        [this.determineDirection(path[step], path[step - 1])]: {
+                            color, neighbor: path[step - 1]
+                        },
+                        [this.determineDirection(path[step], path[step + 1])]: {
+                            color: col, neighbor: path[step + 1]
+                        },
+                    }
                 }
                 continue
             }
@@ -275,22 +285,16 @@ export class PuzzleResolver extends PuzzleCommons {
                 ...(pointProps || {endpoint: false}),
                 connections: {
                     ...(pointProps?.connections || defaultConnectionsWithColor(color)),
-                    [dir]: {color, neighbor: path[step + 1]},
-                    [dirBack]: {color, neighbor: path[step - 1]}
+                    [dir]: {color: col, neighbor: path[step + 1]},
+                    [dirBack]: {color: col, neighbor: path[step - 1]}
                 }
-            }
-            if (pointProps?.joinPoint && step !== path.length - 1) {
-                color = DefaultColor
-                jointPoint = path[step]
             }
         }
-        if (!endPointInMiddle) {
-            pointsToUpdate[path[path.length - 1]] = {
-                ...(lastPointProps || {endpoint: false}),
-                connections: {
-                    ...(lastPointProps?.connections || defaultConnectionsWithColor(color)),
-                    [dirBack]: {color, neighbor: path[path.length - 2]}
-                }
+        pointsToUpdate[path[path.length - 1]] = {
+            ...(lastPointProps || {endpoint: false}),
+            connections: {
+                ...(lastPointProps?.connections || defaultConnectionsWithColor(color)),
+                [dirBack]: {color, neighbor: path[path.length - 2]}
             }
         }
         this.addTakenPoints(pointsToUpdate)
@@ -378,7 +382,7 @@ export class PuzzleResolver extends PuzzleCommons {
     }
 
     saveInterferedLine = (point: string, color: string) => {
-        let line: string[]
+        let line: SA
         line = this.getFullLineFromAnyPoint(point, color)
         if (!line.length) {
             return
@@ -387,7 +391,7 @@ export class PuzzleResolver extends PuzzleCommons {
         this.interferedLines[color] = this.getFullLine(line)
     }
 
-    removeLinePartResolver = (line: string[], color: string) => {
+    removeLinePartResolver = (line: SA, color: string) => {
         this.removeLinePart(line, color)
     }
 
@@ -447,7 +451,7 @@ export class PuzzleResolver extends PuzzleCommons {
         if (!endpoint) {
             return console.error('invalid method', nextPoint, this.getPoint(nextPoint))
         }
-        const pointsToUpdate = {} as ITakenPoints
+        const pointsToUpdate = {} as ITPoints
         let dir = this.determineDirection(nextPoint, prevPoint)
         pointsToUpdate[nextPoint] = {
             connections: {
@@ -479,10 +483,39 @@ export class PuzzleResolver extends PuzzleCommons {
         this.addTakenPoints(pointsToUpdate)
     }
 
-    checkIfPuzzleIsResolved = () => {
+    revealLine = (altLines = false) => {
+        let lineToShow = {} as ITPoints
+        const { line, color } = this.checkIfPuzzleIsResolved(altLines)
+        if (!line) {
+            return true
+        }
+        this.resolveMouseDown(line[0], color)
+        for (const point of line) {
+            const existedPoint = this.getPoint(point)
+            if (existedPoint && !existedPoint.endpoint) {
+                const pointColor = this.getColors(existedPoint.connections)[0]
+                const lineToRemove = this.getFullLineFromAnyPoint(point, pointColor)
+                this.removeLinePart(lineToRemove, pointColor)
+            }
+            if (this.totalPoints[point].crossLine || this.totalPoints[point].joinPoint) {
+                lineToShow[point] = this.updateCrossLinePointToRevealLine(point, color)
+            } else {
+                lineToShow[point] = this.totalPoints[point] as ITakenPointProps
+            }
+        }
+        this.addTakenPoints(lineToShow)
+        console.log('reveal line', lineToShow)
+        this.resolved = this.checkIfPuzzleIsResolved().resolved
+        if (this.resolved) {
+            this.$resolved.emit(this.resolved)
+        }
+    }
+
+    checkIfPuzzleIsResolved = (altLines = false) => {
         console.log('check resolve')
-        for (const key in this.lines) {
-            const {line, color} = this.lines[key]
+        const lines = altLines ? this.altLines : this.lines
+        for (const key in lines) {
+            const {line, color} = lines[key]
             const linePart =  this.getLinePartPoints(color, line[0])
             if (linePart[linePart.length - 1] !== line[line.length - 1]
                 || line.length !== linePart.length) {

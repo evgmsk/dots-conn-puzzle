@@ -9,7 +9,7 @@ import {
     IDotSectorProps,
     ITakenPointProps,
     LineDirections,
-    ISector
+    ISector, SA
 } from "../constant/interfaces";
 
 import React from "react";
@@ -42,9 +42,9 @@ export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
     })
 }
 
-export const checkIfPointNeighbor = (neighbors: string[], target: string,) => neighbors.includes(target)
+export const checkIfPointNeighbor = (neighbors: SA, target: string,) => neighbors.includes(target)
 
-export const getCommonColor = (colors1: string[], colors2: string[]) => {
+export const getCommonColor = (colors1: SA, colors2: SA) => {
     for (let color of colors1) {
         if (colors2.includes(color)) {
             return color
@@ -85,6 +85,12 @@ export const sectorIndex = (dir: LineDirections) => {
         default: 
             return 2
     }
+}
+
+export const isAppropriateCell = (props: ITakenPointProps, mode: string, commonColor: boolean) => {
+    return !props
+        || (!props.endpoint && mode !== 'strict')
+        || (props.endpoint && commonColor)
 }
 
 export const defaultConnectionsWithColor = (color = DefaultColor) => {

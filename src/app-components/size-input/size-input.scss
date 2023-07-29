@@ -1,4 +1,4 @@
-@import "src/assets/scss/constant";
+@import "../../assets/scss/constant";
 
 .input {
     &__btn {
@@ -28,7 +28,7 @@
         }
         &.btn-down:after {
             left: 70%;
-            border-right:  $size-input-btn solid #add0e6;
+            border-right:  $size-input-btn solid #e3e0d1;
         }
         &.btn-down:before {
             z-index: 1;
@@ -42,7 +42,7 @@
         }
         &.btn-up:after {
             right: 70%;
-            border-left:  $size-input-btn solid #add0e6;
+            border-left:  $size-input-btn solid #e3e0d1;
         }
     }
     &__size-value {
@@ -68,7 +68,7 @@
         display: inline-flex;
         align-items: center;
         justify-content: space-between;
-        @extend .shadow;
+        //@extend .shadow;
         margin: 0 5px;
         border-radius: 20px;
     }

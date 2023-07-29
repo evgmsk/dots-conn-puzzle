@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import {modeService} from "../../app-services/mode-service";
+import {modeService} from "../app-services/mode-service";
 
 export interface ITimer {
     starting: boolean,
@@ -14,7 +14,6 @@ const Timer: React.FC = () => {
         const unsubPause = modeService.$pause.subscribe(setPause)
         return unsubPause
     }, [])
-
     useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (pause) return () => clearInterval(interval as NodeJS.Timeout);
@@ -30,7 +29,7 @@ const Timer: React.FC = () => {
     }, [seconds, pause]);
 
     return (
-        <div className="puzzle-resolver-menu_top-timer">
+        <div className="puzzle-timer">
             <p>{minutes.toString().padStart(2, '0')}&nbsp;:&nbsp;{seconds.toString().padStart(2, '0')}</p>
         </div>
     );

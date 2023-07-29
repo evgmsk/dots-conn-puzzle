@@ -1,6 +1,6 @@
 import { IScrollBar } from "../../constant/interfaces";
 import React, { useEffect, useRef, useState } from "react";
-import { IncreaseBtn, DecreaseBtn } from "../size-input/SizeInput";
+import { IncreaseBtn, DecreaseBtn } from "../../app-components/size-input/SizeInput";
 import {getCoordinates} from '../../utils/helper-fn';
 
 import './scroll-bar.scss';

@@ -46,7 +46,6 @@
 @mixin sector-border($dir, $col) {
     @if $dir == 'top' {
         border-top-left-radius: 100%;
-        // border-left: 1px solid #{$col};
     }
     @if $dir == 'bottom' {
         border-bottom-right-radius: 100%;
@@ -64,12 +63,13 @@
 .point-wrapper {
     position:relative;
     transform: rotate(45deg);
+    box-sizing: border-box;
     width: $point-size;
     height: $point-size;
     display: grid;
     grid-template-columns: repeat(2, 1fr);
     grid-template-rows: repeat(2, 1fr);
-    border-radius: 100%;
+    border-radius: 50%;
     z-index: 10000;
     transition: all .3s;
     &.join {
@@ -100,9 +100,11 @@
                 transition: all .3s;
                 background-color: #{$col};
                 @include sector-border($dir, $col);
-                border: 1px solid #{$col};
+                box-shadow: 0 0 .5px .5px $col;
                 @if $name == 'lightgrey' {
-                    border-color: darken($col, 20%);
+                    box-shadow: unset;
+                    box-sizing: border-box;
+                    border: 1px solid darken($col, 20%);
                 }
                 @for $j from 2 to 5 {
                     &.join-#{$j} {

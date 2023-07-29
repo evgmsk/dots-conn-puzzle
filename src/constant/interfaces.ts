@@ -9,9 +9,9 @@ export interface IUser {
     name: string,
     level: number,
     role: 'admin' | 'user',
-    followed: string[],
-    blocked: string[],
-    resolved?: string[],
+    followed: SA,
+    blocked: SA,
+    resolved?: SA,
     [k: string]: any
 }
 
@@ -25,11 +25,11 @@ export interface IPos {x: number, y: number}
 
 export interface IRectProps {
     dimension: IRectDimension
-    points: ITakenPoints
+    points: ITPoints
     mouseColor?: string
     mouseDown?: string
     creator?: boolean
-    highlightedEndpoints?: string[]
+    highlightedEndpoints?: SA
 }
 
 // export type GameMode = 'create' | 'resolve' | 'generate'
@@ -86,15 +86,15 @@ export enum LineDirections {
 }
 
 export interface IDLines {
-    [key: string]: {line: string[], color: string}
+    [key: string]: {line: SA, color: string}
 }
 
 export interface ISLines {
-    [color: string]: string[][]
+    [color: string]: SA[]
 }
 
 export interface ILines {
-    [color: string]: ITakenPoints
+    [color: string]: ITPoints
 }
 
 export interface IPuzzle {
@@ -106,16 +106,16 @@ export interface IPuzzle {
     width: number
     height: number
     difficulty: number
-    points: ITakenPoints
+    points: ITPoints
 }
 
 // export interface IStartPoints {
-//     [color: string]: string[]
+//     [color: string]: SA
 // }
 
 export interface IPath {
     dist: number,
-    path: string[],
+    path: SA,
     target: string,
     index?: number
 }
@@ -124,13 +124,15 @@ export interface ITakenPointProps {
     endpoint: boolean
     connections: IDotConnections
     indKey?: string
-    crossLine?: string[]
-    joinPoint?: string[]
+    crossLine?: SA
+    joinPoint?: SA
     highlighted?: boolean
     startPoint?: boolean
 }
 
-export interface ITakenPoints {
+export type SA = string[]
+
+export interface ITPoints {
     [key: string]: ITakenPointProps
 }
 
@@ -144,8 +146,8 @@ export interface IEndpointsValue {
     intervals: {x: number, y: number}
     meddling: number
     color: string
+    keys: SA
     resolved?: boolean
-
 }
 
 // export interface IPoint {
@@ -153,20 +155,20 @@ export interface IEndpointsValue {
 // }
 
 export interface IRectCell {
-    [key: string]: {neighbors: string[], point: number[]}
+    [key: string]: {neighbors: SA, point: number[]}
 }
 
 export interface ILinedRect {
     _width: number
     _height: number
     rect: IRectCell
-    _takenPoints: ITakenPoints
+    _takenPoints: ITPoints
 }
 
 export interface ICollision {
     sameColor?: boolean
     joinPoint?: boolean
-    sameLine?: string[]
+    sameLine?: SA
 }
 
 export interface IScrollBar {

@@ -1,118 +1,169 @@
 @import "assets/scss/constant";
 
+body {
+    background-color: #252324;
+}
+
 .app {
-  padding: 30px 0 10px;
-  position: relative;
-  background-color: #252324;
-  border-radius: 10px;
-  display: flex;
-  align-items: flex-start;
-  justify-content: center;
-  box-sizing: border-box;
-  min-height: 100vh;
-  max-height: 100vh;
-  @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
-    transform: rotate(90deg);
-    min-height: 100vw;
-    max-height: 100vw;
-  }
-  @media screen and (max-aspect-ratio: 54/71){
-    padding: 0;
-  }
-}
-
-.close-modal-btn {
-  position: absolute;
-  right: 10px;
-  top: 10px;
-  width: 2rem;
-  height: 2rem;
-  background-color: transparent;
-  border-radius: 50%;
-  border: unset;
-  padding: unset;
-  color: white;
-}
-
-.loading-spinner_puzzles {
-  display: inline-block;
-  position: relative;
-  width: 2rem;
-  height: 2rem;
-  &:after {
-    content: " ";
-    display: block;
-    border-radius: 50%;
-    width: 0;
-    height: 0;
-    margin: 8px;
-    box-sizing: border-box;
-    border: 1.8rem solid lightblue;
-    border-color: lightblue transparent lightblue transparent;
-    animation: spinner 1.2s infinite;
-  }
-}
-
-.animated-component {
-  position: relative;
-  opacity: 0;
-  transition: opacity .3s;
-  &.show-up {
-    opacity: 1;
-  }
-}
-
-.dots-conn-puzzle {
-  // border: solid 2px black;
-
-  &_resolver {
-    opacity: 0;
-    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
-      max-width: 90vh;
+    margin: 0 auto;
+    .header {
+        box-sizing: border-box;
+        height: 50px;
+        max-width: 500px;
+        width: 100%;
+        background-color: darken(#252324, 10%);
+        display: flex;
+        justify-content: space-between;
+        padding: 5px 20px 0;
+        .puzzle-level, .user-id, .puzzle-timer {
+            color: $puzzle-text-color;
+            font-size: 1.2rem;
+            line-height: 2rem;
+        }
+        .user-id {
+            background-color: transparent;
+            border: unset;
+            max-width: 100px;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            //padding: 11px;
+        }
     }
-    @media screen and (max-aspect-ratio: 54/71){
-      padding: 20px 0 0;
-    }
-  }
-
-  &_creator {
-    height: auto;
-    max-width: 90vw;
+    position: relative;
+    background-color: darken(#252324, 20%);
+    border-radius: 10px;
     display: flex;
     flex-direction: column;
     align-items: center;
-    justify-content: center;
-    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
-      width: 90vh;
+    justify-content: space-between;
+    box-sizing: border-box;
+    min-height: 100vh;
+    max-height: 100vh;
+    max-width: 440px;
+    .footer {
+        background-color: lighten($bg-main, 5%);
+        width: 100%;
+        .dots-puzzle_menu {
+            &__footer {
+                margin: 0 auto;
+                display: flex;
+                justify-content: space-between;
+                max-width: 400px;
+                width: 100%;
+                padding: 10px;
+                box-sizing: border-box;
+                svg {
+                    stroke-width: 1.2;
+                }
+            }
+            &__btn {
+                @extend #menu-btn;
+                padding: 5px;
+            }
+        }
     }
-    @media screen and (max-aspect-ratio: 54/71){
-      padding: 20px 0 0;
-    }
-  }
+    //@media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+    //    transform: rotate(90deg);
+    //    min-height: 100vw;
+    //    max-height: 100vw;
+    //}
+    //@media screen and (max-aspect-ratio: 54/71){
+    //    padding: 0;
+    //}
+}
 
-  &_body {
+.close-modal-btn {
+    position: absolute;
+    right: 10px;
+    top: 10px;
+    width: 2rem;
+    height: 2rem;
+    background-color: transparent;
+    border-radius: 50%;
+    border: unset;
+    padding: unset;
+    color: white;
+}
+
+.loading-spinner_puzzles {
+    display: inline-block;
     position: relative;
-    background-color: $bg-main;
-    border-radius: 10px;
-    border: solid 1px lightblue;
-    min-width: 320px;
-    @include rect(90vw);
-    @media screen and (max-aspect-ratio: 54/71){
-      @include rect(66vw);
+    width: 2rem;
+    height: 2rem;
+    &:after {
+        content: " ";
+        display: block;
+        border-radius: 50%;
+        width: 0;
+        height: 0;
+        margin: 8px;
+        box-sizing: border-box;
+        //border: 1.8rem solid lightblue;
+        //border-color: lightblue transparent lightblue transparent;
+        animation: spinner 1.2s infinite;
     }
-  }
+}
+
+.animated-component {
+    position: relative;
+    opacity: 0;
+    transition: opacity .3s;
+    &.show-up {
+        opacity: 1;
+    }
+}
+
+.dots-conn-puzzle {
+    // border: solid 2px black;
+
+    //&_resolver {
+    //    opacity: 0;
+    //    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+    //        max-width: 90vh;
+    //    }
+    //    @media screen and (max-aspect-ratio: 54/71){
+    //        padding: 20px 0 0;
+    //    }
+    //}
+
+    &_creator {
+        height: auto;
+        max-width: 90vw;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        //@media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
+        //    width: 90vh;
+        //}
+        //@media screen and (max-aspect-ratio: 54/71){
+        //    padding: 20px 0 0;
+        //}
+    }
+
+    &_body {
+        position: relative;
+        background-color: $bg-main;
+        border-radius: 2px;
+        @extend .cell-border;
+        min-width: 320px;
+        @include rect(90vw);
+        //@media screen and (max-aspect-ratio: 54/71){
+        //    @include rect(66vw);
+        //}
+    }
 }
 
 @keyframes spinner {
-  0% {
-    transform: rotate(0);
-    animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
-  }
-  50% {
-    transform: rotate(900deg);
-    animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
-  }
-  100% {
-    transform: rotate(1800deg);
-  }
+    0% {
+        transform: rotate(0);
+        animation-timing-function: cubic-bezier(0.55, 0.055, 0.675, 0.19);
+    }
+    50% {
+        transform: rotate(900deg);
+        animation-timing-function: cubic-bezier(0.215, 0.61, 0.355, 1);
+    }
+    100% {
+        transform: rotate(1800deg);
+    }
 }

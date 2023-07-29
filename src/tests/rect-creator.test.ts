@@ -1,5 +1,5 @@
 import {IEndpoints, IEndpointsValue, LineDirections} from '../constant/interfaces'
-import {RectCreator} from '../puzzle-engine/rect-creator'
+import {pC, RectCreator} from '../puzzle-engine/rect-creator'
 import {defaultConnectionsWithColor, isDev, sectorIndex} from '../utils/helper-fn'
 import {DefaultColor, LineColors} from "../constant/constants";
 
@@ -23,7 +23,8 @@ describe('test rect-creator methods', () => {
                 "y": 0
             },
             meddling: 0,
-            color: LineColors[4]
+            color: LineColors[4],
+            keys: ['0-0', '2-0']
         }
         const line2 = {
             "pairKey": "1-2_1-0",
@@ -40,13 +41,16 @@ describe('test rect-creator methods', () => {
                 "y": 2
             },
             meddling: 0,
-            color: LineColors[3]
+            color: LineColors[3],
+            keys: ['1-2', '1-0']
         }
         expect(rectCR0.twoLinesInterfering(line1, line2)).toBe(4)
     })
+    test('auto resolve', () => {
+        const puzz = pC
+    })
     test('get start point function', () => {
         const points0 = {
-
             '0-0': {
                 endpoint: true,
                 connections: {
@@ -215,7 +219,8 @@ describe('test rect-creator methods', () => {
             coords2: [3, 0],
             intervals: {x: -3, y: 3},
             meddling: 0,
-            color: LineColors[2]
+            color: LineColors[2],
+            keys: ['0-3', '3-0']
         }
         const line2 = {
 

@@ -42,14 +42,15 @@
     display: flex;
     justify-content: space-between;
     max-width: 400px;
-    width: 100%;
+    width: 90vw;
+    margin: 0 auto;
     .dots-puzzle_menu__btn, .mode-switcher-ntn{
-        margin: 15px;
+        margin: 10px;
         width: 2.4rem;
         height: 2.4rem;
     }
     .dots-puzzle_menu__btn:last-of-type {
-        margin-right: 10px;
+        //margin-right: 10px;
     }
 }
 

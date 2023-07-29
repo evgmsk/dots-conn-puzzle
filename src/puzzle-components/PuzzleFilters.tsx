@@ -1,7 +1,7 @@
 /* eslint-disable react-hooks/exhaustive-deps */
 import React, {useEffect, useState} from "react";
 
-import {SizeInput} from "./size-input/SizeInput";
+import {SizeInput} from "../app-components/size-input/SizeInput";
 import {StartDate} from "../constant/constants";
 import {puzzlesManager} from "../app-services/puzzles-manager";
 import {getUTCDate} from "../utils/helper-fn";
@@ -39,7 +39,7 @@ export const PuzzleFilters: React.FC<{close: Function}> = (props:{close: Functio
         if (timeout) {
             clearTimeout(timeout)
         }
-        timeout = setTimeout(puzzlesManager.updatePuzzles, delay)
+        timeout = setTimeout(puzzlesManager.getPuzzles, delay)
     }
 
     const handleSubmit = (e: any) => {

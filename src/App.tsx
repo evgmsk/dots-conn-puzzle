@@ -2,7 +2,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { PuzzleWrapper } from './puzzle-components/resolver-components/PuzzleResolver';
-import { PuzzleCreator } from './puzzle-components/creator-components/PuzzleCreator';
+import PuzzleCreator from './puzzle-components/creator-components/PuzzleCreator';
 import { ConfirmAdmin } from "./confirm-admin/ConfirmAdmin";
 
 import { isDev } from "./utils/helper-fn";
@@ -11,6 +11,8 @@ import { authService } from "./app-services/auth-service";
 
 import './App.scss';
 import {Admin} from "./constant/constants";
+import Header from "./Header";
+import Footer from "./Footer";
 
 
 function App() {
@@ -56,10 +58,12 @@ function App() {
     const appClass = `app app-${gameMode} no-select`
     return (
         <div className={appClass}>
+            <Header />
             {gameMode === 'create'
                 ? <PuzzleCreator />
                 : <PuzzleWrapper />
             }
+            <Footer />
         </div>
     );
 }

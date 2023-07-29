@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 
 import './adds-modal.scss'
-import { ShowUP } from "../puzzle-components/show-up/ShowUp";
+import { ShowUP } from "../app-components/ShowUp";
 import {addsService} from "../app-services/adds-service";
 
 export const AddsModal = (props = { message: 'Great' }) => {

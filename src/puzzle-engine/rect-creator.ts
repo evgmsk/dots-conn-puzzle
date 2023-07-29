@@ -2,9 +2,9 @@ import { Height, Width } from "../constant/constants";
 import {
     ICollision,
     IPuzzle,
-    ITakenPoints,
+    ITPoints,
     IEndpoints,
-    IDLines,
+    IDLines, SA,
 } from "../constant/interfaces";
 
 import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../utils/helper-fn";
@@ -13,7 +13,7 @@ import {PuzzleEvaluator} from "./rect-evaluator";
 import {authService} from "../app-services/auth-service";
 
 export class RectCreator extends PuzzleEvaluator {
-    steps: ITakenPoints[] = [{}]
+    steps: ITPoints[] = [{}]
     currentStep = 0
     puzzle = {} as IPuzzle
 
@@ -35,14 +35,13 @@ export class RectCreator extends PuzzleEvaluator {
 
     clearAll = () => {
         this.clearPoints()
-        this.steps = [{}] as ITakenPoints[]
+        this.steps = [{}] as ITPoints[]
         this.lines = {} as IDLines
         this.currentStep = 0
         this.puzzle = {} as IPuzzle
         this.lineError = ''
         this.linesInterfering = {}
         this.lineEndpoints = {} as IEndpoints
-        this.$points.emit(this.takenPoints)
     }
 
     updateSteps = () => {
@@ -78,21 +77,9 @@ export class RectCreator extends PuzzleEvaluator {
         return puzzle
     }
 
-    getTotalPoints = () => {
-        const takenPoints = this.takenPoints
-        const points = {} as ITakenPoints
-        for (const point in takenPoints) {
-            const { crossLine, joinPoint } = takenPoints[point].endpoint
-                ? this.prepareEndpointForResolver(takenPoints[point])
-                : {crossLine: undefined, joinPoint: undefined}
-            points[point] = {...takenPoints[point], crossLine, joinPoint,}
-        }
-        return points
-    }
-
     changeLineColor = (key: string, newColor: string, oldColor: string) => {
         const line = this.getLinePartPoints(oldColor, key)
-        const updatedPoints = {} as ITakenPoints
+        const updatedPoints = {} as ITPoints
         for (const point of line) {
             const pointProps = this.getPoint(point)
             const lineDirections = this.getLineDirections(pointProps.connections, oldColor)
@@ -114,9 +101,9 @@ export class RectCreator extends PuzzleEvaluator {
     }
 
     resolveMouseUp = (point: string, color: string) => {
-
+        // console.log(point, color)
         const pointProps = this.getPoint(point)
-        if (pointProps.endpoint) {
+        if (!point || pointProps?.endpoint) {
             return
         }
         const noFeeCell = {sameColor: 0, freeCell: this.rect[point].neighbors.length}
@@ -197,19 +184,24 @@ export class RectCreator extends PuzzleEvaluator {
             this.removeLinePartCreator(sameLine, color)
             return this.updateSteps()
         }
-        if (sameLine && !sameLine.length) {
+        if (sameLine && !sameLine.length && this.getPoint(next).endpoint) {
             this.createJoinPoint(next, prev, color, sameColor)
         }
         if (!interfere) {
             this.continueLineWithoutInterfering(next, prev, color)
             return this.updateSteps()
         }
+        if (!joinPoint && !sameColor && this.getPoint(prev).endpoint) {
+            let lineToRemove = this.getFullLineFromAnyPoint(prev, color)
+            this.removeLinePart(lineToRemove, color)
+        }
         this.updateLineStart(next, prev, color, true)
-        if (joinPoint) {
-            this.createJoinPoint(next, prev, color, sameColor)
-        } else if (!joinPoint && !sameLine && !sameColor) {
+        if (!joinPoint && !sameLine && !sameColor) {
             this.removeInterferedLine(next)
             this.addNextPoint(next, prev, color)
+        }
+        if (joinPoint) {
+            this.createJoinPoint(next, prev, color, sameColor)
         } else if (!joinPoint && !sameLine && sameColor) {
             this.resolveSameColorInterfering(next, prev, color)
         }
@@ -252,7 +244,7 @@ export class RectCreator extends PuzzleEvaluator {
         })
     }
 
-    removeLinePartCreator = (line: string[], color: string) => {
+    removeLinePartCreator = (line: SA, color: string) => {
         this.removeLinePart(line, color)
     }
 

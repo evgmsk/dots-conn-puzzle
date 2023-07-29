@@ -11,6 +11,7 @@ import {authService} from './auth-service'
 import {IPuzzle} from "../constant/interfaces";
 import {Observable} from "./observable";
 import {addsService} from "./adds-service";
+import {PuzzleResolver} from "../puzzle-engine/rect-resolver";
 
 export class PuzzlesManager {
     puzzles = getPuzzlesFromStorage()
@@ -19,6 +20,7 @@ export class PuzzlesManager {
     error = {} as {message: string}
     options = {method: 'GET'} as {[k:string]: any}
     unresolvedPuzzle = null as unknown as IPuzzle
+    resolveCreated = false
     queryOptions = {
         createdAt: {
             date: StartDate,
@@ -35,6 +37,7 @@ export class PuzzlesManager {
     graded = true
     requestingSystem = false
     lastRequest = Date.now() - OneDay
+    resolver = {} as PuzzleResolver
 
     $requestSystem = new Observable<boolean>(this.requestingSystem)
     $puzzles = new Observable<IPuzzle[]>(this.puzzles)
@@ -43,6 +46,7 @@ export class PuzzlesManager {
     $error = new Observable<{message: string}>(this.error)
     $customPuzzles = new Observable<IPuzzle[]>(this.customPuzzles)
     $graded = new Observable(this.graded)
+    $resolveCreated = new Observable(this.resolveCreated)
 
     // $creator = new Observable(this.creator)
 
@@ -55,14 +59,18 @@ export class PuzzlesManager {
         this.checkIfPuzzlesUpToDate()
     }
 
+    setResolver = (resolver: PuzzleResolver) => {
+        this.resolver = resolver
+    }
+
     checkIfPuzzlesUpToDate = () => {
         // console.log('puzzles length', this.puzzles.length, this.customPuzzles.length)
         if (this.puzzles.length <= 5) {
-            this.updatePuzzles(true).then(() => console.log('system updated'))
+            this.getPuzzles(true).then(() => console.log('system updated'))
         }
         if (Date.now() - this.lastRequest >= OneDay) {
             this.queryOptions.createdAt.date = getUTCDate() - OneDay
-            this.updatePuzzles(false).then((a) => console.log('custom updated', a))
+            this.getPuzzles(false).then((a) => console.log('custom updated', a))
             this.lastRequest = Date.now()
         }
     }
@@ -103,12 +111,16 @@ export class PuzzlesManager {
 
     setUnresolved = (puzzle = null as unknown as IPuzzle) => {
         this.unresolvedPuzzle = puzzle
-        // console.log(this.unresolvedPuzzle, puzzle)
         this.$unresolved.emit(this.unresolvedPuzzle)
     }
 
     setOptions = (opts: {[k:string]: any}) => {
         this.options = opts
+    }
+
+    setResolveCreated = () => {
+        this.resolveCreated = !this.resolveCreated
+        this.$resolveCreated.emit(this.resolveCreated)
     }
 
     getDiffQuery = (admin = authService.user.role === Admin) => {
@@ -205,12 +217,15 @@ export class PuzzlesManager {
     updatePuzzle = () => {
         if (authService.user.role !== Admin) return
         const url = `puzzles/${this.unresolvedPuzzle._id}`
-        authService.makeFetch(url, {method: 'DELETE'})
+        console.log(url)
+        authService.makeFetch(url, {method: 'PUT',
+            headers: authService.tokenizedHeadersPost(),
+            body: JSON.stringify({data: this.unresolvedPuzzle})})
             .then(d => console.log(d))
             .catch(e => console.log(e))
     }
 
-    updatePuzzles = async (
+    getPuzzles = async (
         system = this.requestingSystem,
         url = this.getUrl(system),
         options = this.options

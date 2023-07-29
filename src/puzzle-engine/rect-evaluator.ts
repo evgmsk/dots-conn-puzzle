@@ -1,24 +1,23 @@
 import {
-    IEndpoints,
     IEndpointsValue,
-    ITakenPoints,
+    ITPoints, SA,
 } from '../constant/interfaces'
-import { PuzzleCommons } from "./rect-commons";
 import { DefaultColor } from "../constant/constants";
+import {defaultConnectionsWithColor, getCommonColor, isDev} from "../utils/helper-fn";
+import { PathResolver } from "./path-resolver";
 // import { isDev } from "../utils/helper-fn";
 
-export class PuzzleEvaluator extends PuzzleCommons {
+export class PuzzleEvaluator extends PathResolver {
     linesInterfering = {} as {[key: string]: number}
     lineError = ''
-    lineEndpoints = {} as IEndpoints
 
-    checkPoint = (point: string) => {
-        const {endpoint, connections} = this.getPoint(point)
+    checkPoint = (point: string, TP = false) => {
+        const {endpoint, connections} = TP ? this.totalPoints[point] : this.getPoint(point)
         const {crossLine, joinPoint} = endpoint
-            ? this.prepareEndpointForResolver({endpoint, connections})
+            ? this.prepareEndpointForResolver({endpoint, connections}, TP)
             : {crossLine: undefined, joinPoint: undefined}
         const colors = this.getColors(connections)
-        const neighbors = this.getLineNeighbors(connections)
+        const neighbors = this.getLineNeighbors(connections, '', TP)
         if ((!(crossLine || joinPoint) && colors.length !== 1)
             || (endpoint && !(crossLine || joinPoint) && neighbors.length !== 1)
             || colors.includes(DefaultColor)
@@ -31,7 +30,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
     }
 
     preparePuzzleEvaluation = () => {
-        console.log('prepare evaluation')
+        console.log('prepare evaluation', this.takenPoints)
         const passed = {} as {[key: string]: boolean}
         const lines = {} as {[key: string]: number}
         for (const point in this.takenPoints) {
@@ -42,9 +41,9 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 endpoint,
                 joinPoint,
                 crossLine
-            } = this.checkPoint(point)
+            } = this.checkPoint(point, )
             if (endpoint) {
-                this.addTemporalPoints({
+                this.addTakenPoints({
                     [point]: {
                         endpoint, connections, crossLine, joinPoint
                     }
@@ -54,9 +53,9 @@ export class PuzzleEvaluator extends PuzzleCommons {
             if (!connections) {return console.error('not connections', colors, point)}
             for (const color of colors) {
                 const lineNeighbors = colors.length > 1
-                    ? this.getLineNeighbors(connections, color)
+                    ? this.getLineNeighbors(connections, color, )
                     : neighbors
-                const line = this.getFullLineFromAnyPoint(point, color, lineNeighbors)
+                const line = this.getFullLineFromAnyPoint(point, color, lineNeighbors, )
                 if (!line.length || line.length < 3) {
                     this.lineError = `Line of ${color} color is too short. It has Less then 3 points`
                     return console.error(line)
@@ -67,8 +66,9 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 this.convertLastToEndpoint(end)
                 line.forEach(p => { passed[p] = true })
                 if (this.addLineEndpoint([start, end], color)) {
-                    if (lines[color] && lines[color] > 0) {
+                    if (lines[color] && lines[color] > 1) {
                         this.lineError = `There are too many lines of ${color} color. Limit is 2`
+                        console.error(this.lineError, lines)
                         return false
                     }
                     lines[color] = 1
@@ -79,7 +79,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return true
     }
 
-    addLineEndpoint = (points: string[], color: string) => {
+    addLineEndpoint = (points: SA, color: string) => {
         if (this.lineEndpoints[`${points[0]}_${points[1]}`]
             || this.lineEndpoints[`${points[1]}_${points[0]}`]) {
             return false
@@ -89,7 +89,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return true
     }
 
-    getLineEndpoints = (points: string[], color: string): IEndpointsValue & {pairKey: string} => {
+    getLineEndpoints = (points: SA, color: string): IEndpointsValue & {pairKey: string} => {
         const firstPointCoords = points[0].split('-').map(i => parseInt(i))
         const secondPointCoords = points[1].split('-').map(i => parseInt(i))
         return {
@@ -101,13 +101,15 @@ export class PuzzleEvaluator extends PuzzleCommons {
                 y: firstPointCoords[1] - secondPointCoords[1]
             },
             color,
-            meddling: 0
+            meddling: 0,
+            keys: points
         }
     }
 
     evaluatePuzzle = () => {
         let puzzleInterfering = 0
         this.linesInterfering = {}
+        let step = 0
         for (const key1 in this.lineEndpoints) {
             for (const key2 in this.lineEndpoints) {
                 // console.log(key1, key2, this.linesInterfering)
@@ -116,13 +118,17 @@ export class PuzzleEvaluator extends PuzzleCommons {
                     || this.linesInterfering[`${key2}_${key1}`]) {
                     continue
                 }
+
                 const key = `${key1}_${key2}`
+
                 const line1 = this.lineEndpoints[key1]
                 const line2 = this.lineEndpoints[key2]
                 this.linesInterfering[key] = this.twoLinesInterfering(line1, line2)
+
                 puzzleInterfering += this.linesInterfering[key]
                 this.lineEndpoints[key1].meddling += this.linesInterfering[key]
                 this.lineEndpoints[key2].meddling += this.linesInterfering[key]
+                console.log(step++, key, this.linesInterfering[key], puzzleInterfering)
             }
         }
         // console.log('eval puzzle', this.linesInterfering, this.lineEndpoints)
@@ -153,7 +159,7 @@ export class PuzzleEvaluator extends PuzzleCommons {
             || line2X[1] < line1X[0])
             // && !interfering1
         ) {
-            // console.warn('no interfering', line1, line2)
+            console.warn('no interfering', line1, line2)
             return 0
         }
         const cos = this.cosOfLines(line1, line2)
@@ -171,45 +177,96 @@ export class PuzzleEvaluator extends PuzzleCommons {
         return Math.max(interfering1, interfering2)
     }
 
+    addFoundLine = (line: SA, color: string) => {
+        isDev() && console.log('found', line, color)
+        const lineToShow = {} as ITPoints
+        for (let i = 0; i < line.length; i++) {
+            const point = line[i]
+            const utmost = i === 0 || i === line.length - 1
+            const neighbors = !utmost
+                ?  [line[i -1 ], line[i + 1]]
+                : (i === 0 ? line.slice(1,2) : line.slice(-2, -1))
+
+            const existedPoint = this.getPoint(point)
+            const lineConnections = {
+                [this.determineDirection(point, neighbors[0])]: {
+                    color, neighbor: neighbors[0]
+                }
+            }
+            if (utmost) {
+                lineToShow[point] = {
+                    ...existedPoint,
+                    connections: {
+                        ...existedPoint.connections,
+                        ...lineConnections
+                    }
+                }
+            } else if (existedPoint) {
+                    lineToShow[point] = this.updateCrossLinePoint(point, color, this.totalPoints[point])
+            } else {
+                lineConnections[this.determineDirection(point, neighbors[1])] = {
+                    color, neighbor: neighbors[1]
+                }
+                lineToShow[point] = {
+                    endpoint: false,
+                    connections: {
+                        ...defaultConnectionsWithColor(color),
+                        ...lineConnections
+                    }
+                }
+            }
+        }
+        this.addTakenPoints(lineToShow)
+    }
+
     resolvePuzzle = () => {
         const lineKeys = Object.keys(this.lineEndpoints).sort((a, b) => {
-                return this.lineEndpoints[b].meddling - this.lineEndpoints[a].meddling
+            return this.lineEndpoints[a].meddling - this.lineEndpoints[b].meddling
         })
         if (!Object.keys(this.lineEndpoints).length) {
             return console.error('impossible resolve')
         }
-        let lineResolved = 0
-        while (lineResolved < lineKeys.length) {
-            const endPoints = this.lineEndpoints[lineResolved]
-            // const line = this.findPath()
-        }
-    }
-
-    getDistantWithMeddling = (point: string, target: string) => {
-        const dist = this.getDistantBetweenPoints(point, target)
-        if (dist === 0) {
-            return 0
-        }
-        return this.getPointMeddling(point) + dist / 100
-    }
-
-    getPointMeddling(point: string) {
-        const coords = this.rect[point].point
-        let meddling = 0
-        let lines = 0
-        for (const key in this.lineEndpoints) {
-            lines++
-            const lineProps = this.lineEndpoints[key]
-            const sortedX = [lineProps.coords1[0], lineProps.coords2[0]].sort()
-            const sortedY = [lineProps.coords1[1], lineProps.coords2[1]].sort()
-            if (sortedX[0] < coords[0] && sortedX[1] > coords[0]
-                && sortedY[0] < coords[1] && sortedY[1] > coords[1]) {
-                meddling += 1
+        console.log('handle resolve', Object.keys(this.totalPoints))
+        if (Object.keys(this.totalPoints).length) {
+            if (Object.keys(this.totalPoints).length >= Object.keys(this.takenPoints).length) {
+                this.addTakenPoints(this.totalPoints)
+                this.totalPoints = {} as ITPoints
+                return
             }
         }
-        if (lines < 1) {
-            console.error('not evaluated', this.lineEndpoints)
+        this.totalPoints = this.takenPoints
+        this._takenPoints = {} as ITPoints
+        this.setStartingPoints()
+        while (Object.keys(this.altLines).length < lineKeys.length) {
+            const {endPoints, key} = this.getUnresolvedLine(lineKeys)
+            if (!key) break
+            const {keys, color} = endPoints
+            let line: SA
+            line = this.findPath(keys[0], keys[1], [color], 'strict').concat(keys[1])
+            if (line.length === 1) {
+                line = this.findPath(keys[0], keys[1], [color], 'strict', true)
+                    .concat(keys[1])
+            }
+            const lineColor = getCommonColor(
+                this.getColors(this.getPoint(line[0]).connections),
+                this.getColors(this.getPoint(line[line.length - 1]).connections)
+            )
+            if (line.length > 1) {
+                this.addFoundLine(line, lineColor)
+                this.altLines[key] = { line, color }
+            } else {
+                console.error('unresolved problem', line, keys, color)
+                break
+            }
         }
-        return meddling
+    }
+
+    getUnresolvedLine = (sortedLines: SA) => {
+        for (const key of sortedLines) {
+            if (!this.altLines[key]) {
+                return {key, endPoints: this.lineEndpoints[key]}
+            }
+        }
+        return {}
     }
 }

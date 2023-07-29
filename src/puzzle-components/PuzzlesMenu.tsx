@@ -6,7 +6,7 @@ import { IPuzzle } from "../constant/interfaces"
 import { authService } from "../app-services/auth-service";
 import { getPColor } from "../utils/helper-fn";
 import { puzzlesManager } from '../app-services/puzzles-manager';
-import { ShowUP } from "./show-up/ShowUp";
+import { ShowUP } from "../app-components/ShowUp";
 import { PuzzleFilters } from "./PuzzleFilters";
 
 import './puzzles-menu.scss'

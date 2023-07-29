@@ -2,16 +2,16 @@ import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from '../rect/Rect'
 import { PuzzleResolver } from '../resolver-components/PuzzleResolver'
-import { ICollision, IPuzzle, ITakenPointProps, ITakenPoints } from '../../constant/interfaces'
+import { ICollision, IPuzzle, ITakenPointProps, ITPoints } from '../../constant/interfaces'
 
-import { CreationPuzzleMenu, ManagerMenu } from './CreationPuzzleMenu'
+import { CreationPuzzleMenu } from './CreationPuzzleMenu'
 
 import { pC } from '../../puzzle-engine/rect-creator'
 import { CreationConfirmModal } from '../../modals/creator-modals/CreationConfirmModal'
 import { isDev } from "../../utils/helper-fn";
 import { puzzlesManager } from "../../app-services/puzzles-manager";
 import { shadowState } from "../../app-services/finger-shadow-state";
-import {ShowUP} from "../show-up/ShowUp";
+import {ShowUP} from "../../app-components/ShowUp";
 import {LSUserCreatedPuzzle} from "../../constant/constants";
 
 
@@ -21,20 +21,20 @@ export interface IConfirm {
     args: any[]
 }
 
-export const PuzzleCreator: React.FC = () => {
+const PuzzleCreator: React.FC = () => {
     const [width, setWidth] = useState(pC.width)
     const [height, setHeight] = useState(pC.height)
     const [color, setColor] = useState(shadowState.color)
     const [confirm, setConfirm] = useState({} as IConfirm)
-    const [points, setPoints] = useState({} as ITakenPoints)
+    const [points, setPoints] = useState({} as ITPoints)
     const [mouseDown, setMouseDown] = useState('')
     const [resolverView, setResolverView] = useState(false)
-
     useEffect(() => {
         const unsubWidth = pC.$width.subscribe(setWidth)
         const unsubHeight = pC.$height.subscribe(setHeight)
         const unsubColor = shadowState.$color.subscribe(setColor)
         const unsubPoints = pC.$points.subscribe(setPoints)
+        const unsubResCreated = puzzlesManager.$resolveCreated.subscribe(setResolverView)
         const {steps, width, height} = JSON.parse(localStorage.getItem(LSUserCreatedPuzzle) || '{}')
         if (steps) {
             pC.setHeight(height)
@@ -47,17 +47,10 @@ export const PuzzleCreator: React.FC = () => {
             unsubColor()
             unsubHeight()
             unsubPoints()
+            unsubResCreated()
             clearAll()
         }
     },[])
-
-    const viewPuzzleInResolverMode = () => {
-        if (!resolverView && puzzlesManager.unresolvedPuzzle) {
-            setResolverView(true)
-        }
-
-        resolverView && setResolverView(false)
-    }
 
     const confirmationHandler = (data: boolean) => {
         const {args, cb} = confirm
@@ -69,31 +62,10 @@ export const PuzzleCreator: React.FC = () => {
         cb(...args.slice(0, -1), interfere)
         setConfirm({} as IConfirm)
     }
-    
-    const savePuzzleHandler = () => {
-        console.log('save', pC.puzzle)
-        if (pC.puzzle) return puzzlesManager.handleSavePuzzle(pC.puzzle)
-        // const valid = pC.checkPuzzle()
-        // if (valid !== 'valid') {
-        //     // TODO resolve errors
-        //     console.error(valid)
-        //     return
-        // }
-        // const puzzle = pC.buildPuzzle()
-        console.log('save', pC.puzzle)
-    }
-
-    const undo = () => {
-        pC.undo()
-    }
 
     const clearAll = () => {
         pC.clearAll()
         puzzlesManager.setUnresolved(null as unknown as IPuzzle)
-    }
-
-    const redo = () => {
-        pC.redo()
     }
 
     const selectColor = (color: string) => {
@@ -101,7 +73,7 @@ export const PuzzleCreator: React.FC = () => {
         shadowState.setColor(color)
     }
 
-    const handleMouseUp = (key: string) => {
+    const handleMouseUp = (key: string = mouseDown) => {
         setMouseDown('')
         const upPoint = pC.getPoint(key)
         isDev() && console.log('handle up', upPoint, confirm.question)
@@ -172,7 +144,13 @@ export const PuzzleCreator: React.FC = () => {
         }
         setMouseDown(nextPoint)
         const existed = pC.getPoint(nextPoint)
-
+        const {endpoint, connections} = pC.getPoint(prevPoint) || {}
+        if (existed
+            && pC.getColors(existed.connections).length === 1
+            && endpoint
+            &&  pC.getColors(connections)?.length === 1) {
+            return
+        }
         if (existed) {
             resolveMouseEnterIfNextPointExist(existed, nextPoint, prevPoint)
         } else {
@@ -224,22 +202,6 @@ export const PuzzleCreator: React.FC = () => {
         clearAll()
     }
 
-    const saveLocally = () => {
-        try {
-            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
-                steps: pC.steps, width: pC.width, height: pC.height
-            }))
-        } catch (e) {
-            console.error(e)
-        }
-        console.log(pC.puzzleFulfilled(), pC.preparePuzzleEvaluation())
-        if (!pC.puzzleFulfilled() || !pC.preparePuzzleEvaluation()) {
-            return
-        }
-        pC.buildPuzzle()
-        puzzlesManager.setUnresolved(pC.puzzle)
-    }
-
     const changeHeight = (height: string) => {
         const newHeight = parseInt(height)
         if (newHeight > 25) {return}
@@ -253,14 +215,6 @@ export const PuzzleCreator: React.FC = () => {
         changeHeight,
     }
 
-    const ManagerHandlers = {
-        redo,
-        sharePuzzle: savePuzzleHandler,
-        clearAll,
-        undo,
-        viewPuzzleInResolverMode,
-        saveLocally
-    }
     // console.log(resolverView)
     return (
         <ShowUP className='dots-conn-puzzle_creator'>
@@ -283,12 +237,12 @@ export const PuzzleCreator: React.FC = () => {
                         mouseColor={color}
                       />
             }
-            <ManagerMenu handlers={ManagerHandlers} view={resolverView}/>
             <CreationConfirmModal
                 handler={confirmationHandler}
                 question={confirm.question}
             />
-        {/*</div>*/}
         </ShowUP>
     )
 }
+
+export default PuzzleCreator

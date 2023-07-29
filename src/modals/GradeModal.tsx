@@ -4,7 +4,7 @@ import {puzzlesManager} from "../app-services/puzzles-manager";
 
 import './grade-modal.scss'
 import {authService} from "../app-services/auth-service";
-import {ShowUP} from "../puzzle-components/show-up/ShowUp";
+import {ShowUP} from "../app-components/ShowUp";
 
 export const GradeModal = (props: {[key: string]: any}) => {
     const [closeBtn, setCloseBtn] = useState(true)

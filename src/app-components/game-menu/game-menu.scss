@@ -1,0 +1,55 @@
+@import "../../assets/scss/constant";
+
+.dots-puzzle_menu {
+    position: relative;
+    &__btn {
+        @extend #menu-btn;
+    }
+    .open-dropdown-btn {
+        @extend #main-btn;
+        border: none;
+        margin: unset;
+        //width: 2.2rem;
+        //height: 2.2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        svg {
+            display: block;
+            color: ivory;
+            width: 1.8rem;
+            height: 1.8rem;
+        }
+    }
+    .menu-dropdown {
+        background: $bg-main;
+        border-radius: 5px 5px 0 0;
+        position: absolute;
+        //width: 4.1rem;
+        z-index: 100000;
+        opacity: 0;
+        display: none;
+        transition: opacity .5s;
+        &.menu-open {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+            top: 40px;
+            //left: -10px;
+            .open-dropdown-btn {
+                margin: unset;
+            }
+            &.show-up {
+                opacity: 1;
+            }
+        }
+    }
+
+}
+.mode-switcher-btn {
+
+    padding: 10px 15px;
+    font-size: 1.2rem;
+    //box-shadow: 0 0 3px 3px #add0e6;
+}
