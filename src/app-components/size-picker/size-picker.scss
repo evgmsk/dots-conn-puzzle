@@ -1,0 +1,34 @@
+@import "../../assets/scss/constant";
+
+.size-picker {
+
+    &_open-btn {
+        display: block;
+        border: none;
+        text-align: center;
+        background: transparent;
+        //font-family: Roboto, sans-serif;
+        font-size: 1.2rem;
+        color: inherit;
+        margin: 0 auto;
+        &:hover {
+            color: gold;
+        }
+    }
+    &_dropdown {
+        position: absolute;
+        bottom: -50px;
+        left: 50%;
+        width: 99vw;
+        height: 50px;
+        background: $bg-main;
+        display: none;
+        transform: translateX(-50%);
+        z-index: 10000;
+        &.is-open {
+            display: flex;
+            justify-content: center;
+        }
+    }
+
+}

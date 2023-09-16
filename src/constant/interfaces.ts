@@ -86,7 +86,11 @@ export enum LineDirections {
 }
 
 export interface IDLines {
-    [key: string]: {line: SA, color: string}
+    [key: string]: IDLineProps
+}
+
+export interface IDLineProps {
+    line: SA, color: string
 }
 
 export interface ISLines {
@@ -109,18 +113,50 @@ export interface IPuzzle {
     points: ITPoints
 }
 
-// export interface IStartPoints {
-//     [color: string]: SA
-// }
-
 export interface IPath {
     dist: number,
     path: SA,
-    target: string,
-    index?: number
+    index?: number,
+    blocked?: string
+    onlyPath?: string,
+    fin?: boolean,
 }
 
-export interface ITakenPointProps {
+export interface IPCheckR extends IPCheck {
+    blocked: SA,
+    noPath: SA,
+    freePath: SA,
+    taken: SA,
+    pathsToJoin: SA,
+    resolved: SA,
+    isolated: SA
+    indexes: number[],
+}
+
+export interface IPathSelect {
+    pathToCheck: IPath,
+    blockedPaths?: IPath[]
+    freePaths?: IPath[]
+    lineRemoved?: boolean
+}
+
+export interface IPCheck {
+    // onlyPath?: SA,
+    rePath?: SA
+    rePaths?: SA[]
+    path: SA
+}
+
+export interface INCheck {
+    paths: IPath[]
+    fin?: number,
+    onlyPath?: string,
+    noPath?: boolean,
+    circle?: SA,
+    restart?: boolean
+}
+
+export interface ITakenPProps {
     endpoint: boolean
     connections: IDotConnections
     indKey?: string
@@ -128,25 +164,24 @@ export interface ITakenPointProps {
     joinPoint?: SA
     highlighted?: boolean
     startPoint?: boolean
+    lineEndpoints?: SA
 }
 
 export type SA = string[]
 
 export interface ITPoints {
-    [key: string]: ITakenPointProps
+    [key: string]: ITakenPProps
 }
 
 export interface IEndpoints {
     [key: string]: IEndpointsValue
 }
 
-export interface IEndpointsValue {
+export interface IEndpointsValue extends IDLineProps {
     coords1: number[]
     coords2: number[]
     intervals: {x: number, y: number}
     meddling: number
-    color: string
-    keys: SA
     resolved?: boolean
 }
 
@@ -179,11 +214,11 @@ export interface IScrollBar {
     behavior?: ScrollBehavior
 }
 
-export interface IScroll {
-    container: HTMLElement | string
-    progressBar: HTMLElement | string
-    slider: HTMLElement | string
-    numberOfRows: number
-    currentScroll: number
-    orientation: number
-}
+// export interface IScroll {
+//     container: HTMLElement | string
+//     progressBar: HTMLElement | string
+//     slider: HTMLElement | string
+//     numberOfRows: number
+//     currentScroll: number
+//     orientation: number
+// }

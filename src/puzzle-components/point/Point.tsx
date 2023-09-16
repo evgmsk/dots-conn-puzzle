@@ -1,11 +1,11 @@
 import {memo, useEffect, useState} from "react"
-import { ITakenPointProps, IDotSectorProps } from "../../constant/interfaces"
+import { ITakenPProps, IDotSectorProps } from "../../constant/interfaces"
 
 import './point.scss'
 import {getSectorsData} from "../../utils/helper-fn";
 
 
-export const PointComponent: React.FC<ITakenPointProps> = (props: ITakenPointProps) => {
+export const PointComponent: React.FC<ITakenPProps> = (props: ITakenPProps) => {
     const [animation, setAnimation] = useState('')
     const sectorsData = getSectorsData(props)
     const {crossLine, joinPoint, indKey, highlighted} = props

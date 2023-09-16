@@ -8,7 +8,6 @@ import {
     IDLines, IDotConnections,
     ILines,
     IPuzzle,
-    ITakenPointProps,
     ITPoints, SA,
 } from "../constant/interfaces";
 import {PathResolver} from "./path-resolver";
@@ -29,36 +28,6 @@ export class PuzzleResolver extends PathResolver {
         this.difficulty = props.difficulty
         this.getLines(props.points)
         this.setStartingPoints()
-    }
-
-    getLines = (points: ITPoints): IDLines => {
-        const lines = {} as IDLines
-        const passed = {} as {[key: string]: boolean}
-        this.totalPoints = points
-        // isDev() && console.log('sep by lines', points)
-        for (const point in points) {
-            if (passed[point]) { continue }
-            const {connections} = points[point]
-            if (!connections) return {}
-            const colors = this.getColors(connections)
-            for (const color of colors) {
-                const neighbors = this.getLineNeighbors(point,  color, true)
-                const line = this.getFullLineFromAnyPoint(point, color, neighbors, true)
-                if (!line.length) return {}
-                line.forEach(p => {
-                    passed[p] = true
-                })
-                const lineKey = `${line[0]}_${line[line.length - 1]}`
-                lines[lineKey] = {line, color}
-                this.lines = lines
-            }
-        }
-        // console.log('lines', lines)
-        return lines
-    }
-
-    updateCrossLinePointToRevealLine = (point: string, color: string): ITakenPointProps => {
-        return this.updateCrossLinePoint(point, color, this.totalPoints[point])
     }
 
     getCurrentLine = (color: string, prevPoint: string): SA => {
@@ -202,19 +171,24 @@ export class PuzzleResolver extends PathResolver {
                 if (this.resolved) {
                     this.$resolved.emit(this.resolved)
                 }
-                console.log(this.resolved, this.checkIfPuzzleIsResolved())
+                // console.log(this.resolved, this.checkIfPuzzleIsResolved())
             }
         }
     }
 
     makeIntermediateSteps = (path: SA, color: string) => {
         const pointsToUpdate = {} as ITPoints
+        console.warn(path, this.getPoint(path[path.length - 1]), this.getPoint(path[0]))
+        if (this.getPoint(path[0]).endpoint) {
+            this.removeLinePart(this.getFullLineFromAnyPoint(path[0], color), color)
+        }
         const startPointProps = this.getPoint(path[0]) || {}
         const lastPointProps = this.getPoint(path[path.length - 1]) || {}
         let jointPoint = null as unknown as string
         const dir = this.determineDirection(path[0], path[1])
         const dirBack = this.determineDirection(path[path.length - 1], path[path.length - 2])
         let col = color
+
         pointsToUpdate[path[0]] = {
             ...(startPointProps || {endpoint: false}),
             connections: {
@@ -303,6 +277,7 @@ export class PuzzleResolver extends PathResolver {
 
     resolveMouseEnter = (next: string, prev: string, color: string, newColor: string) => {
         const {endpoint, connections, joinPoint, crossLine} = this.getPoint(next) || {}
+        if (!this.getPoint(prev)) return
         isDev() && console.log('enter', next, prev, color, newColor, connections, this.getPoint(next))
         if (!connections) {
             const {endpoint, crossLine, joinPoint} = this.getPoint(prev)
@@ -364,7 +339,6 @@ export class PuzzleResolver extends PathResolver {
         const point = this.getPoint(next) ? next : prev
         console.log('update interfered', next, prev)
         const restOfLine = this.getFullLineFromAnyPoint(point, color)
-
         for (const col in this.interferedLines) {
             let interfered = false
             for (const point of restOfLine) {
@@ -377,7 +351,6 @@ export class PuzzleResolver extends PathResolver {
                 this.addTakenPoints(this.interferedLines[col])
                 delete this.interferedLines[col]
             }
-            console.log(interfered)
         }
     }
 
@@ -483,39 +456,26 @@ export class PuzzleResolver extends PathResolver {
         this.addTakenPoints(pointsToUpdate)
     }
 
-    revealLine = (altLines = false) => {
-        let lineToShow = {} as ITPoints
-        const { line, color } = this.checkIfPuzzleIsResolved(altLines)
+    revealLine = () => {
+        const { line, color } = this.checkIfPuzzleIsResolved()
+        console.log('reveal', line)
         if (!line) {
             return true
         }
-        this.resolveMouseDown(line[0], color)
-        for (const point of line) {
-            const existedPoint = this.getPoint(point)
-            if (existedPoint && !existedPoint.endpoint) {
-                const pointColor = this.getColors(existedPoint.connections)[0]
-                const lineToRemove = this.getFullLineFromAnyPoint(point, pointColor)
-                this.removeLinePart(lineToRemove, pointColor)
-            }
-            if (this.totalPoints[point].crossLine || this.totalPoints[point].joinPoint) {
-                lineToShow[point] = this.updateCrossLinePointToRevealLine(point, color)
-            } else {
-                lineToShow[point] = this.totalPoints[point] as ITakenPointProps
-            }
+        const existedLine = this.getFullLineFromAnyPoint(line[0], color)
+        if (existedLine.length > 1) {
+            this.removeLinePart(existedLine, color)
         }
-        this.addTakenPoints(lineToShow)
-        console.log('reveal line', lineToShow)
+        this.drawLine(line, color)
         this.resolved = this.checkIfPuzzleIsResolved().resolved
         if (this.resolved) {
             this.$resolved.emit(this.resolved)
         }
     }
 
-    checkIfPuzzleIsResolved = (altLines = false) => {
-        console.log('check resolve')
-        const lines = altLines ? this.altLines : this.lines
-        for (const key in lines) {
-            const {line, color} = lines[key]
+    checkIfPuzzleIsResolved = () => {
+        for (const key in this.lines) {
+            const {line, color} = this.lines[key]
             const linePart =  this.getLinePartPoints(color, line[0])
             if (linePart[linePart.length - 1] !== line[line.length - 1]
                 || line.length !== linePart.length) {

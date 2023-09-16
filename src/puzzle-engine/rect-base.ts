@@ -5,7 +5,7 @@ import {
     ILinedRect,
     IRectCell,
     IRectDimension,
-    ITakenPointProps,
+    ITakenPProps,
     ITPoints,
     LineDirections, SA,
 } from '../constant/interfaces'
@@ -18,12 +18,12 @@ export class LinedRectBase implements ILinedRect {
     _height = Height
     rect = {} as IRectCell
     _takenPoints = {} as ITPoints
+    totalPoints = {} as ITPoints
     lines = {} as IDLines
-    altLines = {} as IDLines
+    keys = {} as {[k: string]: string}
     $points = new Observable<ITPoints>(this._takenPoints)
     $width = new Observable<number>(this._width)
     $height = new Observable<number>(this._height)
-    totalPoints = {} as ITPoints
 
     constructor(size: IRectDimension) {
         this._width = size.width
@@ -36,7 +36,7 @@ export class LinedRectBase implements ILinedRect {
     }
     
     getPoint = (key: string) => {
-        return copyObj(this._takenPoints[key]) as ITakenPointProps
+        return copyObj(this._takenPoints[key]) as ITakenPProps
     }
 
     addTakenPoints = (points: ITPoints) => {
@@ -56,13 +56,13 @@ export class LinedRectBase implements ILinedRect {
             const {connections, endpoint, crossLine, joinPoint} = points[key]
             if (endpoint && !crossLine && !joinPoint
                 && this.getColors(connections).length !== 1) {
-                console.error('invalid props', key, points, connections)
+                // console.error('invalid props', key, points, Object.values(connections))
             }
             const neighbors = this.getLineNeighbors(connections)
             const pointNeighbors = this.rect[key].neighbors
             for (const nei of neighbors) {
                 if (!pointNeighbors.includes(nei)) {
-                    console.error('invalid neighbor in connection', connections)
+                    console.error('invalid neighbor in connection', connections, key, points, this.rect[key], this.rect )
                 }
             }
         }
@@ -77,6 +77,7 @@ export class LinedRectBase implements ILinedRect {
 
     clearPoints = () => {
         this._takenPoints = {} as ITPoints
+        this.totalPoints = {} as ITPoints
         this.$points.emit(this.takenPoints)
     }
 
@@ -91,19 +92,11 @@ export class LinedRectBase implements ILinedRect {
     setDimension(props: {width?: number, height?: number}) {
         const {width, height} = props
         if (!width && !height) {return}
-
         if (width) {
             this._width = width
-            if (this.height < width || this.height > width * 1.5) {
-                this._height = Math.round(width * 1.2)
-
-            }
-        } else if (height) {
+        }
+        if (height) {
             this._height = height
-            if (height > this.width * 1.5 || height < this.width) {
-                this._width = Math.round(height / 1.2)
-
-            }
         }
         this._takenPoints = {} as ITPoints
         this.createRect()
@@ -162,6 +155,7 @@ export class LinedRectBase implements ILinedRect {
             : props
         if (!connections || !connections[LineDirections.top]) {
             console.error('invalid props get line neighbors', props, points, connections)
+            // throw new Error(`invalid props get line neighbors ${connections} ${props} ${TP}`)
             return []
         }
         // isDev() && console.warn('get line neighbors', connections, color, this.takenPoints)
@@ -188,7 +182,8 @@ export class LinedRectBase implements ILinedRect {
             let nextPoint = lineNeighbors.filter(n => n !== passed)[0]
             if (!lineNeighbors.length || (!prevPoint && lineNeighbors.length !== 1)) {
                 isDev() && console.error('invalid props because of two ways or no ways', color,
-                    current, prevPoint, lineNeighbors, nextPoint, index)
+                    current, prevPoint, lineNeighbors, nextPoint,
+                    index, Object.keys(this.takenPoints), {...this.getPoint(current)})
                 return ''
             }
             while(!stopFn(current, index)) {
@@ -228,11 +223,12 @@ export class LinedRectBase implements ILinedRect {
         point: string,
         color: string,
         neighbors?: SA,
-        TP = false
+        TP = false,
+        rev = true
     ): SA => {
         const points = TP ? this.totalPoints : this.takenPoints
         const _neighbors = neighbors || this.getLineNeighbors( point, color, TP)
-        isDev() && console.log('get full line', point, color, _neighbors.map(n => ({n, t: this.getPoint(n)})))
+        // isDev() && console.log('get full line', point, color, _neighbors.map(n => ({n, t: this.getPoint(n)})))
         if (!_neighbors.length) {
             return [point]
         }
@@ -245,7 +241,7 @@ export class LinedRectBase implements ILinedRect {
         const linePart1 = this.getLinePartPoints(color, _neighbors[0], point, TP)
         const linePart2 = this.getLinePartPoints(color, _neighbors[1], point, TP)
         const line = linePart1.reverse().concat(linePart2.slice(1))
-        return points[line[line.length -1]]?.endpoint
+        return points[line[line.length -1]]?.endpoint || !rev
             ? line
             : line.reverse()
     }
@@ -328,6 +324,7 @@ export class LinedRectBase implements ILinedRect {
         const connections = typeof props === "string"
             ? this.getPoint(props)?.connections
             : props
+        if (!connections) return []
         const colors = {} as {[key: string]: boolean}
         for (const dir in connections) {
             const color = connections[dir].color
@@ -358,7 +355,6 @@ export class LinedRectBase implements ILinedRect {
         }
         const next = nextPoint.split('-').map(c => parseInt(c))
         const previous = prevPoint.split('-').map(c => parseInt(c))
-
 
         if (next[0] < previous[0]) {
             return LineDirections.right

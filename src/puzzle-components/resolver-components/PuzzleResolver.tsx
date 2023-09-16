@@ -62,7 +62,7 @@ export const PuzzleWrapper: React.FC = () => {
 }
 
 export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) => {
-    const {width, height} = puzzlesManager.unresolvedPuzzle
+    const {width, height} = puzzlesManager.unresolvedPuzzle || {}
     const [points, setPoints] = useState({} as ITPoints)
     const [mouseDown, setMouseDown] = useState('')
     const [resolved, setResolved] = useState(false)
@@ -102,7 +102,9 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             modeService.setPause(true)
         }
     }, [resolved])
-
+    if (!width || !height) {
+        return <></>
+    }
     const checkLine = (nextPoint: string, prevPoint: string) => {
         const {getLineNeighbors, getPoint} = resolver
         if (!mouseDown
@@ -148,7 +150,12 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         console.warn('handle enter', nextPoint, prevPoint)
         if (resolved || !checkLine(nextPoint, prevPoint) || !resolver.lineStartPoint) { return }
         const {
-            resolveMouseEnter, getPoint, findPath, getColorsOfGreyLineStart, getPossibleColors, lineStartPoint
+            resolveMouseEnter,
+            getPoint,
+            findPathResolver,
+            getColorsOfGreyLineStart,
+            getPossibleColors,
+            lineStartPoint
         } = resolver
         const newColor = resolver.determineColor(lineStartPoint, prevPoint, nextPoint)
         isDev() && console.log('handle enter', newColor, nextPoint, prevPoint, lineStartPoint)
@@ -159,12 +166,12 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
             const colors = newColor === DefaultColor
                 ? getColorsOfGreyLineStart(prevPoint)
                 : [newColor]
-            path = findPath(prevPoint, nextPoint, colors)
+            path = findPathResolver(prevPoint, nextPoint, colors)
             isDev() && console.log('not consistent line, path:', path)
             if (path.length > 1) {
                 path = resolvePath(path, prevPoint, newColor)
             }
-            // console.log('not consistent line, path2:', path)
+            isDev() && console.log('not consistent line, path2:', path)
         }
         isDev() && console.log('handle mouse enter', nextPoint, newColor, prevPoint, lineConsistent, path)
         if (!path.length) {
@@ -231,10 +238,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         handleMouseUp,
         handleMouseLeave
     }
-
-    // const handlers = {
-    //     revealLine,
-    // }
 
     if (verify) {
         return (

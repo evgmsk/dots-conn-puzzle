@@ -9,6 +9,7 @@ import {puzzlesManager} from "./app-services/puzzles-manager";
 import {IPuzzle, IUser} from "./constant/interfaces";
 import Timer from "./app-components/Timer";
 import {UserId} from "./app-components/UserId";
+import {SizePicker} from "./app-components/size-picker/SizePicker";
 
 
 
@@ -40,7 +41,7 @@ function Header() {
     return (
         <header className='header'>
             <Level />
-            {gameMode === 'resolve' && puzzle ? <Timer /> : <UserId id={id}/>}
+            {gameMode === 'resolve' ? (puzzle ? <Timer /> : <UserId id={id}/>) : <SizePicker/>}
             <GameMenu />
         </header>
     );

@@ -2,6 +2,8 @@
 
 .dots-puzzle_menu {
     position: relative;
+    display: flex;
+    align-items: center;
     &__btn {
         @extend #menu-btn;
     }

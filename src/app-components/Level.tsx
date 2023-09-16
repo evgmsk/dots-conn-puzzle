@@ -3,7 +3,7 @@ import {useEffect, useState} from "react";
 import {IPuzzle} from "../constant/interfaces";
 
 export const Level = () => {
-    const [level, setLevel] = useState('x')
+    const [level, setLevel] = useState('X')
     const getLevel = (puzzle: IPuzzle) => {
         setLevel(puzzle?.difficulty ? puzzle.difficulty.toString() : 'x')
     }
@@ -14,7 +14,7 @@ export const Level = () => {
     }, [])
     return (
         <div className='puzzle-level'>
-            Level:&nbsp;{ level || 'x' }
+            <div>Level:&nbsp;{ level }</div>
         </div>
     )
 }

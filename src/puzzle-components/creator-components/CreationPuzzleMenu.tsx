@@ -3,11 +3,11 @@ import React, {useState} from "react";
 import { LineColors, LSUserCreatedPuzzle } from '../../constant/constants'
 import { IHandlers } from '../../constant/interfaces'
 import { ColorBtn } from './color-btn/ColorBtn'
-import { SizeInput } from '../../app-components/size-input/SizeInput'
 import { puzzlesManager } from "../../app-services/puzzles-manager";
 import { pC } from "../../puzzle-engine/rect-creator";
 
 import './creator-menu.scss'
+import {isDev} from "../../utils/helper-fn";
 
 export interface ICustomPuzzle {
     color: string
@@ -55,20 +55,24 @@ export const ManagerMenu: React.FC = () => {
         console.log('save', pC.puzzle)
     }
 
-    const handleAutoResolve = () => {
-        pC.resolvePuzzle()
-    }
 
     const saveLocally = () => {
+        console.log('save puzz', pC.steps.slice(-1)[0])
+        const datToSave = {
+            steps: pC.steps, width: pC.width, height: pC.height
+        }
         try {
-            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify({
-                steps: pC.steps, width: pC.width, height: pC.height
-            }))
+            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify(datToSave))
         } catch (e) {
             console.error(e)
+        } finally {
+            datToSave.steps = pC.steps.slice(0, 1).concat(pC.steps.slice(-1))
+            localStorage.setItem(LSUserCreatedPuzzle, JSON.stringify(datToSave))
         }
-        console.log(pC.puzzleFulfilled(), pC.preparePuzzleEvaluation())
+
         if (!pC.puzzleFulfilled() || !pC.preparePuzzleEvaluation()) {
+            isDev() && console.error('puzzle do not finished', !pC.puzzleFulfilled()
+                || !pC.preparePuzzleEvaluation())
             return
         }
         pC.buildPuzzle()
@@ -126,20 +130,21 @@ export const ManagerMenu: React.FC = () => {
             <button
                 type="button"
                 className='dots-puzzle_menu__btn'
-                onClick={handleAutoResolve}
+                onClick={pC.handleAutoResolvePuzzle}
             >
                 <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 3v1.5M4.5 8.25H3m18 0h-1.5M4.5 12H3m18 0h-1.5m-15 3.75H3m18 0h-1.5M8.25 19.5V21M12 3v1.5m0 15V21m3.75-18v1.5m0 15V21m-9-1.5h10.5a2.25 2.25 0 002.25-2.25V6.75a2.25 2.25 0 00-2.25-2.25H6.75A2.25 2.25 0 004.5 6.75v10.5a2.25 2.25 0 002.25 2.25zm.75-12h9v9h-9v-9z" />
                 </svg>
             </button>
             <button
-                className='dots-puzzle_menu__btn'
+                className='dots-puzzle_menu__btn save-puzzle-btn'
                 type="button"
                 onClick={() => saveLocally()}
             >
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                </svg>
+
+                    {/*<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">*/}
+                {/*    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m3.75 9v6m3-3H9m1.5-12H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />*/}
+                {/*</svg>*/}
 
             </button>
             <button
@@ -160,32 +165,13 @@ export const CreationPuzzleMenu: React.FC<ICustomPuzzle> =
     (props: ICustomPuzzle) => {
     const {
         color,
-        width,
-        height,
-        level,
         handlers: {
-            changeWidth,
-            changeHeight,
             selectColor,
         }
     } = props
 
     return (
         <div className="dots-puzzle_menu">
-            <div className='dots-puzzle_menu__dimension'>
-                <SizeInput
-                    currentValue={width} label='Width'
-                    handlers={{changeSize: changeWidth}}
-                    max={20}
-                />
-                <div className='dots-puzzle_menu__level'>Lev:&nbsp;{level || '000'}</div>
-                <SizeInput
-                    currentValue={height}
-                    label='Height'
-                    handlers={{changeSize: changeHeight}}
-                    max={25}
-                />
-            </div>
             <div className='dots-puzzle_menu__colors-wrapper'>
                 {
                     LineColors.slice(1).map(c => {

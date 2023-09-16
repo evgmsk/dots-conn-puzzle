@@ -1,11 +1,7 @@
 import React, {useEffect, useState} from "react"
 
-import Timer from '../../app-components/Timer'
-import {IHandlers} from "../../constant/interfaces";
-
 import './resolver-menu.scss'
 
-import {GameMenu} from "../../app-components/game-menu/GameMenu";
 import {modeService} from "../../app-services/mode-service";
 import {puzzlesManager} from "../../app-services/puzzles-manager";
 import {authService} from "../../app-services/auth-service";

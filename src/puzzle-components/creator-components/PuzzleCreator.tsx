@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from '../rect/Rect'
 import { PuzzleResolver } from '../resolver-components/PuzzleResolver'
-import { ICollision, IPuzzle, ITakenPointProps, ITPoints } from '../../constant/interfaces'
+import { ICollision, IPuzzle, ITakenPProps, ITPoints } from '../../constant/interfaces'
 
 import { CreationPuzzleMenu } from './CreationPuzzleMenu'
 
@@ -37,9 +37,10 @@ const PuzzleCreator: React.FC = () => {
         const unsubResCreated = puzzlesManager.$resolveCreated.subscribe(setResolverView)
         const {steps, width, height} = JSON.parse(localStorage.getItem(LSUserCreatedPuzzle) || '{}')
         if (steps) {
-            pC.setHeight(height)
-            pC.setWidth(width)
+            pC.setDimension({height, width})
+            console.log('old puzzle', height, width)
             pC.addTakenPoints(steps[steps.length - 1])
+            pC.steps = steps
         }
         // isDev() && console.log(points)
         return () => {
@@ -142,11 +143,13 @@ const PuzzleCreator: React.FC = () => {
                 return
             }
         }
+
         setMouseDown(nextPoint)
         const existed = pC.getPoint(nextPoint)
         const {endpoint, connections} = pC.getPoint(prevPoint) || {}
         if (existed
             && pC.getColors(existed.connections).length === 1
+            && pC.getLineNeighbors(connections).length > 0
             && endpoint
             &&  pC.getColors(connections)?.length === 1) {
             return
@@ -159,7 +162,7 @@ const PuzzleCreator: React.FC = () => {
     }
 
     const resolveMouseEnterIfNextPointExist = (
-        existed: ITakenPointProps,
+        existed: ITakenPProps,
         nextPoint: string,
         prevPoint: string) => {
         const {endpoint} = existed

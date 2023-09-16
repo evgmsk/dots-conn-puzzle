@@ -1,4 +1,4 @@
-import { ITakenPointProps, LineDirections } from '../../constant/interfaces'
+import { ITakenPProps, LineDirections } from '../../constant/interfaces'
 import {defaultConnectionsWithColor, oppositeDirection} from '../../utils/helper-fn'
 import {defaultSectors, getSectorsData} from "../../utils/helper-fn";
 
@@ -11,7 +11,7 @@ test('sectors data', () => {
             [LineDirections.top]: {color: 'blue', neighbor: '1-1'},
             [LineDirections.bottom]: {color: 'blue', neighbor: '1-3'}
         }
-    } as ITakenPointProps
+    } as ITakenPProps
     const props2 =  { 
         endpoint: false,
         joinPoint: ['blue', 'red'],
@@ -20,14 +20,14 @@ test('sectors data', () => {
             [LineDirections.top]: {color: 'blue', neighbor: '1-1'},
             [LineDirections.bottom]: {color: 'red', neighbor: '1-3'}
         }
-    }  as ITakenPointProps
+    }  as ITakenPProps
     const props3 =  { 
         endpoint: true,
         connections: {
             ...defaultConnectionsWithColor('blue'),
             [LineDirections.bottom]: {color: 'blue', neighbor: '1-3'}
         }
-    }  as ITakenPointProps
+    }  as ITakenPProps
     const sectors1 = getSectorsData(props1)
     const sectors2 = getSectorsData(props2)
     const sectors3 = getSectorsData(props3) 

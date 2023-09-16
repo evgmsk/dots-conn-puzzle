@@ -1,6 +1,16 @@
 @import "../../assets/scss/constant";
 
 .input {
+    &__size {
+        height: 2rem;
+        //width: 36%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #252324;
+        margin: 0 5px;
+        border-radius: 20px;
+    }
     &__btn {
         &.btn-down, &.btn-up {
             margin: 0;
@@ -12,41 +22,46 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            &:after, &:before {
-                content: '';
-                width: 0;
-                height: 0;
-                position: absolute;
-                border-bottom: $size-input-btn solid transparent;
-                border-top:  $size-input-btn solid transparent;
+            svg {
+                color: ivory;
+                width: 1rem;
+                height: 1rem;
             }
+            //&:after, &:before {
+            //    content: '';
+            //    width: 0;
+            //    height: 0;
+            //    position: absolute;
+            //    border-bottom: $size-input-btn solid transparent;
+            //    border-top:  $size-input-btn solid transparent;
+            //}
         }
         &:hover {
             svg {
-                color: #104b4f;
+                transform: scale(1.2);
             }
         }
-        &.btn-down:after {
-            left: 70%;
-            border-right:  $size-input-btn solid #e3e0d1;
-        }
-        &.btn-down:before {
-            z-index: 1;
-            left: 90%;
-            border-right:  $size-input-btn solid $bg-main;
-        }
-        &.btn-up:before {
-            z-index: 1;
-            right: 90%;
-            border-left:  $size-input-btn solid $bg-main;
-        }
-        &.btn-up:after {
-            right: 70%;
-            border-left:  $size-input-btn solid #e3e0d1;
-        }
+        //&.btn-down:after {
+        //    left: 70%;
+        //    border-right:  $size-input-btn solid #e3e0d1;
+        //}
+        //&.btn-down:before {
+        //    z-index: 1;
+        //    left: 90%;
+        //    border-right:  $size-input-btn solid $bg-main;
+        //}
+        //&.btn-up:before {
+        //    z-index: 1;
+        //    right: 90%;
+        //    border-left:  $size-input-btn solid $bg-main;
+        //}
+        //&.btn-up:after {
+        //    right: 70%;
+        //    border-left:  $size-input-btn solid #e3e0d1;
+        //}
     }
     &__size-value {
-        color: #bac9dc;
+        color: ivory;
         text-align: center;
         height: 1.6rem;
         line-height: 1.6rem;
@@ -62,15 +77,6 @@
             color: #5600f4;
         }
     }
-    &__size {
-        height: 2rem;
-        width: 36%;
-        display: inline-flex;
-        align-items: center;
-        justify-content: space-between;
-        //@extend .shadow;
-        margin: 0 5px;
-        border-radius: 20px;
-    }
+
 }
 

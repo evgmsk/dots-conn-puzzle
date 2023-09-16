@@ -53,13 +53,13 @@ describe('test rect common methods', () => {
         expect(rect.getDistantBetweenPoints('2-1', '3-2'))
             .toBeLessThan(rect.getDistantBetweenPoints('1-2', '3-2'))
     })
-    test('find path ', () => {
+    test('find path resolver', () => {
         const rect = new RectCreator({width: 6, height: 6})
         const points = {
             '0-1': {
                 connections: {
                     ...defaultConnectionsWithColor(LineColors[2]),
-                    ['right']: {
+                    'right': {
                         color: LineColors[2], neighbor: '1-1'
                     }
                 },
@@ -68,7 +68,7 @@ describe('test rect common methods', () => {
             '1-1': {
                 connections: {
                     ...defaultConnectionsWithColor(LineColors[2]),
-                    ['left']: {
+                    'left': {
                         color: LineColors[2], neighbor: '0-1'
                     }
                 },
@@ -110,7 +110,7 @@ describe('test rect common methods', () => {
             '2-5': {
                 connections: defaultConnectionsWithColor(LineColors[2]),
                 endpoint: true,
-                crossLine: [LineColors[1], LineColors[2]]
+                crossLine: [LineColors[8], LineColors[2]]
             },
             '1-5': {
                 connections: defaultConnectionsWithColor(LineColors[2]),
@@ -118,34 +118,35 @@ describe('test rect common methods', () => {
                 crossLine: [LineColors[3], LineColors[2]]
             },
         }
-        expect(rect.findPath('1-1', '1-2', [DefaultColor])).toEqual([])
+        expect(rect.findPathResolver('1-1', '1-2', [DefaultColor])).toEqual([])
+        expect(rect.findPath('1-1', '1-2', [DefaultColor], 'test')).toEqual([])
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('1-1', '1-2', LineColors.slice(2,3))).toEqual([])
+        expect(rect.findPathResolver('1-1', '1-2', LineColors.slice(2,3))).toEqual([])
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('1-1', '1-3', LineColors.slice(2,3))).toEqual(["0-1", "0-2", "0-3"])
+        expect(rect.findPathResolver('1-1', '1-3', LineColors.slice(2,3))).toEqual(["0-1", "0-2", "0-3"])
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('1-1', '2-3', LineColors.slice(2,3))).toEqual(["0-1", "0-2", "0-3", "1-3"])
+        expect(rect.findPathResolver('1-1', '2-3', LineColors.slice(2,3))).toEqual(["0-1", "0-2", "0-3", "1-3"])
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('1-1', '4-0', LineColors.slice(2,3), ).length).toEqual(9)
+        expect(rect.findPathResolver('1-1', '4-0', LineColors.slice(2,3), ).length).toEqual(9)
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('0-0', '4-0', LineColors.slice(2,3)).length).toEqual(0)
+        expect(rect.findPathResolver('0-0', '4-0', LineColors.slice(2,3)).length).toEqual(0)
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('1-5', '3-5', LineColors.slice(2,3) ).length).toEqual(2)
+        expect(rect.findPathResolver('1-5', '3-5', LineColors.slice(2,3) ).length).toEqual(2)
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('0-5', '3-5', LineColors.slice(4,5), 'strict').length).toEqual(0)
+        expect(rect.findPathResolver('0-5', '3-5', LineColors.slice(4,5), 'strict').length).toEqual(0)
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('0-5', '3-5', LineColors.slice(4,5))).toEqual( ["0-5", "0-4", "1-4", "2-4", "3-4"])
+        expect(rect.findPathResolver('0-5', '3-5', LineColors.slice(4,5))).toEqual( ["0-5", "0-4", "1-4", "2-4", "3-4"])
         rect.clearAll()
         rect.addTakenPoints(points)
-        expect(rect.findPath('5-3', '5-0', LineColors.slice(3,4), '').length).toEqual(5)
+        expect(rect.findPathResolver('5-3', '5-0', LineColors.slice(3,4), '').length).toEqual(5)
 
         const rect2 = new RectCreator({width: 7, height: 7})
         const point2 = {
@@ -208,19 +209,51 @@ describe('test rect common methods', () => {
                 }
             }
         }
+        const points4 = {
+            '0-0': {
+                endpoint: true,
+                connections: {
+                    ...defaultConnectionsWithColor(LineColors[2]),
+                    'right': {color: LineColors[2], neighbor: '1-0'}
+                }
+            },
+            '1-0': {
+                endpoint: false,
+                connections: {
+                    ...defaultConnectionsWithColor(LineColors[2]),
+                    'bottom': {color: LineColors[2], neighbor: '1-1'},
+                    'left': {color: LineColors[2], neighbor: '0-0'}
+                }
+            },
+            '1-1': {
+                endpoint: false,
+                connections: {
+                    ...defaultConnectionsWithColor(LineColors[2]),
+                    'left': {color: LineColors[2], neighbor: '0-1'},
+                    'top': {color: LineColors[2], neighbor: '1-0'}
+                }
+            },
+            '0-1': {
+                endpoint: false,
+                connections: {
+                    ...defaultConnectionsWithColor(LineColors[2]),
+                    'right': {color: LineColors[2], neighbor: '1-1'},
+                }
+            },
+        }
         rect2.addTakenPoints(point2)
-        expect(rect2.findPath('3-0', '6-0', LineColors.slice(2,3), ''))
+        expect(rect2.findPathResolver('3-0', '6-0', LineColors.slice(2,3), ''))
             .toEqual(["0-0", "1-0", "2-0", "3-0", "4-0", "4-1", "5-1", "6-1"])
         rect2.clearAll()
         rect2.addTakenPoints(point2)
-        expect(rect2.findPath('3-0', '6-0', LineColors.slice(2,3), ))
+        expect(rect2.findPathResolver('3-0', '6-0', LineColors.slice(2,3), ))
             .toEqual( ["0-0", "0-1", "0-2", "1-2", "1-3", "2-3", "3-3", "3-2", "4-2", "5-2", "5-1", "6-1"])
         rect2.clearAll()
         rect2.addTakenPoints(point2)
-        expect(rect2.findPath('3-0', '0-1', LineColors.slice(2,3))).toEqual(['0-0'])
+        expect(rect2.findPathResolver('3-0', '0-1', LineColors.slice(2,3))).toEqual(['0-0'])
         rect2.clearAll()
         rect2.addTakenPoints(point2)
-        // expect(rect2.findPath('0-5', '1-5', LineColors.slice(4,5), '')).toEqual(['0-5'])
+        expect(rect2.findPathResolver('5-0', '5-1', LineColors.slice(4,5), '')).toEqual(['5-0'])
 
         const point3 = {
             '0-0': {
@@ -245,7 +278,7 @@ describe('test rect common methods', () => {
             '0-3': {
                 endpoint: true,
                 connections: {
-                    ...defaultConnectionsWithColor(LineColors[8]),
+                    ...defaultConnectionsWithColor(LineColors[6]),
                     'right': {color: LineColors[6], neighbor: '1-3'}
                 },
                 joinPoint: [LineColors[2], LineColors[6]]
@@ -253,9 +286,13 @@ describe('test rect common methods', () => {
         }
         rect2.clearAll()
         rect2.addTakenPoints(point3)
-        console.log(rect2.takenPoints)
-        expect(rect2.findPath('0-0', '0-3', LineColors.slice(2, 3), 'strict')).toEqual(["0-0", "0-1", "0-2"]
-        )
+        // console.log(rect2.takenPoints)
+        expect(rect2.findPathResolver('0-0', '0-3', LineColors.slice(2, 3), 'strict')).toEqual(["0-0", "0-1", "0-2"])
+        rect2.clearAll()
+        rect2.addTakenPoints(points4)
+        rect2.findPathResolver('0-1', '0-2', LineColors.slice(2, 3))
+        // console.log(rect2.takenPoints)
+        expect(rect2.getPoint('1-1')).toBe(undefined)
     })
     test('meddling calc fn', () => {
         const rect = new RectCreator({width: 4, height: 6})
@@ -275,7 +312,7 @@ describe('test rect common methods', () => {
                 },
                 "color": "purple",
                 "meddling": 7.5208835226860025,
-                "keys": [
+                "line": [
                     "2-1",
                     "3-3"
                 ]
@@ -295,7 +332,7 @@ describe('test rect common methods', () => {
                 },
                 "color": "aqua",
                 "meddling": 6.462961130059517,
-                "keys": [
+                "line": [
                     "3-0",
                     "3-3"
                 ]
@@ -315,7 +352,7 @@ describe('test rect common methods', () => {
                 },
                 "color": "yellow",
                 "meddling": 10.527456232305497,
-                "keys": [
+                "line": [
                     "1-1",
                     "3-3"
                 ]
@@ -335,7 +372,7 @@ describe('test rect common methods', () => {
                 },
                 "color": "green",
                 "meddling": 8.382310680559055,
-                "keys": [
+                "line": [
                     "2-2",
                     "1-4"
                 ]

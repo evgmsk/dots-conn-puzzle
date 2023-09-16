@@ -1,7 +1,5 @@
-import {isDev} from "../utils/helper-fn";
-
 export class Observable<T> {
-    data: T
+    private data: T
     subscribers = {} as {[k: string]: Function}
     constructor(data: T = null as unknown as T) {
         this.data = data
@@ -17,7 +15,6 @@ export class Observable<T> {
     subscribe = (sub: Function) => {
         const key = `${Math.floor(Math.random()*10000)}-${sub.name}`
         this.subscribers[key] = sub
-        // isDev() && console.log(key, this.subscribers)
         return this.unsubscribe(key)
     }
 

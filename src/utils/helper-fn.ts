@@ -7,7 +7,7 @@ import {
 } from "../constant/constants";
 import {
     IDotSectorProps,
-    ITakenPointProps,
+    ITakenPProps,
     LineDirections,
     ISector, SA
 } from "../constant/interfaces";
@@ -18,7 +18,7 @@ const development = !process.env.NODE_ENV || process.env.NODE_ENV !== 'productio
 
 export const isDev = () => development
 
-export const getSectorsData = (props: ITakenPointProps): IDotSectorProps[] => {
+export const getSectorsData = (props: ITakenPProps): IDotSectorProps[] => {
     // console.warn(props)
     const {connections, endpoint, crossLine, joinPoint} = props
     const singleColor = (!crossLine && !joinPoint) || joinPoint?.length === 1
@@ -53,6 +53,21 @@ export const getCommonColor = (colors1: SA, colors2: SA) => {
     return ''
 }
 
+export const loopLimit = (lim = 100) => {
+    return () => {
+        lim--
+        return lim > 0
+    }
+}
+
+export const isEqualArrays = (arr1: SA, arr2: SA) => {
+    if (arr1.length !== arr2.length) return false
+    for (let i = 0; i < arr1.length; i++) {
+        if (arr1[i] !== arr2[i]) return false
+    }
+    return true
+}
+
 export const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
     const { clientY, clientX } =
         e.type === 'touchmove'
@@ -85,12 +100,6 @@ export const sectorIndex = (dir: LineDirections) => {
         default: 
             return 2
     }
-}
-
-export const isAppropriateCell = (props: ITakenPointProps, mode: string, commonColor: boolean) => {
-    return !props
-        || (!props.endpoint && mode !== 'strict')
-        || (props.endpoint && commonColor)
 }
 
 export const defaultConnectionsWithColor = (color = DefaultColor) => {

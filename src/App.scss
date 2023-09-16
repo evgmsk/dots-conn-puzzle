@@ -1,24 +1,28 @@
 @import "assets/scss/constant";
 
 body {
-    background-color: #252324;
+    background: url('./assets/images/AtHome-NightSky-1080x810-1.jpg') no-repeat;
+    background-size: 100% 100%;
 }
 
 .app {
     margin: 0 auto;
     .header {
+        position: relative;
         box-sizing: border-box;
         height: 50px;
         max-width: 500px;
         width: 100%;
-        background-color: darken(#252324, 10%);
+        background-color: lighten($bg-main, 15%);
         display: flex;
         justify-content: space-between;
         padding: 5px 20px 0;
-        .puzzle-level, .user-id, .puzzle-timer {
+        .puzzle-level, .user-id, .puzzle-timer, .size-picker {
             color: $puzzle-text-color;
             font-size: 1.2rem;
-            line-height: 2rem;
+            line-height: 1.2rem;
+            display: flex;
+            align-items: center;
         }
         .user-id {
             background-color: transparent;
@@ -41,7 +45,7 @@ body {
     max-height: 100vh;
     max-width: 440px;
     .footer {
-        background-color: lighten($bg-main, 5%);
+        background-color: lighten($bg-main, 15%);
         width: 100%;
         .dots-puzzle_menu {
             &__footer {
@@ -55,10 +59,16 @@ body {
                 svg {
                     stroke-width: 1.2;
                 }
+
             }
             &__btn {
                 @extend #menu-btn;
                 padding: 5px;
+                &.save-puzzle-btn {
+                    background: url("./assets/images/saveas_5165.png") no-repeat center;
+                    background-size: 55% 55%;
+                    filter: invert(100%);
+                }
             }
         }
     }
@@ -143,7 +153,7 @@ body {
 
     &_body {
         position: relative;
-        background-color: $bg-main;
+        background-color: lighten($bg-main, 0%) ;
         border-radius: 2px;
         @extend .cell-border;
         min-width: 320px;

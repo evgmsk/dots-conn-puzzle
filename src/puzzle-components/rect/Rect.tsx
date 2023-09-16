@@ -3,7 +3,7 @@ import React, {useEffect, useRef} from "react"
 
 import './rect.scss'
 
-import {IPuzzleProps, ITakenPointProps, LineDirections} from "../../constant/interfaces"
+import {IPuzzleProps, ITakenPProps, LineDirections} from "../../constant/interfaces"
 import { Point } from "../point/Point"
 import { shadowState } from '../../app-services/finger-shadow-state'
 import { FingerShadow } from './finger-shadow/FingerShadow'
@@ -99,7 +99,7 @@ export const Puzzle: React.FC<IPuzzleProps> = (props: IPuzzleProps) => {
     const rect = new Array(height).fill('1').map((i, k) => {
         return new Array(width).fill('1').map((j, n) => {
             const key = `${n}-${k}`
-            const point = points[key] || {} as ITakenPointProps
+            const point = points[key] || {} as ITakenPProps
             const color = !(point.crossLine || point.joinPoint)
                 ? point?.connections && point?.connections[LineDirections.top]?.color
                 : ''

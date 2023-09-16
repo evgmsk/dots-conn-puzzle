@@ -71,7 +71,7 @@ export class RectCreator extends PuzzleEvaluator {
             height,
             points: this.getTotalPoints()
         } as IPuzzle
-        isDev() && console.log('new puzzle', puzzle)
+        isDev() && console.log('new puzzle', puzzle, this.lineEndpoints)
         this.puzzle = puzzle
         // puzzlesManager.setUnresolved(puzzle)
         return puzzle
@@ -98,6 +98,7 @@ export class RectCreator extends PuzzleEvaluator {
         }
         // isDev() && console.log('ch color', newColor, oldColor, line, key, updatedPoints)
         this.addTakenPoints(updatedPoints)
+        this.updateSteps()
     }
 
     resolveMouseUp = (point: string, color: string) => {
@@ -140,6 +141,7 @@ export class RectCreator extends PuzzleEvaluator {
             endpoint: true,
             connections: defaultConnectionsWithColor(color)
         }})
+        this.updateSteps()
     }
 
     removeForks = (start: string, color: string) => {
