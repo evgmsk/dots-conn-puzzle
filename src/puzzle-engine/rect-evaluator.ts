@@ -245,8 +245,6 @@ export class PuzzleEvaluator extends PathResolver {
             }
         }
         this.addTakenPoints(lineToAdd)
-        isDev() && console.warn('add line', lineToAdd)
-
     }
 
     handleAutoResolvePuzzle = () => {
@@ -271,7 +269,8 @@ export class PuzzleEvaluator extends PathResolver {
             const {line: points, color} = endPoints
             const [sP, tP] = [points[0], points[points.length - 1]]
             let line = this.findPath(sP, tP, [color], key)
-            if (line.length >= this.lineEndpoints[key].line.length) {
+            const isEqual =isEqualArrays(line, points)
+            if (line.length >= points.length && !isEqual){
                 this.pathCrossLines = crossLines || []
                 this.forceRePath = true
                 line = this.findPath(sP, tP, [color], key)
@@ -282,16 +281,10 @@ export class PuzzleEvaluator extends PathResolver {
             ) {
                 if (!this.forceRePath) {
                     console.error('need turn on force re-path', copyObj(this.altLinePaths), copyObj(this.fixedLines), copyObj(this.linesOrder))
-                    // this.altLinePaths = {}
-                    // this.linesOrder.length = 0
-                    // this.fixedLines.length = 0
-                    // this._takenPoints = {}
-                    // this.setStartingPoints()
-                    // this.resolvePuzzle(lineKeys, true)
                 }
                 return console.error('unresolved problem', line, this.altLinePaths, this.fixedLines, key)
             }
-            if (line.length < this.lineEndpoints[key].line.length || this.forceRePath) {
+            if (line.length < points.length || this.forceRePath || isEqual) {
                 this.linesOrder.push(key)
                 this.addFoundLine(line, color, key)
             }

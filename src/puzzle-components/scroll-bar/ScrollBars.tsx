@@ -27,7 +27,7 @@ export const ScrollBars: React.FC<IScrollBars> = (props) => {
             return
         }
         const rect = container.getBoundingClientRect()
-        // console.log('rect', rect, container.scrollHeight, container.scrollWidth)
+        console.log('rect', rect, container.scrollHeight, container.scrollWidth)
         setScrollHeight(container.scrollHeight - rect.height)
         setScrollWidth(container.scrollWidth - rect.width)
     }, [container])
@@ -61,6 +61,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
     const [mouseDown, setMouseDown] = useState(0)
     const [scrollHeight, setScrollHeight] = useState(container?.scrollHeight || 100)
     const [barSize, setBarSize] = useState(100)
+    const [scrollStyle, setScrollStyle] = useState({})
 
     useEffect(() => {
         if (!container) return
@@ -86,13 +87,26 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
 
     useEffect(() => {
         if (!container || !progressRef.current) return
-        const {height, width} = (progressRef.current as HTMLElement).getBoundingClientRect()
-        const size = orientation ? height : width
         const containerRect = container.getBoundingClientRect()
+        const {width, height} = containerRect
+        const slider = document.querySelector('.progress-bar_slider')
+        if (slider) {
+            const prop = orientation ? 'height' : 'width'
+            const size = orientation
+                ? height * height / container.scrollHeight
+                : width * width / container.scrollWidth
+            slider.setAttribute('style', `${prop}: ${size}px`)
+        }
+        const bar = document.querySelector('.scroll-bar')
+        if (bar) {
+            const ori = orientation ? 'height' : 'width'
+            const si = (orientation ? height : width)
+            setBarSize(si - 30)
+            setScrollStyle({[ori]: `${si}px`})
+        }
         setScrollHeight(orientation
             ? container.scrollHeight - containerRect.height
             : container.scrollWidth - containerRect.width)
-        setBarSize(size)
         container.addEventListener('wheel', handleWheel)
         return () => {
             container.removeEventListener('wheel', handleWheel)
@@ -105,13 +119,10 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
         setCurrentScroll(value / numberOfRows)
     }
 
-
-
     const getStyle = () => ({[orientation ? 'top' : 'left']: `${barSize * currentScroll}px`})
     const getCurrentValue = () => Math.floor(numberOfRows * currentScroll)
 
     const handleMouseMove = (e: React.MouseEvent | React.TouchEvent) => {
-        // e.stopPropagation()
         if (!mouseDown || !progressRef.current) return
         const {clientX, clientY} = getCoordinates(e)
         const {x, y} = (progressRef.current as HTMLElement)
@@ -124,6 +135,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
             top: currentScroll * scrollHeight,
             behavior
         })
+        console.log('container', container)
     }
 
     const handleMouseDown = (e: React.MouseEvent | React.TouchEvent) => {
@@ -158,35 +170,37 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
     return (
         <div
             className={'scroll-bar' + (orientation ? ' vertical-bar' : ' horizontal-bar')}
+            style={scrollStyle}
         >
-            <IncreaseBtn
+            <DecreaseBtn
                 handler={handleClickButton}
                 currentValue={getCurrentValue()}
-                step={-1}
+                step={1}
                 min={0}
                 max={numberOfRows}
             />
+
             <div
                 className='progress-bar_wrapper'
                 onMouseDown={handleMouseDown}
+                style={scrollStyle}
             >
                 <div
                     className='progress-bar'
                     ref={progressRef}
-                    // onMouseDown={handleMouseDown}
                     onMouseMove={handleMouseMove}
                     onWheel={handleWheel}
                 >
-                    <button
-                        type='button' className='progress-bar_slider'
-                        style={getStyle()}
-                    />
+                    <span
+                        className='progress-bar_slider'
+                        // style={getStyle()}
+                    ></span>
                 </div>
             </div>
-            <DecreaseBtn
+            <IncreaseBtn
                 handler={handleClickButton}
                 currentValue={getCurrentValue()}
-                step={-1}
+                step={1}
                 min={0}
                 max={numberOfRows}
             />

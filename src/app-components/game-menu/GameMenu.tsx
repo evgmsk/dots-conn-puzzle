@@ -45,6 +45,7 @@ export const GameMenu: React.FC = () => {
             puzzlesManager.setUnresolved()
             modeService.changeMode('resolve')
         }
+        setOpen(false)
     }
 
     const leftEdge = !!puzzlesManager.unresolvedPuzzle || modeService.mode === 'create'

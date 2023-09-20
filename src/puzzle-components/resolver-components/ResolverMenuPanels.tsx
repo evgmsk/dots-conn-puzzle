@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from "react"
+import React, {useEffect, useRef, useState} from "react"
 
 import './resolver-menu.scss'
 
@@ -6,6 +6,7 @@ import {modeService} from "../../app-services/mode-service";
 import {puzzlesManager} from "../../app-services/puzzles-manager";
 import {authService} from "../../app-services/auth-service";
 import {Admin} from "../../constant/constants";
+import {IPuzzle} from "../../constant/interfaces";
 
 
 export interface ITopPanel {
@@ -13,31 +14,66 @@ export interface ITopPanel {
     diff: number | string
 }
 
-// export const ResolverMenuPanels: React.FC<ITopPanel> = (props: ITopPanel) => {
-//     return (
-//         <>
-//             <div className="puzzle-resolver-menu_top">
-//
-//                 <div
-//                     className='puzzle-resolver-menu_top-level'
-//                 >
-//                     level:&nbsp;{props.diff}
-//                 </div>
-//             </div>
-//         </>
-//
-//     )
-// }
+const PuzzleSelectorMenu = () => {
+    const [requestingSystem, setRequestingSystem] = useState(puzzlesManager.requestingSystem)
+    const [filterOpen, setFiltersOpen] = useState(false)
+    useEffect(() => {
+        const sub1 = puzzlesManager.$requestSystem.subscribe(setRequestingSystem)
+        return () => {
+            sub1()
+        }
+    }, [])
 
-export const FooterMenu: React.FC = () => {
+    const handleFilterOpen = () => {
+        setFiltersOpen(!filterOpen)
+    }
+
+    const switchToCustom = () => {
+        console.log('switch system')
+        puzzlesManager.setRequestSystem(!puzzlesManager.requestingSystem)
+        // setCurrentScroll(0) //TODO change to user.level
+    }
+
+    return (
+        <>
+            {!requestingSystem
+                ? <button
+                    type='button'
+                    className='dots-puzzle_menu__btn puzzle-filters-menu'
+                    onClick={handleFilterOpen}
+                >
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+                    </svg>
+                </button>
+                : null
+            }
+            <button
+                type='button'
+                className='dots-puzzle_menu__btn'
+                onClick={switchToCustom}
+            >
+                {
+                    !requestingSystem
+                        ? <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M17.982 18.725A7.488 7.488 0 0012 15.75a7.488 7.488 0 00-5.982 2.975m11.963 0a9 9 0 10-11.963 0m11.963 0A8.966 8.966 0 0112 21a8.966 8.966 0 01-5.982-2.275M15 9.75a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        : <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                            <path strokeLinecap="round" strokeLinejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+                        </svg>
+                }
+            </button>
+        </>
+    )
+}
+
+const ResolverMenu = () => {
     const [pause, setPause] = useState(false)
-
     useEffect(() => {
         return modeService.$pause.subscribe(setPause)
     }, [])
-
     return (
-        <div className='dots-puzzle-resolver_menu__footer'>
+        <>
             <button
                 className='dots-puzzle_menu__btn'
                 type="button"
@@ -52,34 +88,6 @@ export const FooterMenu: React.FC = () => {
                     </svg>
                 }
             </button>
-            {
-                authService.user.role === Admin
-                    ? (<><button
-                        className='dots-puzzle_menu__btn'
-                        title='click to reveal one line'
-                        type="button"
-                        onClick={() => puzzlesManager.deletePuzzle()}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
-                        </svg>
-
-                    </button>
-                    <button
-                        className='dots-puzzle_menu__btn'
-                        title='click to reveal one line'
-                        type="button"
-                        onClick={() => puzzlesManager.updatePuzzle()}
-                    >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
-                            <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
-                        </svg>
-
-                    </button>
-                    </>)
-                    : null
-            }
-
             <button
                 className='dots-puzzle_menu__btn'
                 title='click to reveal one line'
@@ -92,6 +100,48 @@ export const FooterMenu: React.FC = () => {
                 </svg>
 
             </button>
+        </>
+    )
+}
+
+const AdminMenu = () => {
+    return (
+        <>
+            <button
+                className='dots-puzzle_menu__btn'
+                title='click to reveal one line'
+                type="button"
+                onClick={() => puzzlesManager.deletePuzzle()}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+                </svg>
+
+            </button>
+            <button
+                className='dots-puzzle_menu__btn'
+                title='click to reveal one line'
+                type="button"
+                onClick={() => puzzlesManager.updatePuzzle()}
+            >
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" className="w-6 h-6">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m6.75 12l-3-3m0 0l-3 3m3-3v6m-1.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                </svg>
+
+            </button>
+        </>
+    )
+}
+
+export const FooterMenu: React.FC = () => {
+
+    return (
+        <div className='dots-puzzle-resolver_menu__footer'>
+            { authService.user.role === Admin ? <AdminMenu /> : null }
+            { puzzlesManager.unresolvedPuzzle
+                ? <ResolverMenu />
+                : <PuzzleSelectorMenu />
+            }
         </div>
     )
 }

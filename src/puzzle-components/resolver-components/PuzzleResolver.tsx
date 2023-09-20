@@ -239,20 +239,6 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
         handleMouseLeave
     }
 
-    if (verify) {
-        return (
-            <ShowUP>
-                <Puzzle
-                    points={points}
-                    mouseDown={mouseDown}
-                    dimension={{width, height}}
-                    handlers={resolvePuzzleHandlers}
-                    highlightedEndpoints={resolver.highlightedEndpoints}
-                />
-            </ShowUP>
-        )
-    }
-
     return (
         <ShowUP className='dots-conn-puzzle_resolver'>
             <Puzzle
@@ -262,7 +248,7 @@ export const PuzzleResolver: React.FC<{verify: boolean}> = ({verify = false}) =>
                 handlers={resolvePuzzleHandlers}
                 highlightedEndpoints={resolver.highlightedEndpoints}
             />
-            {pause && !resolved
+            {!verify && pause && !resolved
                 ? <PauseModal>
                     <p>{'Pause'}</p>
                   </PauseModal>

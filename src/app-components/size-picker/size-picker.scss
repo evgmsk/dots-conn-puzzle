@@ -1,8 +1,28 @@
 @import "../../assets/scss/constant";
 
 .size-picker {
+    .size-item {
+        //width: 3rem;
+        text-align: center;
+        margin: 20px 10px;
+        cursor: pointer;
+        &.selected {
+            color: gold;
+        }
+        &:hover {
+            color: gold;
+        }
+    }
+    .sizes-wrapper {
+        width: 70vw;
+        min-width: 350px;
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        z-index: 1000000;
 
+    }
     &_open-btn {
+        position: relative;
         display: block;
         border: none;
         text-align: center;
@@ -10,24 +30,53 @@
         //font-family: Roboto, sans-serif;
         font-size: 1.2rem;
         color: inherit;
-        margin: 0 auto;
-        &:hover {
-            color: gold;
+        margin-right: 20px;
+        //margin: 0 auto;
+        &:before {
+            content: '';
+            width: 0;
+            height: 0;
+            border-top:  7px solid #e3e0d1;
+            border-right: 7px solid transparent;
+            border-left: 7px solid transparent;
+            position: absolute;
+            right: -15px;
+            top: 42%;
         }
+        &.open {
+            &:before {
+                border-top:  unset;
+                border-bottom:  7px solid #e3e0d1;
+                top: 40%;
+            }
+            &:hover {
+                color: gold;
+                &:before {
+                    border-bottom:  7px solid gold;
+                }
+            }
+        }
+        &:not(.open):hover {
+            color: gold;
+            &:before {
+                border-top:  7px solid gold;
+            }
+        }
+
     }
     &_dropdown {
         position: absolute;
-        bottom: -50px;
+        top: 50px;
         left: 50%;
-        width: 99vw;
-        height: 50px;
+        //width: 99vw;
+        //height: 50px;
         background: $bg-main;
         display: none;
         transform: translateX(-50%);
-        z-index: 10000;
+        z-index: 1000000;
         &.is-open {
             display: flex;
-            justify-content: center;
+            //justify-content: center;
         }
     }
 

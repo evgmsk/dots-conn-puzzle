@@ -3,7 +3,7 @@
 .animated_puzzles {
     display: flex;
     height: 80vh;
-    align-items: center;
+    align-items: flex-start;
     &.filter-open {
         align-items: flex-start;
     }
@@ -20,7 +20,7 @@
     box-sizing: border-box;
     opacity: 0;
     border-radius: 20px;
-    box-shadow: 0 0 3px 3px lightblue;
+    //box-shadow: 0 0 3px 3px lightblue;
     margin-bottom: 10px;
     .close-btn {
         position: absolute;
@@ -92,7 +92,7 @@
         appearance: none;
         margin: 0;
         font: inherit;
-        box-shadow: 0 0 2px 2px lightblue;
+        //box-shadow: 0 0 2px 2px lightblue;
         background-color: black;
         width: 1.2rem;
         height: 1.2rem;
@@ -117,21 +117,26 @@
     position: relative;
     top: 0;
     width: 80vw;
-
-    box-shadow: 0 0 3px 3px lightblue;
-    border-radius: 1rem;
-    padding: 30px;
+    //box-shadow: 0 0 3px 3px lightblue;
+    border-radius: 3px;
+    padding: 1rem;
+    background-color: #252324;
     max-width: 400px;
     min-width: 350px;
     box-sizing: border-box;
     transition: all .3s;
-    max-height: 400px;
+    height: 100%;
+
     &_puzzle-box {
         display: grid;
         grid-template-columns: repeat(5, 1fr);
-        grid-template-rows: repeat(5, 1fr);
-        max-height: 340px;
-        overflow: hidden;
+        //grid-template-rows: repeat(5, 1fr);
+        //max-height: 340px;
+        min-height: 300px;
+        max-height: 400px;
+        //max-height: 40vh;
+        overflow-y: hidden;
+        //overflow-y: scroll;
     }
     //height: 60vw;
     .dots-puzzle_menu__btn {

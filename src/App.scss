@@ -24,10 +24,14 @@ body {
             display: flex;
             align-items: center;
         }
+        .user-id-wrapper {
+            display: flex;
+            align-items: center;
+        }
         .user-id {
             background-color: transparent;
             border: unset;
-            max-width: 100px;
+            max-width: 150px;
             text-overflow: ellipsis;
             white-space: nowrap;
             //padding: 11px;
@@ -124,18 +128,6 @@ body {
 }
 
 .dots-conn-puzzle {
-    // border: solid 2px black;
-
-    //&_resolver {
-    //    opacity: 0;
-    //    @media screen and (min-aspect-ratio: 100/101) and (max-height: $device) {
-    //        max-width: 90vh;
-    //    }
-    //    @media screen and (max-aspect-ratio: 54/71){
-    //        padding: 20px 0 0;
-    //    }
-    //}
-
     &_creator {
         height: auto;
         max-width: 90vw;

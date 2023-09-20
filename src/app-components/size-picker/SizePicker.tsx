@@ -1,10 +1,11 @@
 import React, {useEffect, useRef, useState} from "react";
 
 import {pC} from "../../puzzle-engine/rect-creator";
-import {SizeInput} from "../size-input/SizeInput";
+// import {SizeInput} from "../size-input/SizeInput";
 
 import './size-picker.scss'
-import {MaxPuzzleHeight, MaxPuzzleWidth, MinPuzzleHeight, MinPuzzleWidth} from "../../constant/constants";
+import {MaxPuzzleHeight, MaxPuzzleWidth, MinPuzzleHeight, MinPuzzleWidth, Sizes} from "../../constant/constants";
+import {ShowUP} from "../ShowUp";
 
 export const SizePicker: React.FC = () => {
     const [open, setOpen] = useState(false)
@@ -42,53 +43,34 @@ export const SizePicker: React.FC = () => {
         }
     }, [])
 
-    const changeHeight = (height: number) => {
-        let _width
-        if (height > width * 1.45) {
-            _width = Math.round(height / 1.4)
-        }
-        if (height < width) {
-            _width = height
-        }
-        if (height >= MinPuzzleHeight && height <= MaxPuzzleHeight) {
-            pC.setDimension({height, width: _width})
-        }
-    }
-
-    const changeWidth = (width: number) => {
-        let _height
-        if (height < width) {
-            _height = width
-        }
-        if (height > width * 1.45) {
-            _height = Math.round(width * 1.4)
-        }
-        if (width >= MinPuzzleWidth && width <= MaxPuzzleWidth) {
-            pC.setDimension({width, height: _height})
-        }
+    const selectSize = (size: string) => {
+        const [width, height] = size.split('x').map(s => parseInt(s))
+        pC.setDimension({width, height})
+        setOpen(false)
     }
 
     return (
         <div className="size-picker" ref={ref}>
             <button
-                className="size-picker_open-btn"
+                className={"size-picker_open-btn" + (open ? ' open' : '')}
                 type="button"
                 onClick={handleOpen}
             >
                 Select Puzzle Size
             </button>
             <div className={"size-picker_dropdown" + (open ? " is-open" : "")}>
-                <SizeInput
-                    currentValue={width} label='Width'
-                    handlers={{changeSize: changeWidth}}
-                    max={18}
-                />
-                <SizeInput
-                    currentValue={height}
-                    label='Height'
-                    handlers={{changeSize: changeHeight}}
-                    max={22}
-                />
+                <ShowUP className={'sizes-wrapper'}>
+                    {
+                        Sizes.map(s => {
+                            const cl =  `${width}x${height}` === s ? ' selected' : ''
+                            return <div
+                                key={s}
+                                className={'size-item' + cl}
+                                onClick={() => selectSize(s)}
+                            >{s}</div>
+                        })
+                    }
+                </ShowUP>
             </div>
         </div>
     )

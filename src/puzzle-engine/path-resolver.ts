@@ -619,6 +619,7 @@ export class PathResolver extends PuzzleCommons {
 
     addAltLinePaths = (line: SA, color: string, paths: IPath[], key: string) => {
         this.altLinePaths[key] = {line, color, paths}
+        console.log('alt line added', copyObj(this.altLinePaths))
     }
 
     resolveOnlyPath = (result: INCheck) => {
@@ -684,7 +685,6 @@ export class PathResolver extends PuzzleCommons {
             ? this.chooseBlockedPath(blockedPaths)
             : freePaths.sort((a, b) => a.dist - b.dist).shift()!
         const prop = this.startTurn ? 'restTgTargets' : 'restStTargets'
-        const lastOfSelected = selectedPath.path[selectedPath.path.length - 1]
         this[prop] = selectedPath.blocked
             ? freePaths.concat(blockedPaths.filter(p => !isEqualArrays(selectedPath.path, p.path)))
             : freePaths.concat(blockedPaths)
@@ -695,14 +695,15 @@ export class PathResolver extends PuzzleCommons {
     }
 
     chooseStsTgs = () => {
-        const [stP, tgP] = this.startTurn
+        const [stPs, tgPs] = this.startTurn
             ? [this.stPaths, this.tgPaths]
             : [this.tgPaths, this.stPaths]
-        const targets = this.chooseTargets(tgP).path
-        if (!stP.length || !tgP.length) {
+        if (!stPs.length || !tgPs.length) {
             console.error('no paths', this.stPaths, this.tgPaths, this.startTurn)
+            throw new Error('no paths to select next')
         }
-        const {pathToCheck, paths: restPaths, lineRemoved} = this.choosePath(stP)
+        const targets = this.chooseTargets(tgPs).path
+        const {pathToCheck, paths: restPaths, lineRemoved} = this.choosePath(stPs)
         return {targets, pathToCheck, restPaths, lineRemoved}
     }
 
@@ -710,7 +711,7 @@ export class PathResolver extends PuzzleCommons {
         const res = st
             ? start.concat(end.slice(0, index).reverse())
             : start.slice(0, index).concat(end.reverse())
-        console.warn('concat result', start, end, index, res, st)
+        console.warn('concat result', start, end, index, res, st, res)
         return res
     }
 
@@ -882,15 +883,18 @@ export class PathResolver extends PuzzleCommons {
             result.paths.push(nextPath)
             return
         }
-        console.log('result before path validation', copyObj(result), nextPath)
+        // console.log('result before path validation', copyObj(result), nextPath)
         const valPath = this.validatePath(nextPath.path, tgs, colors, key)
-        console.log('result after path validation', copyObj(result), valPath)
+        // console.log('result after path validation', copyObj(result), valPath)
         if (!valPath.path.length) {
             console.error('path validation failed', copyObj(result), point)
             return result
         }
-        valPath.rePaths?.length
-            && this.resolveTrueRePath(valPath,result, nextPath, target)
+        if (valPath.rePaths?.length) {
+            this.resolveTrueRePath(valPath,result, nextPath, target)
+        } else {
+            nextPath.path = valPath.path
+        }
         if (dist === 0) result.paths.length = !fin ? 0 : result.paths.length
         result.paths.push(nextPath)
         console.log('path validation passed', path, point, valPath,
@@ -950,15 +954,29 @@ export class PathResolver extends PuzzleCommons {
     checkEndpoint = (
         nei: string,
         props: ITakenPProps,
-        path: SA, tgs:SA,
+        path: SA,
+        tgs:SA,
         key: string
-    ) => {
-        if (!props.crossLine) {
-            const numOfFreeNeighbors = this.freeNeighborsNumber(nei, path, tgs)
-            const numOfColors = this.getPossibleColors(nei).length
-            return numOfFreeNeighbors >= numOfColors
+    ): boolean => {
+        if (props.crossLine) {
+            return this.fitEndpoint(props.lineEndpoints || [], key)
         }
-        return this.fitEndpoint(props.lineEndpoints || [], key)
+        const numOfColors = this.getPossibleColors(nei).length
+        let targets = tgs
+        let numOfFreeNeighbors = this.freeNeighborsNumber(nei, path, targets)
+        let restTargets = this.startTurn ? this.restTgTargets : this.restStTargets
+        let valid = numOfFreeNeighbors >= numOfColors
+        while (restTargets.length && !valid) {
+            targets = this.chooseTargets(restTargets).path
+            restTargets = this.startTurn ? this.restTgTargets : this.restStTargets
+            numOfFreeNeighbors = this.freeNeighborsNumber(nei, path, targets)
+            valid = numOfFreeNeighbors >= numOfColors
+            const prop = this.startTurn ? 'tgPaths' : 'stPaths'
+            const index = this[prop].findIndex(p => isEqualArrays(p.path, targets)) // = this[prop].filter(p => !isEqualArrays(p.path, targets))
+            console.error('index to change dist', index, prop, this[prop], valid, path)
+            this[prop][index].dist = valid ? .01 : Infinity
+        }
+        return valid
     }
 
     checkLinePoint = (props: ITakenPProps, colors: SA) => {
@@ -982,15 +1000,18 @@ export class PathResolver extends PuzzleCommons {
         console.error('val path', path, copyObj(result))
         for (const neighbor of this.rect[path[path.length - 1]].neighbors) {
             if (neighbor === path[path.length - 2] || tgs.includes(neighbor)) continue
+            const index = path.indexOf(neighbor)
+            if (index >= 0) {
+                console.error('circle', path, index, neighbor)
+                result.path = path.slice(0, index + 1).concat(path[path.length - 1])
+            }
             const nProps = this.getPoint(neighbor) || {}
-            console.error('nei', neighbor, nProps)
+            // console.error('nei', neighbor, nProps)
             if (nProps.connections) {
                 const checkRes = nProps.endpoint
                     ? this.checkEndpoint(neighbor, nProps, path, tgs, key)
                     : this.checkLinePoint(nProps, colors)
                 if (!checkRes) {
-                    // TODO check restTargets
-                    // console.warn(checkRes)
                     result.path.length = 0
                     break
                 }
@@ -1218,5 +1239,23 @@ export class PathResolver extends PuzzleCommons {
 
     checkEndpoints = (key1: string, key2: string) => {
         return !!this.lineEndpoints[`${key1}_${key2}`] || !!this.lineEndpoints[`${key2}_${key1}`]
+    }
+
+    validateTotalPath = (path: SA, colors: SA) => {
+        const checked = {} as {[k: string]: boolean}
+        for (const point of path) {
+            const neighbors = this.rect[point].neighbors
+            for (const nei of neighbors) {
+                if (!this.getPoint(nei) && !path.includes(nei) && !checked[nei]) {
+                    const pocket = this.checkPocket(path, nei, colors, [])
+                    checked[nei] = true
+                    console.warn('total path validation', path, nei, pocket)
+                    if (!pocket.path.length || pocket.rePath?.length) {
+                        return false
+                    }
+                }
+            }
+        }
+        return true
     }
 }
