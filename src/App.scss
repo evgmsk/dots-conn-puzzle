@@ -5,13 +5,17 @@ body {
     background-size: 100% 100%;
 }
 
+main {
+    min-height: 40vh;
+}
+
 .app {
     margin: 0 auto;
     .header {
         position: relative;
         box-sizing: border-box;
         height: 50px;
-        max-width: 500px;
+        max-width: 400px;
         width: 100%;
         background-color: lighten($bg-main, 15%);
         display: flex;
@@ -38,7 +42,7 @@ body {
         }
     }
     position: relative;
-    background-color: darken(#252324, 20%);
+    background-color: darken($base-dark, 20%);
     border-radius: 10px;
     display: flex;
     flex-direction: column;
@@ -47,10 +51,11 @@ body {
     box-sizing: border-box;
     min-height: 100vh;
     max-height: 100vh;
-    max-width: 440px;
+    max-width: 400px;
     .footer {
         background-color: lighten($bg-main, 15%);
         width: 100%;
+        max-width: 400px;
         .dots-puzzle_menu {
             &__footer {
                 margin: 0 auto;

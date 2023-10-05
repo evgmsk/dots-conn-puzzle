@@ -1,10 +1,13 @@
 @import "../../assets/scss/constant";
 
 .size-picker {
+    .scroll-bar.vertical-bar {
+        right: 0;
+    }
     .size-item {
         //width: 3rem;
         text-align: center;
-        margin: 20px 10px;
+        margin: 16px 10px;
         cursor: pointer;
         &.selected {
             color: gold;
@@ -14,8 +17,13 @@
         }
     }
     .sizes-wrapper {
-        width: 70vw;
+        box-sizing: border-box;
+        max-height: 80vh;
+        padding: 5px;
+        overflow-y: hidden;
+        width: 80vw;
         min-width: 350px;
+        max-width: 400px;
         display: grid;
         grid-template-columns: repeat(4, 1fr);
         z-index: 1000000;
@@ -68,16 +76,10 @@
         position: absolute;
         top: 50px;
         left: 50%;
-        //width: 99vw;
-        //height: 50px;
+        display: flex;
         background: $bg-main;
-        display: none;
         transform: translateX(-50%);
         z-index: 1000000;
-        &.is-open {
-            display: flex;
-            //justify-content: center;
-        }
     }
 
 }

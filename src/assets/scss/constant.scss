@@ -24,8 +24,8 @@ $colors: (
 }
 
 $size-input-btn: 7px;
-
-$bg-main:darken(#252324, 20%);
+$base-dark: #252324;
+$bg-main:darken($base-dark, 20%);
 
 $directions: 'top', 'right', 'bottom', 'left';
 $border-color: #e3e0d1;
@@ -55,26 +55,22 @@ $font-main: 'Roboto', sans-serif;
 }
 
 #menu-btn {
-    //margin: 15px 0;
     width: 2.2rem;
     height: 2.2rem;
-    //border-radius: 50%;
     border: none;
-    //@extend .shadow;
     display: flex;
     align-items: center;
     justify-content: center;
     background-color: transparent;
-    //transition: box-shadow .3s;
+    transition: box-shadow .3s;
     &:hover {
-        //box-shadow: 0 0 3px 3px lighten(blue, 30%);
         svg {
             color: gold;
         }
     }
     svg {
         display: block;
-        color: #e3e0d1;
+        color: $border-color;
         width: 1.6rem;
         height: 1.6rem;
         stroke-width: 1.2;
@@ -119,7 +115,7 @@ $font-main: 'Roboto', sans-serif;
     transition: all .3s;
     svg {
         display: block;
-        color: #e3e0d1;
+        color: $border-color;
         width: 1.6rem;
         height: 1.6rem;
         stroke-width: 1.2;
@@ -137,12 +133,11 @@ $font-main: 'Roboto', sans-serif;
     width: 80vw;
     height: 40vh;
     border-radius: 5px;
-    top: 30vh;
+    top: 0;
     left: 50%;
     transform: translateX(-50%);
     font-size: 3rem;
     z-index: 300000;
-    border-radius: 5px;
     border: #add0e6 solid 2px;
     .close-modal-btn {
         position: absolute;

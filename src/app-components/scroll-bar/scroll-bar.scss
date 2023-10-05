@@ -1,0 +1,105 @@
+@import '../../assets/scss/constant';
+
+
+.scroll-bars-container {
+    position: relative;
+    &:hover {
+        .scroll-bar.vertical-bar, .scroll-bar.horizontal-bar {
+            visibility: visible;
+        }
+    }
+    .input__btn {
+        padding: 0;
+    }
+}
+
+.scroll-bar {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: absolute;
+    z-index: 1000;
+    background-color: darken($base-dark, 5%);
+    .progress-bar_slider {
+        position: absolute;
+        border-radius: 4px;
+        background-color: darken(lightblue, 45%);
+        transition: all .2s linear;
+    }
+    .progress-bar_wrapper {
+        position: relative;
+        &:hover {
+            cursor: pointer;
+            background-color: rgba(120, 206, 206, 0.2);
+        }
+    }
+    &.horizontal-bar {
+        left: 0;
+        bottom: -1rem;
+        height: 15px;
+        visibility: hidden;
+        .progress-bar {
+            position: absolute;
+            height: 10px;
+            width: 100%;
+            &_slider {
+                height: 10px;
+                left: 0;
+                bottom: 2px;
+                border-radius: 4px;
+                background-color: darken(lightblue, 45%);
+                transition: all .2s linear;
+                //border-color: $bg-main;
+                &:after {
+                    content: '';
+                    position: absolute;
+                    width: 130%;
+                    height: 300%;
+                    top: 130%;
+                    left: -10%;
+                    z-index: 1;
+                }
+                &:hover {
+                    background-color: darken(lightblue, 45%);
+                }
+            }
+        }
+    }
+    &.vertical-bar {
+        flex-direction: column;
+        right: -1rem;
+        top: 0rem;
+        //transform: translateY(-50%);
+        visibility: hidden;
+        .progress-bar_wrapper {
+            &:hover {
+                cursor: pointer;
+                background-color: rgba(120, 206, 206, 0.2);
+            }
+            width: 15px;
+        }
+        .progress-bar {
+            position: absolute;
+            width: 10px;
+            height: 100%;
+            &_slider {
+                left: 2px;
+                width: 10px;
+                min-height: 10px;
+                //border-color: $bg-main;
+                &:after {
+                    content: '';
+                    position: absolute;
+                    width: 300%;
+                    height: 130%;
+                    top: -10%;
+                    left: 120%;
+                    z-index: 1;
+                }
+            }
+        }
+
+    }
+
+
+}

@@ -1,17 +1,18 @@
 import React, {useEffect, useRef, useState} from "react";
 
 import {pC} from "../../puzzle-engine/rect-creator";
-// import {SizeInput} from "../size-input/SizeInput";
 
 import './size-picker.scss'
-import {MaxPuzzleHeight, MaxPuzzleWidth, MinPuzzleHeight, MinPuzzleWidth, Sizes} from "../../constant/constants";
+import { Sizes} from "../../constant/constants";
 import {ShowUP} from "../ShowUp";
+import {ScrollBars} from "../scroll-bar/ScrollBars";
 
 export const SizePicker: React.FC = () => {
     const [open, setOpen] = useState(false)
     const [width, setWidth] = useState(pC.width)
     const [height, setHeight] = useState(pC.height)
     const ref = useRef(null)
+    const refDrop = useRef(null)
 
     const handleOpen = () => {
         function close(e: MouseEvent | TouchEvent) {
@@ -48,18 +49,13 @@ export const SizePicker: React.FC = () => {
         pC.setDimension({width, height})
         setOpen(false)
     }
-
-    return (
-        <div className="size-picker" ref={ref}>
-            <button
-                className={"size-picker_open-btn" + (open ? ' open' : '')}
-                type="button"
-                onClick={handleOpen}
+    const dropDown = !open
+        ? null
+        : <ShowUP className={'sizes-show-up'} >
+            <ScrollBars container={{elem: refDrop.current as unknown as HTMLElement}}
+                        selector={'.sizes-wrapper'}
             >
-                Select Puzzle Size
-            </button>
-            <div className={"size-picker_dropdown" + (open ? " is-open" : "")}>
-                <ShowUP className={'sizes-wrapper'}>
+                <div className={'sizes-wrapper'} ref={refDrop}>
                     {
                         Sizes.map(s => {
                             const cl =  `${width}x${height}` === s ? ' selected' : ''
@@ -70,8 +66,22 @@ export const SizePicker: React.FC = () => {
                             >{s}</div>
                         })
                     }
-                </ShowUP>
-            </div>
+                </div>
+            </ScrollBars>
+        </ShowUP>
+    return (
+        <div className="size-picker" ref={ref}>
+            <button
+                className={"size-picker_open-btn" + (open ? ' open' : '')}
+                type="button"
+                onClick={handleOpen}
+            >
+                Select Puzzle Size
+            </button>
+                <div className={"size-picker_dropdown" + (open ? " is-open" : "")} >
+                    {dropDown}
+                </div>
         </div>
+
     )
 }

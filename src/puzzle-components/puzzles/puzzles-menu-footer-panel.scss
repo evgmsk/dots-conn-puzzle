@@ -1,0 +1,47 @@
+@import "../../assets/scss/constant";
+
+
+// puzzles footer menu styles
+.dots-puzzle-resolver_menu__footer {
+    //position: relative;
+    display: flex;
+    justify-content: space-between;
+    max-width: 400px;
+    padding: 0 10px;
+    width: 90vw;
+    margin: 0 auto;
+    box-sizing: border-box;
+    &.system {
+        justify-content: flex-end;
+    }
+    .dots-puzzle_menu__btn, .mode-switcher-ntn{
+        color: $border-color;
+        margin: 10px;
+        width: 2.4rem;
+        height: 2.4rem;
+        font-size: 1.1rem;
+        font-weight: 500;
+
+        &:hover {
+            color: gold;
+        }
+    }
+    .dots-puzzle_menu__btn:last-of-type:not(.close-btn) {
+        margin-right: 15px;
+    }
+}
+
+@keyframes next {
+    0% {
+        color: lighten(blue, 40%);
+        //box-shadow: 0 0 2px 2px lighten(blue, 40%);
+    }
+    50% {
+        color: aliceblue;
+        //box-shadow: 0 0 2px 2px lighten(blue, 30%);
+    }
+    100% {
+        color: lighten(blue, 40%);
+        //box-shadow: 0 0 2px 2px lighten(blue, 40%);
+    }
+}

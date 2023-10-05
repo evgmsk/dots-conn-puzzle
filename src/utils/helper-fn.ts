@@ -60,6 +60,9 @@ export const loopLimit = (lim = 100) => {
     }
 }
 
+export const square = (a: string) =>
+    a.split('x').reduce((acc, j) => acc * parseInt(j), 1)
+
 export const isEqualArrays = (arr1: SA, arr2: SA) => {
     if (arr1.length !== arr2.length) return false
     for (let i = 0; i < arr1.length; i++) {
@@ -68,7 +71,7 @@ export const isEqualArrays = (arr1: SA, arr2: SA) => {
     return true
 }
 
-export const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
+export const getCoordinates = (e: React.MouseEvent | React.TouchEvent | Partial<React.MouseEvent>) => {
     const { clientY, clientX } =
         e.type === 'touchmove'
             ? (e as React.TouchEvent).changedTouches['0']
@@ -79,6 +82,31 @@ export const getCoordinates = (e: React.MouseEvent | React.TouchEvent) => {
 export function getPuzzlesFromStorage() {
     return JSON.parse(localStorage.getItem(LSPuzzles) || '[]')
 }
+
+export const isContainClass = (e: Element, className: string) => e.classList.contains(className)
+
+export const getYearMonthDay = (date: Date) => {
+    return `${date.getMonth() + 1}/${date.getDate()}/${date.getFullYear().toString().slice(2)}`
+}
+
+export const haveCommonPoint = (line1: SA, line2: SA) => {
+    const map = {} as {[k: string]: number}
+    for (const point of line1) {
+        if (map[point]) {
+            return true
+        }
+        map[point] = 1
+    }
+    for (const point of line2) {
+        if (map[point]) {
+            return true
+        }
+        map[point] = 1
+    }
+    return false
+}
+
+export const getFullD = (d:number) => d < 10 ? '0' + d : d
 
 export const getPColor = (n: number) => {
     const ind = n % LineColors.slice(1).length

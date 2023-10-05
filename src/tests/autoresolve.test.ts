@@ -1896,7 +1896,6 @@ describe('test autotresolve', function () {
             [color],
             ['0-5', '1-5', '2-5', '2-4'],
             {paths: []},
-            {},
             key
         )
         // expect(res).toBe(1)
@@ -2505,7 +2504,7 @@ describe('test autotresolve', function () {
         rect.preparePuzzleEvaluation()
         rect.evaluatePuzzle()
         rect.prepareToResolve()
-        expect(rect.findPath('2-5', '3-4', LineColors.slice(10, 11), '2-5_3-4'))
+        expect(rect.findPath('2-5', '3-4', LineColors.slice(10, 11), '2-5_3-4').line)
             .toEqual(['2-5', '2-4', '3-4'])
     })
     test('th', () => {
@@ -2544,7 +2543,7 @@ describe('test autotresolve', function () {
             }
         })
 
-        expect(rect.findPath('1-3', '0-4', LineColors.slice(5,6), '1-3_0-4'))
+        expect(rect.findPath('1-3', '0-4', LineColors.slice(5,6), '1-3_0-4').line)
             .toEqual(["1-3", "1-4", "0-4"])
     })
     test('circle path', () => {
@@ -2649,7 +2648,7 @@ describe('test autotresolve', function () {
         const validRePath = rect.validateRePath(['1-1', '2-1', '2-0', '3-0'], ['1-4'], LineColors.slice(3,4), ['1-1', '2-1', '3-1', '3-0'])
         expect(validRePath).toEqual(false)
         expect(rect.validateRePath(['3-4', '3-5', '4-5'], ['1-3'], LineColors.slice(5,6), ['3-4', '3-5'])).toEqual(false)
-        expect(path1).toEqual(path2.reverse())
+        expect(path1.line).toEqual(path2.line.reverse())
         console.error( path2)
         console.error( path1)
         const valPath1 = rect.validatePath(['1-1', '0-1'], ['1-4'], LineColors.slice(3,4), '1-1_1-4')

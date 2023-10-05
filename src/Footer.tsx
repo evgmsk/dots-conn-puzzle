@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import { modeService } from "./app-services/mode-service";
 import {ManagerMenu} from "./puzzle-components/creator-components/CreationPuzzleMenu";
-import {FooterMenu} from "./puzzle-components/resolver-components/ResolverMenuPanels";
+import {FooterMenu} from "./puzzle-components/puzzles/PuzzlesMenuFooterPanels";
 
 
 

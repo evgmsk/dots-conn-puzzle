@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react'
 
 import { Puzzle } from '../rect/Rect'
 import {IPuzzle, ITPoints, SA} from '../../constant/interfaces'
-import { PuzzleSelector } from '../PuzzlesMenu'
+import { PuzzleSelector } from '../puzzles/PuzzlesMenu'
 
 import { PuzzleResolver as PR } from '../../puzzle-engine/rect-resolver'
 

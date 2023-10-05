@@ -2,13 +2,13 @@ import {Admin, LSPuzzles, LSUserPuzzles, OneDay, StartDate} from "../constant/co
 
 import {
     getPuzzlesFromStorage,
-    getUserPuzzlesFromStorage, getUTCDate, isDev,
+    getUserPuzzlesFromStorage, getUTCDate
     // isDev,
 } from "../utils/helper-fn";
 
 import {authService} from './auth-service'
 
-import {IPuzzle} from "../constant/interfaces";
+import {IPuzzle, IQueryOption, IQueryOptions} from "../constant/interfaces";
 import {Observable} from "./observable";
 import {addsService} from "./adds-service";
 import {PuzzleResolver} from "../puzzle-engine/rect-resolver";
@@ -21,24 +21,30 @@ export class PuzzlesManager {
     options = {method: 'GET'} as {[k:string]: any}
     unresolvedPuzzle = null as unknown as IPuzzle
     resolveCreated = false
-    queryOptions = {
+    queryOptions: IQueryOptions = {
         createdAt: {
             date: StartDate,
-            after: true},
-        rating: {value: 0, over: true},
-        numberOfGrades: {value: 0, over: true},
-        square: {value: 9, from: true},
+            andAfter: true},
+        rating: {value: 0, andAbove: true},
+        grades: {value: 0, andAbove: true},
+        size: {value: 12, size: '3x4'},
         difficulty: {
-            level: authService.user.role === Admin ? 0 :authService.user.level || 0,
-            over: true
+            value: authService.user.role === Admin ? 0 :authService.user.level || 0,
+            andAbove: true
         },
-        followed: true
+        authors: {
+            followed: authService.user.followed || [],
+            blocked: authService.user.blocked || []
+        }
     }
     graded = true
     requestingSystem = false
     lastRequest = Date.now() - OneDay
     resolver = {} as PuzzleResolver
+    filters = false
 
+    $queryOptions = new Observable<IQueryOptions>(this.queryOptions)
+    $filters = new Observable<boolean>(this.filters)
     $requestSystem = new Observable<boolean>(this.requestingSystem)
     $puzzles = new Observable<IPuzzle[]>(this.puzzles)
     $unresolved = new Observable<IPuzzle>(this.unresolvedPuzzle)
@@ -59,6 +65,16 @@ export class PuzzlesManager {
         this.checkIfPuzzlesUpToDate()
     }
 
+    setFilters = () => {
+        this.filters = !this.filters
+        this.$filters.emit(this.filters)
+    }
+
+    updateQueryOptions = (options: Partial<IQueryOptions>) => {
+        this.queryOptions = {...this.queryOptions, ...options}
+        this.$queryOptions.emit(this.queryOptions)
+    }
+
     setResolver = (resolver: PuzzleResolver) => {
         this.resolver = resolver
     }
@@ -77,6 +93,9 @@ export class PuzzlesManager {
 
     setRequestSystem = (sys: boolean) => {
         this.requestingSystem = sys
+        if (puzzlesManager.filters) {
+            puzzlesManager.setFilters()
+        }
         this.$requestSystem.emit(this.requestingSystem)
     }
 
@@ -89,12 +108,12 @@ export class PuzzlesManager {
         this.$graded.emit(this.graded)
     }
 
-    setDifficultyOption = (diff: number) => {
-        this.queryOptions.difficulty.level = diff
+    setDifficultyOption = (data: IQueryOption) => {
+        this.queryOptions.difficulty = data
     }
 
     setDiffLowerLimit = (lim: boolean) => {
-        this.queryOptions.difficulty.over = lim
+        this.queryOptions.difficulty.andAbove = lim
     }
 
     handleSavePuzzle = async (puzzle = this.unresolvedPuzzle, puzzles = [] as IPuzzle[]) => {
@@ -124,34 +143,35 @@ export class PuzzlesManager {
     }
 
     getDiffQuery = (admin = authService.user.role === Admin) => {
-        const {level, over} = this.queryOptions.difficulty
-        return over ? `?difficulty=${level}` : `?difficulty=${[0, level]}`
+        if (admin) {
+            return '?difficulty=0'
+        }
+        const {value, andAbove} = this.queryOptions.difficulty
+        return andAbove ? `?difficulty=${value}` : `?difficulty=${[0, value]}`
     }
 
     getDateQuery = () => {
-        const {date, after} = this.queryOptions.createdAt
-        return after ? `&createdAt=${date}` : `&createdAt=${[StartDate, date]}`
+        const {date, andAfter} = this.queryOptions.createdAt
+        return andAfter ? `&createdAt=${date}` : `&createdAt=${[StartDate, date]}`
     }
 
     getRatingQuery = () => {
-        const {value, over} = this.queryOptions.rating
-        return over ? `&rating=${value}` : `&rating=${[0, value]}`
+        const {value, andAbove} = this.queryOptions.rating
+        return andAbove ? `&rating=${value}` : `&rating=${[0, value]}`
     }
 
     getGradesQuery = () => {
-        const {value, over} = this.queryOptions.numberOfGrades
-        return over ? `&grade=${value}` : `&grade=${[0, value]}`
+        const {value, andAbove} = this.queryOptions.grades
+        return andAbove ? `&grade=${value}` : `&grade=${[0, value]}`
     }
 
     getUserQuery = () => {
-        const {followed} = this.queryOptions
-        const followedUsers = authService.user.followed
-        const blockedUsers = authService.user.blocked
-        if (followed && followedUsers?.length) {
-            return `&createdBy=${['$in', ...followedUsers]}`
+        const {authors: {followed, blocked}} = this.queryOptions
+        if (followed && followed?.length) {
+            return `&createdBy=${['$in', ...followed]}`
         }
-        if (!followed && blockedUsers?.length) {
-            return `&createdBy=${['$nin', ...blockedUsers]}`
+        if (!followed && blocked?.length) {
+            return `&createdBy=${['$nin', ...blocked]}`
         }
         return ''
     }
@@ -191,12 +211,14 @@ export class PuzzlesManager {
             localStorage.setItem(LSPuzzles, JSON.stringify(puzzles))
             this.puzzles = puzzles
         }
+        console.log('puzzles', this.puzzles)
         this.$puzzles.emit(this.puzzles)
     }
 
     saveCustomPuzzles = (puzzles: IPuzzle[]) => {
         this.customPuzzles = this.customPuzzles.concat(puzzles)
         localStorage.setItem(LSUserPuzzles, JSON.stringify(this.customPuzzles.slice(-40)))
+        console.log('custom puzzles', this.customPuzzles, puzzles)
         this.$customPuzzles.emit(this.customPuzzles)
     }
 

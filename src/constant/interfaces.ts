@@ -137,7 +137,7 @@ export interface IPathSelect {
     pathToCheck: IPath,
     blockedPaths?: IPath[]
     freePaths?: IPath[]
-    lineRemoved?: boolean
+    lineRemoved?: string
 }
 
 export interface IPCheck {
@@ -206,19 +206,43 @@ export interface ICollision {
     sameLine?: SA
 }
 
+export interface IDate {
+    date: Date | number
+    andAfter?: boolean
+    andBefore?: boolean
+}
+
+export interface IQueryOption {
+    value: number,
+    andAbove?: boolean
+    andUnder?: boolean
+}
+
+export interface IAuthors {
+    followed: SA
+    blocked: SA
+    followedOnly?: boolean
+    excludeBlocked?: boolean
+}
+
+export interface IScrollData {
+    rate: number, slider: number, bar: number, play: number
+}
+
+export interface IQueryOptions {
+    createdAt: IDate
+    rating: IQueryOption
+    grades: IQueryOption
+    size: IQueryOption & {size: string}
+    authors: IAuthors
+    difficulty: IQueryOption
+}
+
 export interface IScrollBar {
     container: HTMLElement
-    numberOfRows?: number
+    steps: number
+    data: IScrollData
     currentScroll?: number
     orientation?: number
     behavior?: ScrollBehavior
 }
-
-// export interface IScroll {
-//     container: HTMLElement | string
-//     progressBar: HTMLElement | string
-//     slider: HTMLElement | string
-//     numberOfRows: number
-//     currentScroll: number
-//     orientation: number
-// }

@@ -8,6 +8,7 @@ import { ConfirmAdmin } from "./confirm-admin/ConfirmAdmin";
 import { isDev } from "./utils/helper-fn";
 import { modeService } from "./app-services/mode-service";
 import { authService } from "./app-services/auth-service";
+import {appService} from "./app-services/app-service";
 
 import './App.scss';
 import {Admin} from "./constant/constants";
@@ -19,7 +20,7 @@ function App() {
     const [gameMode, setGameMode] = useState(modeService.mode)
     const [admin, setAdmin] = useState(window.location.href.includes(Admin))
     const [user, setUser] = useState(authService.user)
-
+    // console.log(navigator, navigator.userAgent, window.outerWidth, window.innerWidth)
     useEffect(() => {
         const unsubUser = authService.$user.subscribe(setUser)
         const unsubMode = modeService.$mode.subscribe(setGameMode)
@@ -59,10 +60,13 @@ function App() {
     return (
         <div className={appClass}>
             <Header />
-            {gameMode === 'create'
-                ? <PuzzleCreator />
-                : <PuzzleWrapper />
-            }
+            <main className={'main'}>
+                {gameMode === 'create'
+                    ? <PuzzleCreator />
+                    : <PuzzleWrapper />
+                }
+            </main>
+
             <Footer />
         </div>
     );

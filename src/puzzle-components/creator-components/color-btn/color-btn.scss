@@ -2,11 +2,12 @@
 
 .colors-wrapper {
     display: flex;
+    min-width: 320px;
 }
 
 .btn_color {
-    width: 1.6rem;
-    height: 1.6rem;
+    width: 1.5rem;
+    height: 1.5rem;
     margin: .2rem;
     border-radius: 40px;
     //border: 2px solid transparent;
@@ -17,6 +18,10 @@
     @media screen and (max-width: 399px){
         width: 1.4rem;
         height: 1.4rem;
+    }
+    @media screen and (max-width: 360px){
+        width: 1.2rem;
+        height: 1.2rem;
     }
     @each $name, $color  in $colors {
         &.btn-#{$name} {

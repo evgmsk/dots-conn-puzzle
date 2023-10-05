@@ -409,7 +409,7 @@ export class PuzzleCommons extends LinedRectBase {
     }
 
     updateCrossLineRemovingFork = (color: string, point: string, pointProps: ITakenPProps) => {
-        const {crossLine, connections, endpoint, joinPoint} = pointProps
+        const {crossLine, connections, endpoint, joinPoint, lineEndpoints} = pointProps
         console.warn('update, crossline point', color, point, pointProps)
         if (!pointProps.connections) {
             console.error('invalid props to update crossLine', pointProps, color)
@@ -421,7 +421,7 @@ export class PuzzleCommons extends LinedRectBase {
                 connections[dir] = {color: DefaultColor}
             }
         }
-        this.addTakenPoints({[point]: {endpoint, joinPoint, crossLine, connections}})
+        this.addTakenPoints({[point]: {endpoint, joinPoint, crossLine, connections, lineEndpoints}})
     }
 
     updateLineStart = (

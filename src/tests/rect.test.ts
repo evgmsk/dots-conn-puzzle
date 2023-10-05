@@ -119,7 +119,7 @@ describe('test rect common methods', () => {
             },
         }
         expect(rect.findPathResolver('1-1', '1-2', [DefaultColor])).toEqual([])
-        expect(rect.findPath('1-1', '1-2', [DefaultColor], 'test')).toEqual([])
+        expect(rect.findPath('1-1', '1-2', [DefaultColor], 'test').line).toEqual([])
         rect.clearAll()
         rect.addTakenPoints(points)
         expect(rect.findPathResolver('1-1', '1-2', LineColors.slice(2,3))).toEqual([])

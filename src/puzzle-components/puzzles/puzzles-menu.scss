@@ -1,0 +1,254 @@
+@import "../../assets/scss/constant";
+
+//puzzles filters styles
+.puzzle-filters_container {
+    position: absolute;
+    bottom: 60px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 100000;
+    width: 80vw;
+    min-width: 350px;
+    max-width: 400px;
+    //height: 320px;
+    background-color: lighten($base-dark, 5%);
+    padding: 1rem 1rem 1.2rem 1rem;
+    box-sizing: border-box;
+    opacity: 0;
+    border-radius: 2px;
+    //box-shadow: 0 0 3px 3px lightblue;
+    //margin-bottom: 10px;
+    .apply-btn {
+        display: block;
+        margin: 0 auto;
+        background-color: lighten(#252324, 10%);
+        color: $border-color;
+        border: none;
+        border-radius: 4px;
+        font-size: 1.2rem;
+        font-weight: 500;
+        padding: 10px 25px;
+        &:hover, &:focus {
+            color: gold;
+        }
+    }
+    .close-btn {
+        position: absolute;
+        right: -5px;
+        top: -5px;
+        margin: 0;
+        color: $border-color;
+        font-size: 1.2rem;
+        &:hover, &:focus {
+            color: gold;
+        }
+    }
+    .puzzle-filters_title {
+        font-size: 1.2rem;
+        color: $border-color;
+        margin-bottom: 15px;
+    }
+    &.show-up {
+        opacity: 1;
+        transition: all .3s;
+    }
+    .size-setter {
+        transform: rotate(90deg) scale(1.2);
+    }
+    .puzzle-filters-wrapper {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 15px 0;
+        //&.size-filter, &.date-filter, &.rating-filter {
+        &.authors-filter {
+            background-color: lighten($base-dark, 10%);
+            padding: .5rem .4rem;
+            border-radius: 4px;
+            label {
+                font-size: .9rem;
+            }
+        }
+        .options-wrapper {
+            color: $border-color;
+            font-size: 1.1rem;
+            padding: .37rem .6rem .37rem 0;
+            box-sizing: border-box;
+            border: none;
+            max-width: 49%;
+            width: 49%;
+            border-radius: 4px;
+            cursor: pointer;
+            background-color: lighten($bg-main, 27%);
+            text-align: right;
+            &:hover, &:focus {
+                color: gold;
+            }
+            &:last-of-type {
+
+            }
+        }
+        .dots-input__size {
+            justify-content: flex-start;
+            width: auto;
+            margin-right: 10px;
+
+            &-value {
+                text-align: left;
+                color: $border-color;
+                width: auto;
+            }
+        }
+        //}
+
+        &.date-filter {
+            input[type='date'] {
+                border: 2px solid $border-color;
+                border-radius: 4px;
+                color: $border-color;
+                background-color: lighten($base-dark, 10%);
+                padding: 3px 5px;
+                outline: none;
+                height: 1.35rem;
+                width: 6.5rem;
+            }
+
+            //::-webkit-datetime-edit-text,
+            ::-webkit-calendar-picker-indicator {
+                background-color: $border-color;
+            }
+        }
+
+        label {
+            display: inline-block;
+            color: $border-color;
+            height: 1.2rem;
+            line-height: 1.2rem;
+            font-size: 1rem;
+            padding: 0 9px;
+        }
+
+        .date-picker-wrapper {
+            width: 49%;
+            margin-right: 10px;
+            label {
+                padding: 0 9px 0 0;
+            }
+        }
+    }
+}
+
+.animated_puzzles {
+    display: flex;
+    height: 80vh;
+    align-items: flex-start;
+    &.filter-open {
+        align-items: flex-start;
+    }
+}
+
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    input[type="checkbox"] {
+        appearance: none;
+        margin: 0;
+        font-size: 1.2rem;
+        //box-shadow: 0 0 2px 2px lightblue;
+        background-color: lighten($base-dark, 3%);
+        width: 1.2rem;
+        height: 1.2rem;
+        border-radius: 4px;
+        &:checked {
+            position: relative;
+            &:before {
+                content: '';
+                position: absolute;
+                top: .2rem;
+                left: .2rem;
+                width: .9rem;
+                height: .9rem;
+                clip-path: polygon(14% 44%, 0 65%, 50% 80%, 80% 16%, 70% 0%, 43% 62%);
+                background-color: $border-color
+            }
+        }
+    }
+}
+
+.puzzles-container {
+    position: relative;
+    top: 0;
+    width: 90%;
+    border-radius: 3px;
+    padding: 2.8rem 1rem 1rem;
+    background-color: $base-dark;
+    //max-width: 400px;
+    min-width: 350px;
+    box-sizing: border-box;
+    transition: all .3s;
+    //height: 100%;
+    .puzzles-name {
+        position: absolute;
+        top: 10px;
+        left: 50%;
+        transform: translateX(-50%);
+        color: darken(#e3e0d1, 10%);
+        font-weight: 500;
+        font-size: 1.3rem;
+    }
+    &_puzzle-box {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr);
+        min-height: 350px;
+        max-height: 400px;
+        max-width: 400px;
+        overflow: hidden;
+    }
+    //height: 60vw;
+    .dots-puzzle_menu__btn {
+        position: absolute;
+        right: 0;
+        top: 0;
+        margin: unset;
+
+        &.puzzle-filters-menu {
+            left: 0;
+        }
+    }
+    //&.filter-open {
+    //    transform: translateY(325px);
+    //}
+    .animated-component {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        align-self: stretch;
+        justify-self: stretch;
+        height: 68px;
+    }
+    .puzzle-btn {
+        @extend #main-btn;
+        width: 50px;
+        height: 50px;
+        padding: unset;
+        border-radius: 50%;
+        font-family: Roboto, sans-serif;
+        font-size: 1.2rem;
+        font-weight: 400;
+        opacity: 1;
+        border: 3px solid transparent;
+        margin: 0;
+        &.cur-level {
+            opacity: 1;
+        }
+        @each $name, $col in $colors {
+            &.col-#{$name} {
+                border-color: $col;
+                color: $col;
+                &:hover, &:focus {
+                    box-shadow: 0 0 2px 2px $col;
+                }
+            }
+        }
+    }
+}
