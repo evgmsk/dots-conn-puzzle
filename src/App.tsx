@@ -14,6 +14,7 @@ import './App.scss';
 import {Admin} from "./constant/constants";
 import Header from "./Header";
 import Footer from "./Footer";
+import {Error} from "./puzzle-components/error/error";
 
 
 function App() {
@@ -55,11 +56,12 @@ function App() {
     if (admin && user.role !== Admin) {
         return <ConfirmAdmin cb={confirmAdminHandler} />
     }
-    console.log(gameMode)
+    console.log(gameMode,[{dist: 0}].sort((a, b) => a.dist - b.dist))
     const appClass = `app app-${gameMode} no-select`
     return (
         <div className={appClass}>
             <Header />
+            <Error />
             <main className={'main'}>
                 {gameMode === 'create'
                     ? <PuzzleCreator />

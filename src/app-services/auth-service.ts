@@ -22,7 +22,7 @@ export class AuthService {
         await this.makeFetch(this.adminTokenUrl, options).then(res => {
             const {resData, error} = res
             console.log(resData)
-            if (resData.user) {
+            if (resData?.user) {
                 this.setToken(resData.token)
                 this.setUser(resData.user)
             }

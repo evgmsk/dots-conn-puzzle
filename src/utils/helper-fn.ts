@@ -64,7 +64,6 @@ export const square = (a: string) =>
     a.split('x').reduce((acc, j) => acc * parseInt(j), 1)
 
 export const isEqualArrays = (arr1: SA, arr2: SA) => {
-    if (arr1.length !== arr2.length) return false
     for (let i = 0; i < arr1.length; i++) {
         if (arr1[i] !== arr2[i]) return false
     }
@@ -91,13 +90,13 @@ export const getYearMonthDay = (date: Date) => {
 
 export const haveCommonPoint = (line1: SA, line2: SA) => {
     const map = {} as {[k: string]: number}
-    for (const point of line1) {
+    for (const point of line1.slice(0, -1)) {
         if (map[point]) {
             return true
         }
         map[point] = 1
     }
-    for (const point of line2) {
+    for (const point of line2.slice(0, -1)) {
         if (map[point]) {
             return true
         }
@@ -155,19 +154,20 @@ export const oppositeDirection = (dir: LineDirections) => {
     } 
 }
 
-export const copyObj = (obj: {[key: string]: any}): {[key: string]: any} => {
+export const copyObj = (obj: any): any => {
     if (typeof obj !== 'object') return obj
-    const copy = Array.isArray(obj) ? [] as any[] : {} as {[key: string]: any}
-    for (const prop in obj) {
-        const value = copyObj(obj[prop]) as any
-        if (typeof value === 'object') {
-            copy[prop] = Object.assign((Array.isArray(value) ? [] : {}), value)
-        } else {
-            copy[prop] = value
-        }
-    }
-    return copy
+    // const copy = Array.isArray(obj) ? [] as any[] : {} as {[key: string]: any}
+    // for (const prop in obj) {
+    //     const value = obj[prop]
+    //     if (typeof value === 'object') {
+    //         copy[prop] = copyObj(value)
+    //     } else {
+    //         return  Array.isArray(obj) ? obj.slice() : Object.assign({}, obj)
+    //     }
+    // }
+    return JSON.parse(JSON.stringify(obj))
 }
+
 
 export const getUTCDate = (date = new Date()) => {
     return Date.UTC(

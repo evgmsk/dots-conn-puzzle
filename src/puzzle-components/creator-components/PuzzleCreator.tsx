@@ -4,7 +4,7 @@ import { Puzzle } from '../rect/Rect'
 import { PuzzleResolver } from '../resolver-components/PuzzleResolver'
 import { ICollision, IPuzzle, ITakenPProps, ITPoints } from '../../constant/interfaces'
 
-import { CreationPuzzleMenu } from './CreationPuzzleMenu'
+import { PuzzleColorsMenu } from './PuzzleCreatorMenu'
 
 import { pC } from '../../puzzle-engine/rect-creator'
 import { CreationConfirmModal } from '../../modals/creator-modals/CreationConfirmModal'
@@ -13,6 +13,7 @@ import { puzzlesManager } from "../../app-services/puzzles-manager";
 import { shadowState } from "../../app-services/finger-shadow-state";
 import {ShowUP} from "../../app-components/ShowUp";
 import {LSUserCreatedPuzzle} from "../../constant/constants";
+import {ResolveSpinner} from "../../app-components/ResolveSpinner";
 
 
 export interface IConfirm {
@@ -29,12 +30,15 @@ const PuzzleCreator: React.FC = () => {
     const [points, setPoints] = useState({} as ITPoints)
     const [mouseDown, setMouseDown] = useState('')
     const [resolverView, setResolverView] = useState(false)
+    const [autoResolving, setAutoResolving] = useState(pC.autoResolving)
+
     useEffect(() => {
         const unsubWidth = pC.$width.subscribe(setWidth)
         const unsubHeight = pC.$height.subscribe(setHeight)
         const unsubColor = shadowState.$color.subscribe(setColor)
         const unsubPoints = pC.$points.subscribe(setPoints)
-        const unsubResCreated = puzzlesManager.$resolveCreated.subscribe(setResolverView)
+        const unsubResCreated = puzzlesManager.$switchResolverView.subscribe(setResolverView)
+        const unsubRes = pC.$autoResolving.subscribe(setAutoResolving)
         const {steps, width, height} = JSON.parse(localStorage.getItem(LSUserCreatedPuzzle) || '{}')
         if (steps) {
             pC.setDimension({height, width})
@@ -49,6 +53,7 @@ const PuzzleCreator: React.FC = () => {
             unsubHeight()
             unsubPoints()
             unsubResCreated()
+            unsubRes()
             clearAll()
         }
     },[])
@@ -114,7 +119,7 @@ const PuzzleCreator: React.FC = () => {
         if ((interfere && !interfere.joinPoint) || colors.length > 1) return
         const oldColor = colors[0]
         pC.changeLineColor(key, newColor, oldColor)
-        console.warn('change color', key, newColor, oldColor)
+        console.warn('change color', key, newColor, oldColor, pC.takenPoints)
     }
 
     const handleMouseEnter = (nextPoint: string, prev: string) => {
@@ -218,11 +223,10 @@ const PuzzleCreator: React.FC = () => {
         changeHeight,
     }
 
-    // console.log(resolverView)
+    // console.log('auto resolve', resolverView, autoResolving)
     return (
         <ShowUP className='dots-conn-puzzle_creator'>
-        {/*<div >*/}
-            <CreationPuzzleMenu
+            <PuzzleColorsMenu
                 handlers={customPuzzleMenuHandlers}
                 color={color}
                 width={width}
@@ -244,6 +248,7 @@ const PuzzleCreator: React.FC = () => {
                 handler={confirmationHandler}
                 question={confirm.question}
             />
+            {/*{autoResolving ? <ResolveSpinner /> : null}*/}
         </ShowUP>
     )
 }

@@ -1,6 +1,6 @@
 
 import {RectCreator} from '../puzzle-engine/rect-creator'
-import {defaultConnectionsWithColor} from '../utils/helper-fn'
+import {defaultConnectionsWithColor, haveCommonPoint, isEqualArrays} from '../utils/helper-fn'
 import {DefaultColor, LineColors} from "../constant/constants";
 
 describe('test rect common methods', () => {
@@ -119,7 +119,8 @@ describe('test rect common methods', () => {
             },
         }
         expect(rect.findPathResolver('1-1', '1-2', [DefaultColor])).toEqual([])
-        expect(rect.findPath('1-1', '1-2', [DefaultColor], 'test').line).toEqual([])
+        rect.key = 'test'
+        expect(rect.findPath('1-1', '1-2', [DefaultColor]).line).toEqual([])
         rect.clearAll()
         rect.addTakenPoints(points)
         expect(rect.findPathResolver('1-1', '1-2', LineColors.slice(2,3))).toEqual([])
@@ -382,4 +383,124 @@ describe('test rect common methods', () => {
         expect(rect.getPointMeddling('1-3', '')).toEqual(2)
         expect(rect.getPointMeddling('0-0', '')).toEqual(0)
     })
+    test('equal fn', () => {
+        const a = [
+            "5-7",
+            "5-8",
+            "5-9",
+            "5-10",
+            "5-11",
+            "6-11",
+            "7-11",
+            "8-11",
+            "9-11",
+            "9-10",
+            "9-9",
+            "9-8",
+            "9-7",
+            "9-6",
+            "9-5",
+            "9-4",
+            "9-3",
+            "9-2",
+            "9-1",
+            "9-0",
+            "8-0",
+            "7-0",
+            "6-0",
+            "5-0",
+            "4-0",
+            "3-0",
+            "2-0",
+            "1-0",
+            "0-0",
+            "0-1",
+            "0-2",
+            "0-3",
+            "1-3"
+        ]
+        const b = [
+            "5-7",
+            "5-8",
+            "5-9",
+            "5-10",
+            "5-11",
+            "6-11",
+            "7-11",
+            "8-11",
+            "9-11",
+            "9-10",
+            "9-9",
+            "9-8",
+            "9-7",
+            "9-6",
+            "9-5",
+            "9-4",
+            "9-3",
+            "9-2",
+            "9-1",
+            "9-0",
+            "8-0",
+            "7-0",
+            "6-0",
+            "5-0",
+            "4-0",
+            "3-0",
+            "2-0",
+            "1-0",
+            "0-0",
+            "0-1",
+            "0-2",
+            "0-3",
+            "1-3"
+        ]
+        const q = [
+            "5-7",
+            "5-8",
+            "5-9",
+            "5-10",
+            "5-11",
+            "6-11",
+            "7-11",
+            "8-11",
+            "9-11",
+            "9-10",
+            "9-9",
+            "9-8",
+            "9-7",
+            "9-6",
+            "9-5",
+            "9-4",
+            "9-3",
+            "9-2",
+            "9-1",
+            "9-0",
+            "8-0",
+            "7-0",
+            "6-0",
+            "5-0",
+            "4-0",
+            "3-0",
+            "2-0",
+            "1-0",
+            "0-0",
+            "0-1",
+            "0-2",
+            "0-3",
+            "1-3"
+        ]
+        const s = [
+            "8-10",
+            "7-10",
+            "7-11",
+            "6-11",
+            "5-11",
+            "5-10",
+            "5-9",
+            "6-9"
+        ]
+        expect(isEqualArrays(a, b)).toBe(true)
+        expect(haveCommonPoint(q, s)).toBe(true)
+    })
 })
+

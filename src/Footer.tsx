@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import { modeService } from "./app-services/mode-service";
-import {ManagerMenu} from "./puzzle-components/creator-components/CreationPuzzleMenu";
+import {CreatorManagerMenu} from "./puzzle-components/creator-components/PuzzleCreatorMenu";
 import {FooterMenu} from "./puzzle-components/puzzles/PuzzlesMenuFooterPanels";
 
 
@@ -22,7 +22,7 @@ function Footer() {
 
     return (
         <footer className='footer'>
-            {gameMode === 'create' ? <ManagerMenu /> : <FooterMenu />}
+            {gameMode === 'create' ? <CreatorManagerMenu /> : <FooterMenu />}
         </footer>
     );
 }

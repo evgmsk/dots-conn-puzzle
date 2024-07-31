@@ -183,7 +183,7 @@ export class LinedRectBase implements ILinedRect {
             if (!lineNeighbors.length || (!prevPoint && lineNeighbors.length !== 1)) {
                 isDev() && console.error('invalid props because of two ways or no ways', color,
                     current, prevPoint, lineNeighbors, nextPoint,
-                    index, Object.keys(this.takenPoints), {...this.getPoint(current)})
+                    index, Object.keys(this.takenPoints), copyObj(this.getPoint(current)))
                 return ''
             }
             while(!stopFn(current, index)) {

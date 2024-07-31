@@ -161,6 +161,51 @@ main {
     }
 }
 
+.error-message {
+    &_wrapper {
+        position: absolute;
+        z-index: 1000000;
+        color: red;
+        font-size: 1.2rem;
+        line-height: 1.4;
+        padding: .5rem 1.5rem .5rem .8rem;
+        background-color: whitesmoke;
+        top: 3rem;
+    }
+    &_close-btn {
+        position: absolute;
+        font-size: inherit;
+        right: 3px;
+        top: 3px;
+        border: none;
+        color: red;
+        &:hover {
+            color: darken(red, 10%);
+        }
+    }
+}
+
+.resolver-spinner {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 300px;
+    height: 300px;
+    &:after {
+        content: " ";
+        display: block;
+        border-radius: 50%;
+        width: 0;
+        height: 0;
+        margin: 80px;
+        box-sizing: border-box;
+        border: 1.8rem solid lightblue;
+        border-color: lightblue transparent lightblue transparent;
+        animation: spinner 1.2s infinite;
+    }
+}
+
 @keyframes spinner {
     0% {
         transform: rotate(0);
@@ -174,3 +219,4 @@ main {
         transform: rotate(1800deg);
     }
 }
+

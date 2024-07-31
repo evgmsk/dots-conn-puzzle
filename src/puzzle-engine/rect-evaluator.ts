@@ -2,42 +2,32 @@ import {
     IEndpointsValue, IPath,
     ITPoints, SA,
 } from '../constant/interfaces'
-import { DefaultColor } from "../constant/constants";
+// import { DefaultColor } from "../constant/constants";
 import {
     copyObj,
     defaultConnectionsWithColor,
-    haveCommonPoint,
     isDev,
-    isEqualArrays,
+    isEqualArrays, loopLimit,
     // loopLimit
 } from "../utils/helper-fn";
 import { PathResolver } from "./path-resolver";
+import {puzzlesManager} from "../app-services/puzzles-manager";
+import {Observable} from "../app-services/observable";
 
 // import { isDev } from "../utils/helper-fn";
 
 export class PuzzleEvaluator extends PathResolver {
     linesInterfering = {} as {[key: string]: number}
-    lineError = ''
+    autoResolving = false
+    $autoResolving = new Observable<boolean>(this.autoResolving)
 
-    checkPoint = (point: string, TP = false) => {
-        const {endpoint, connections} = TP ? this.totalPoints[point] : this.getPoint(point)
-        const {crossLine, joinPoint} = endpoint
-            ? this.prepareEndpointForResolver({endpoint, connections}, TP)
-            : {crossLine: undefined, joinPoint: undefined}
-        const colors = this.getColors(connections)
-        const neighbors = this.getLineNeighbors(connections, '', TP)
-        if ((!(crossLine || joinPoint) && colors.length !== 1)
-            || (endpoint && !(crossLine || joinPoint) && neighbors.length !== 1)
-            || colors.includes(DefaultColor)
-            || (!joinPoint && colors.length > 2)
-        ) {
-            this.lineError = `${colors[0]} line broken`
-            return {}
-        }
-        return {endpoint, crossLine, colors, connections, joinPoint, neighbors}
+    setAutoResolving = (au = !this.autoResolving) => {
+        this.autoResolving = au
+        this.$autoResolving.emit(this.autoResolving)
     }
 
     preparePuzzleEvaluation = () => {
+        this.joinPointLines = {}
         console.warn('prepare evaluation', Object.keys(this.takenPoints))
         const passed = {} as {[key: string]: boolean}
         const lines = {} as {[key: string]: number}
@@ -54,11 +44,10 @@ export class PuzzleEvaluator extends PathResolver {
                     : neighbors
                 const line = this.getFullLineFromAnyPoint(point, color, lNs, false, false)
                 if (!line.length || line.length < 3) {
-                    this.lineError = `Line of ${color} color is too short. It has Less then 3 points`
+                    puzzlesManager.saveError(`Line of ${color} color is too short. It has Less then 3 points`)
                     return console.error(line)
                 }
-                this.convertLastToEndpoint(line[0])
-                this.convertLastToEndpoint(line[line.length - 1])
+                this.convertLastToEndpoint(line[0], line[line.length - 1])
                 line.forEach(p => { passed[p] = true })
                 if (endpoint && !crossLine) {
                     lineEndpoints.push((point === line[0] ? line[line.length - 1] : line[0]))
@@ -69,14 +58,13 @@ export class PuzzleEvaluator extends PathResolver {
                 }
                 if (this.addLineEndpoint(line, color)) {
                     if (lines[color] && lines[color] > 1) {
-                        this.lineError = `There are too many lines of ${color} color. Limit is 2`
-                        console.error(this.lineError, lines)
+                        puzzlesManager.saveError(`There are too many lines of ${color} color. Limit is 2`)
                         return false
                     }
                     lines[color] = 1
                 }
             }
-            if (endpoint) {
+            if (crossLine) {
                 this.addTakenPoints({
                     [point]: {
                         endpoint, connections, crossLine, joinPoint, lineEndpoints
@@ -116,7 +104,6 @@ export class PuzzleEvaluator extends PathResolver {
         const firstPointCoords = points[0].split('-').map(i => parseInt(i))
         const secondPointCoords = points[points.length - 1].split('-').map(i => parseInt(i))
         const pairKey = `${points[0]}_${points[points.length - 1]}`
-
         return {
             pairKey,
             coords1: firstPointCoords,
@@ -198,7 +185,6 @@ export class PuzzleEvaluator extends PathResolver {
         if (line[0] !== endPs[0] && line[0] !== endPs[1]) {
             console.error('invalid line key', line, key)
         }
-
         isDev() && console.log('found', line, color, key)
         const lineEndpoints = key.split('_')
         const lineToAdd = {} as ITPoints
@@ -208,7 +194,6 @@ export class PuzzleEvaluator extends PathResolver {
             const neighbors = !utmost
                 ?  [line[i -1 ], line[i + 1]]
                 : (i === 0 ? line.slice(1,2) : line.slice(-2, -1))
-
             const existedPoint = this.getPoint(point)
             const lineConnections = {
                 [this.determineDirection(point, neighbors[0])]: {
@@ -244,36 +229,39 @@ export class PuzzleEvaluator extends PathResolver {
     }
 
     handleAutoResolvePuzzle = () => {
+        if (this.autoResolving) return
         const lineKeys = this.prepareToResolve()
         console.warn('handle resolve', Object.keys(this.lineEndpoints), lineKeys)
         if (lineKeys.length) {
             this.linesOrder.length = 0
+            this.setAutoResolving(true)
             setTimeout(this.resolvePuzzle, 300, lineKeys)
         }
     }
 
-    findLine = (endPoints: any, key: string, crossLines = [] as SA):
+    findLine = (lineProps: any, key: string, crossLines = [] as SA):
         {line: SA, sRestPaths: IPath[], tRestPaths: IPath[]} => {
         this.pathCrossLines = crossLines
-        console.warn('while resolving puzzle',
-            endPoints, key, copyObj(this.altLinePaths),
-            [...this.fixedLines], [...this.linesOrder], copyObj(this.altLinePaths[key]))
+        this.key = key
+        console.warn('while resolving puzzle', key,
+            copyObj(this.altLinePaths), copyObj(this.lineEndpoints), Object.keys(this.takenPoints))
         this.forceRePath = false
-        const {line: points, color} = endPoints
+        const {line: points, color} = lineProps
         const [sP, tP] = [points[0], points[points.length - 1]]
-        let result = this.findPath(sP, tP, [color], key)
+        let result = this.findPath(sP, tP, [color])
         let isEqual = isEqualArrays(result.line, points)
-        if (result.line.length > points.length
-            && !this.forceRePath
-            && Object.keys(this.altLinePaths).length !== Object.keys(this.lineEndpoints).length - 1) {
-            // result.line = this.lineEndpoints[key].line
-            this.removeInterfered(this.lineEndpoints[key].line)
-            result = this.findPath(sP, tP, [color], key)
+        console.warn('line first result', copyObj(result), isEqual, points, this.forceRePath)
+        if (result.line.length >= points.length
+            && this.compareCommonLinesLength(result.line.length, key) > 0) {
+            this.removeAllInterfered(this.lineEndpoints[key].line.slice())
+            result = this.findPath(sP, tP, [color])
+            console.log('second seeking result', copyObj(this.altLinePaths), result)
             isEqual = isEqualArrays(result.line, points)
         }
-        if (result.line.length === points.length) {
-            result.line = this.lineEndpoints[key].line
-            !isEqual && this.removeInterfered(result.line)
+        if (result.line.length === points.length && !isEqual) {
+            result.line = this.lineEndpoints[key].line.slice()
+            console.log('set puzzle line', copyObj(this.altLinePaths), result)
+            this.removeAllInterfered(result.line)
             return result
         }
         if (result.line.length < 3
@@ -289,47 +277,61 @@ export class PuzzleEvaluator extends PathResolver {
         return result
     }
 
-    removeInterfered = (line: SA) => {
-        const linesToRemove = this.getInterferedLines(line)
-        linesToRemove.forEach(k => {
-            const lineProps = this.altLinePaths[k]
-            this.removeLinePart(lineProps.line, lineProps.color)
-            delete this.altLinePaths[k]
-        })
+    compareCommonLinesLength = (length: number, key: string) => {
+        let i = length, j = this.lineEndpoints[key].line.length
+        for (const k in this.altLinePaths) {
+            i += this.altLinePaths[k].line.length
+            j += this.lineEndpoints[k].line.length
+        }
+        return i - j
     }
 
-    resolvePuzzle = async (lineKeys: SA) => {
-        // const lim = loopLimit(50)
-        let lineToFind = this.getUnresolvedLine(lineKeys.slice(0))
-        while (lineToFind.key) {
-            const {endPoints, key, crossLines} = lineToFind
+    resolvePuzzle = (lineKeys: SA, switchOrder = false, SO = false): any => {
+        let searchOrder = SO
+        let lineToFind = this.getUnresolvedLine(lineKeys.slice(0), searchOrder)
+        const lim = loopLimit(300)
+        while (lineToFind.key && lim()) {
+            const {lineProps, key, crossLines} = lineToFind
             this.linesOrder.push(key)
-            const {line, sRestPaths, tRestPaths} = this.findLine(endPoints, key, crossLines)
+            const {line, sRestPaths, tRestPaths} = this.findLine(lineProps, key, crossLines)
             if (line.length) {
                 this.addFoundLine(line, this.lineEndpoints[key].color, key)
-                this.addAltLinePaths(line, this.lineEndpoints[key].color, sRestPaths, tRestPaths, key)
-            } else { return console.error('line not found', line, sRestPaths, tRestPaths) }
+                const color = this.lineEndpoints[key].color
+                this.altLinePaths[key] = {line, color, sRestPaths, tRestPaths}
+                console.log('alt line added', key , line , copyObj(this.altLinePaths))
+            } else { console.error('line not found', line, sRestPaths, tRestPaths); break }
             const extraLength = this.linesOrder.length > lineKeys.length
-            let lineToFix = [] as SA, linesPattern = [] as SA
+            let linesPattern = [] as SA
             if (extraLength) {
                 linesPattern = this.checkLinesCircle(this.linesOrder, key)
-                lineToFix = linesPattern.filter(l => l !== key && !this.fixedLines.includes(l))
-                console.error('check pattern', linesPattern,
-                    lineToFix, extraLength, key, {...this.altLinePaths})
+                if (linesPattern.length) {
+                    console.error('check pattern', linesPattern, key, copyObj(this.altLinePaths), this.linesOrder)
+                }
             }
-            console.log('loop', this.linesOrder, Object.keys(this.altLinePaths).length < lineKeys.length)
-            lineToFind = this.getUnresolvedLine(lineKeys.slice(0))
+            searchOrder = switchOrder ? !searchOrder : searchOrder
+            console.log('loop', this.linesOrder,
+                Object.keys(this.altLinePaths).length < lineKeys.length, searchOrder, switchOrder)
+            lineToFind = this.getUnresolvedLine(lineKeys.slice(0), searchOrder)
         }
-    }
-
-    getInterferedLines = (line: SA) => {
-        const linesToRemove = [] as SA
-        for (const key in this.altLinePaths) {
-            if (haveCommonPoint(line, this.altLinePaths[key].line)) {
-                linesToRemove.push(key)
+        const foundLines = Object.values(this.altLinePaths).map(l => l.line)
+        if (Object.keys(this.takenPoints).length === this.width * this.height) {
+            puzzlesManager.checkNewlyCreated(true)
+        } else {
+            if (foundLines.length === lineKeys.length && !foundLines.filter(l => !l.length).length) {
+                puzzlesManager.saveError('The puzzle has to many solutions. Please fix it and check again')
+            } else {
+                console.error('newly created puzzle unresolved and unchecked',
+                    copyObj(this.altLinePaths), switchOrder, SO)
+                this.altLinePaths = {}
+                this._takenPoints = {} as ITPoints
+                this.linesOrder.length = 0
+                if (!switchOrder) {
+                    this.setStartingPoints()
+                    return this.resolvePuzzle(lineKeys, true, false)
+                }
             }
         }
-        return linesToRemove
+        this.setAutoResolving(false)
     }
 
     prepareToResolve = () => {
@@ -355,36 +357,34 @@ export class PuzzleEvaluator extends PathResolver {
         return lineKeys
     }
 
-    checkPattern = (stInd: number, lines: SA): SA => {
-        const pattern = lines.slice(stInd)
-        const lineHead = lines.slice(0, stInd)
-        for (let lineInd = 1; lineInd < pattern.length; lineInd++) {
-            if (lineHead[lineHead.length - lineInd] !== pattern[pattern.length - lineInd]) {
-                return []
-            }
-        }
-        return pattern
-    }
 
     checkLinesCircle = (lines: SA, nextLine: string): SA => {
-        const length = lines.length
-        const previousIndex = lines.lastIndexOf(nextLine)
-        if (previousIndex > length / 2) {
-            const pattern = this.checkPattern(previousIndex, lines)
-            if (pattern.length) {
-                return pattern
+        const previousIndex = lines.slice(0, -1).lastIndexOf(nextLine)
+        if (previousIndex > 0) {
+            const pattern = lines.slice(previousIndex + 1)
+            const prevLine = lines.slice(previousIndex - pattern.length + 1, previousIndex + 1)
+            for (let lineInd = pattern.length - 1; lineInd >= 0; lineInd--) {
+                if (prevLine[lineInd] !== pattern[lineInd]) {
+                    return []
+                }
             }
+            return pattern
         }
         return []
     }
 
-    getUnresolvedLine = (sortedLines: SA) => {
-        for (const key of sortedLines) {
+    getUnresolvedLine = (sortedLines: SA, so = true) => {
+        const lines = so ? sortedLines : [...sortedLines].reverse()
+        console.warn('lines order', lines, sortedLines, so)
+        for (const key of lines) {
             if (!this.altLinePaths[key] || !this.altLinePaths[key].line.length) {
-                const crossLines = !this.altLinePaths[key]
-                    ? this.lineEndpoints[key].line.filter(p => this.getPoint(p)?.crossLine)
-                    : []
-                return {key, endPoints: this.lineEndpoints[key], crossLines}
+                const crossLines = this.lineEndpoints[key].line
+                    .filter(p => this.getPoint(p)?.crossLine
+                        && !this.altLinePaths[key]?.tRestPaths.filter(l => l.path.includes(p)).length
+                        && !this.altLinePaths[key]?.sRestPaths.filter(l => l.path.includes(p)).length
+                    )
+
+                return {key, lineProps: this.lineEndpoints[key], crossLines}
             }
         }
         return {}

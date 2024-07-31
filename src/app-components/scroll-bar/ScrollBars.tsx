@@ -214,6 +214,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
                 step={1}
                 min={0}
                 max={steps}
+                plus={false}
             />
             <div
                 className='progress-bar_wrapper'
@@ -234,6 +235,7 @@ export const ScrollBar: React.FC<IScrollBar> = React.memo((props: IScrollBar) =>
                 step={1}
                 min={0}
                 max={steps}
+                plus={false}
             />
         </div>
     )

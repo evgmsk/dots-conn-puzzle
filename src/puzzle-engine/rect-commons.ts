@@ -16,11 +16,13 @@ import {
     oppositeDirection
 } from "../utils/helper-fn";
 import { LinedRectBase } from "./rect-base";
+import {puzzlesManager} from "../app-services/puzzles-manager";
 
 
 export class PuzzleCommons extends LinedRectBase {
     lineStartPoint = ''
     lineEndpoints = {} as IEndpoints
+    joinPointLines: {[k: string]: SA} = {}
 
     getLineKey = (point1: string, point2: string) => {
         let key = (this.lineEndpoints[`${point1}_${point2}`] && `${point1}_${point2}`)
@@ -260,7 +262,7 @@ export class PuzzleCommons extends LinedRectBase {
     removeLinePart = (
         line: SA,
         color: string,
-        fn = this.updateCrossLineRemovingFork) => {
+    ) => {
         const points = this.takenPoints
         if (line.length === 1 && !points[line[0]]?.endpoint) {
             return this.removeLastOnePoint(line[0], color)
@@ -294,7 +296,7 @@ export class PuzzleCommons extends LinedRectBase {
                 this.deletePoint(point)
             } else if (crossLine || (joinPoint && !lastPoints)) {
                 // console.log('remove crossLine')
-                fn(color, point, pointProps)
+                this.updateCrossLineRemovingFork(color, point, pointProps)
             }
         }
         isDev() && console.warn('line has removed', line, color)
@@ -370,21 +372,21 @@ export class PuzzleCommons extends LinedRectBase {
             : Math.sqrt((ps1[0] - ps2[0]) * (ps1[0] - ps2[0]) + (ps1[1] - ps2[1]) * (ps1[1] - ps2[1]))
     }
 
-    getDistantWithMeddling = (point: string, target: string, key: string, diag = '1') => {
-        const dist = this.getDistantBetweenPoints(point, target, diag)
-        if (dist === 0) {
-            return 0
-        }
-        return this.getPointMeddling(point, key) / 100 + dist
-    }
+    // getDistantWithMeddling = (point: string, target: string, key: string, diag = '1') => {
+    //     const dist = this.getDistantBetweenPoints(point, target, diag)
+    //     if (dist === 0) {
+    //         return 0
+    //     }
+    //     return this.getPointMeddling(point, key) / 100 + dist
+    // }
 
-    getPointMeddling(point: string, _key: string, colors?: SA) {
+    getPointMeddling(point: string, _key: string) {
         const coords = this.rect[point].point
         let meddling = 0
-        let lines = 0
+        // let lines = 0
         for (const key in this.lineEndpoints) {
             if (_key === key) continue
-            lines++
+            // lines++
             const lineProps = this.lineEndpoints[key]
             const sortedX = [lineProps.coords1[0], lineProps.coords2[0]].sort()
             const sortedY = [lineProps.coords1[1], lineProps.coords2[1]].sort()
@@ -495,20 +497,45 @@ export class PuzzleCommons extends LinedRectBase {
             }
         }
         this.addTakenPoints({[last]: pointProps})
-        // extraNeighbor && this.removeLineFork(extraNeighbor, last, sectorColor)
     }
 
-    convertLastToEndpoint = (point: string) => {
-        const {endpoint, connections, crossLine, joinPoint} = this.getPoint(point)
-        if (!endpoint){
-            this.addTakenPoints({
-                [point]: {
-                    connections,
-                    joinPoint,
-                    crossLine,
-                    endpoint: true
-                }
-            })
+    checkPoint = (point: string, TP = false): ITakenPProps & {colors: SA, neighbors: SA} => {
+        const {endpoint, connections} = (TP ? this.totalPoints[point] : this.getPoint(point)) || {}
+        const {crossLine, joinPoint} = endpoint
+            ? this.prepareEndpointForResolver({endpoint, connections}, TP)
+            : {crossLine: undefined, joinPoint: undefined}
+        const colors = this.getColors(connections)
+        const neighbors = this.getLineNeighbors(connections, '', TP)
+        if ((!(crossLine || joinPoint) && colors.length !== 1)
+            || (endpoint && !(crossLine || joinPoint) && neighbors.length !== 1)
+            || colors.includes(DefaultColor)
+            || (!joinPoint && colors.length > 2)
+        ) {
+            puzzlesManager.saveError(`${colors[0]} line broken`)
+            return {connections, endpoint, colors, neighbors}
+        }
+        return {endpoint, crossLine, colors, connections, joinPoint, neighbors}
+    }
+
+    convertLastToEndpoint = (point1: string, point2: string) => {
+        // const key = point2 ? `${point1}_${point2}` : ''
+        const points = point2 ? [point1, point2] : [point1]
+        for (const point of points) {
+            const {endpoint, connections, crossLine, joinPoint} = this.checkPoint(point)
+            // if (joinPoint && key) {
+            //     this.joinPointLines[point] = this.joinPointLines[point] || []
+            //     this.joinPointLines[point].push(key)
+            // }
+            if (!endpoint){
+                this.addTakenPoints({
+                    [point]: {
+                        connections,
+                        crossLine,
+                        joinPoint,
+                        endpoint: true
+                    }
+                })
+            }
         }
     }
 

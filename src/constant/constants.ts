@@ -32,6 +32,8 @@ export const LineColors = [
     'rose',
 ]
 
+export const ErrorTiming = 10000
+
 export const Sizes = ['3x4', '4x5', '5x6', '5x7', '6x7', '6x8', '7x8', '7x9',
     '8x9', '8x10', '9x10', '9x11', '9x12', '10x11', '10x12', '10x13', '11x12',
     '11x13', '11x14', '12x13', '12x14', '12x15', '12x16', '13x14', '13x15', '13x16',

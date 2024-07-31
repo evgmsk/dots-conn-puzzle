@@ -7,10 +7,11 @@ import {
     IDLines, SA,
 } from "../constant/interfaces";
 
-import {defaultConnectionsWithColor, isDev, oppositeDirection} from "../utils/helper-fn";
+import {copyObj, defaultConnectionsWithColor, isDev, oppositeDirection} from "../utils/helper-fn";
 import {PuzzleEvaluator} from "./rect-evaluator";
 // import {puzzlesManager} from "../app-services/puzzles-manager";
 import {authService} from "../app-services/auth-service";
+import {puzzlesManager} from "../app-services/puzzles-manager";
 
 export class RectCreator extends PuzzleEvaluator {
     steps: ITPoints[] = [{}]
@@ -39,9 +40,9 @@ export class RectCreator extends PuzzleEvaluator {
         this.lines = {} as IDLines
         this.currentStep = 0
         this.puzzle = {} as IPuzzle
-        this.lineError = ''
         this.linesInterfering = {}
         this.lineEndpoints = {} as IEndpoints
+        puzzlesManager.saveError('')
     }
 
     updateSteps = () => {
@@ -82,15 +83,9 @@ export class RectCreator extends PuzzleEvaluator {
         const updatedPoints = {} as ITPoints
         for (const point of line) {
             const pointProps = this.getPoint(point)
-            const lineDirections = this.getLineDirections(pointProps.connections, oldColor)
-            const connections = {...pointProps.connections}
-            const colors = this.getColors(connections)
-            if (colors.length === 1) {
-                for (const dir in connections) {
-                    connections[dir].color = newColor
-                }
-            } else {
-                for (const dir of lineDirections) {
+            const connections = copyObj(pointProps.connections)
+            for (const dir in pointProps.connections) {
+                if (connections[dir].color === oldColor) {
                     connections[dir].color = newColor
                 }
             }
@@ -127,7 +122,7 @@ export class RectCreator extends PuzzleEvaluator {
             }
         }
         if (noFeeCell.sameColor === 1 && noFeeCell.freeCell === 0) {
-            this.convertLastToEndpoint(point)
+            this.convertLastToEndpoint(point, '')
             this.updateSteps()
             pointProps.endpoint = true
         }

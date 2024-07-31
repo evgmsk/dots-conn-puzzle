@@ -1,4 +1,4 @@
-import {Admin, LSPuzzles, LSUserPuzzles, OneDay, StartDate} from "../constant/constants";
+import {Admin, ErrorTiming, LSPuzzles, LSUserPuzzles, OneDay, StartDate} from "../constant/constants";
 
 import {
     getPuzzlesFromStorage,
@@ -20,7 +20,8 @@ export class PuzzlesManager {
     error = {} as {message: string}
     options = {method: 'GET'} as {[k:string]: any}
     unresolvedPuzzle = null as unknown as IPuzzle
-    resolveCreated = false
+    newlyCreatedChecked = false
+    switchResolverView = false
     queryOptions: IQueryOptions = {
         createdAt: {
             date: StartDate,
@@ -42,7 +43,7 @@ export class PuzzlesManager {
     lastRequest = Date.now() - OneDay
     resolver = {} as PuzzleResolver
     filters = false
-
+    timeout: NodeJS.Timeout | null = null
     $queryOptions = new Observable<IQueryOptions>(this.queryOptions)
     $filters = new Observable<boolean>(this.filters)
     $requestSystem = new Observable<boolean>(this.requestingSystem)
@@ -52,7 +53,8 @@ export class PuzzlesManager {
     $error = new Observable<{message: string}>(this.error)
     $customPuzzles = new Observable<IPuzzle[]>(this.customPuzzles)
     $graded = new Observable(this.graded)
-    $resolveCreated = new Observable(this.resolveCreated)
+    $switchResolverView = new Observable(this.switchResolverView)
+    $newlyCreatedChecked = new Observable(this.newlyCreatedChecked)
 
     // $creator = new Observable(this.creator)
 
@@ -117,6 +119,13 @@ export class PuzzlesManager {
     }
 
     handleSavePuzzle = async (puzzle = this.unresolvedPuzzle, puzzles = [] as IPuzzle[]) => {
+        if (!this.newlyCreatedChecked) {
+            this.error = {message: 'puzzle unchecked, please push auto-resolve button to check puzzle'}
+            console.error(this.error)
+            const button = document.querySelector('.auto-resolve') as HTMLButtonElement
+            button.focus()
+            return
+        }
         const _puzzles = puzzles.concat(puzzle)
         localStorage.setItem(LSPuzzles, JSON.stringify(_puzzles))
         const options = {
@@ -137,9 +146,9 @@ export class PuzzlesManager {
         this.options = opts
     }
 
-    setResolveCreated = () => {
-        this.resolveCreated = !this.resolveCreated
-        this.$resolveCreated.emit(this.resolveCreated)
+    switchToResolverView = (resolved = !this.switchResolverView) => {
+        this.switchResolverView = !this.switchResolverView
+        this.$switchResolverView.emit(this.switchResolverView)
     }
 
     getDiffQuery = (admin = authService.user.role === Admin) => {
@@ -202,7 +211,7 @@ export class PuzzlesManager {
         console.log('is loading', this.loading)
     }
 
-    saveMainPuzzles = (data: IPuzzle[]) => {
+    saveMainPuzzlesToStore = (data: IPuzzle[]) => {
         if (data.length && !this.puzzles.length) {
             localStorage.setItem(LSPuzzles, JSON.stringify(data))
             this.puzzles = data
@@ -215,7 +224,7 @@ export class PuzzlesManager {
         this.$puzzles.emit(this.puzzles)
     }
 
-    saveCustomPuzzles = (puzzles: IPuzzle[]) => {
+    saveCustomPuzzlesToStore = (puzzles: IPuzzle[]) => {
         this.customPuzzles = this.customPuzzles.concat(puzzles)
         localStorage.setItem(LSUserPuzzles, JSON.stringify(this.customPuzzles.slice(-40)))
         console.log('custom puzzles', this.customPuzzles, puzzles)
@@ -224,8 +233,20 @@ export class PuzzlesManager {
 
     saveError = (message: string) => {
         this.error.message = message
+        console.log('emit error', this.error)
         this.$error.emit(this.error)
+        if (message) {
+            this.timeout = setTimeout(this.saveError, ErrorTiming, '')
+        } else if (this.timeout) {
+            clearTimeout(this.timeout)
+        }
     }
+
+    checkNewlyCreated = (checked = this.newlyCreatedChecked) => {
+        this.newlyCreatedChecked = checked
+        this.$newlyCreatedChecked.emit(this.newlyCreatedChecked)
+    }
+
 
     deletePuzzle = async () => {
         if (authService.user.role !== Admin) return
@@ -258,8 +279,8 @@ export class PuzzlesManager {
                 const {resData, error} = res
                 error && this.saveError(error.message)
                 if (resData) {
-                    system && this.saveMainPuzzles(resData)
-                    !system && this.saveCustomPuzzles(resData)
+                    system && this.saveMainPuzzlesToStore(resData)
+                    !system && this.saveCustomPuzzlesToStore(resData)
                 }
                 // isDev() && console.log('data', resData, system, this.puzzles, this.customPuzzles)
             });
@@ -271,8 +292,8 @@ export class PuzzlesManager {
         authService.makeFetch(url, options).then(res => {
             const {resData, error} = res
             if (resData) {
-                system && this.saveMainPuzzles(resData)
-                !system && this.saveCustomPuzzles(resData)
+                system && this.saveMainPuzzlesToStore(resData)
+                !system && this.saveCustomPuzzlesToStore(resData)
             }
             error && this.saveError(error.message)
         })

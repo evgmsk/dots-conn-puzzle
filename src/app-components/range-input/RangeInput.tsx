@@ -10,10 +10,11 @@ export interface IBarBtn {
     step?: number,
     min?: number,
     max?: number,
+    plus?: boolean
 }
 
 export const IncreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
-    const {onChange, step = 1, currentValue, min = 3, max = Infinity} = props
+    const {onChange, step = 1, currentValue, min = 3, max = Infinity, plus = true} = props
     const handleClick = () => {
         const newValue = Math.max(Math.min(+currentValue + step, max), min)
         onChange(newValue)
@@ -26,15 +27,23 @@ export const IncreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
             className='input__btn btn-up'
             onClick={handleClick}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
-            </svg>
+            {
+                plus
+                    ? <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v12m6-6H6" />
+                    </svg>
+                    : <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                    </svg>
+
+            }
+
         </button>
     )
 }
 
 export const DecreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
-    const {onChange, step = 1, currentValue, min = 3, max = Infinity} = props
+    const {onChange, step = 1, currentValue, min = 3, max = Infinity, plus = true} = props
     const handleClick = () => {
         const newValue = Math.max(Math.min(+currentValue - step, max), min)
         console.log(currentValue, newValue, min, max, step)
@@ -47,9 +56,15 @@ export const DecreaseBtn: React.FC<IBarBtn> = (props: IBarBtn) => {
             role='menuitem'
             onClick={handleClick}
         >
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H6" />
-            </svg>
+            {
+                plus
+                    ?  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M18 12H6" />
+                    </svg>
+                    : <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-6 h-6">
+                        <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                    </svg>
+            }
         </button>
     )
 }
